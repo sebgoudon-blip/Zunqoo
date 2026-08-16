@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Vendeurs (foodtrucks). Créés côté admin/console pour le MVP :
+    // pas d'auto-inscription en libre-service pour l'instant.
+    match /vendors/{vendorId} {
+      allow read: if true;
+      allow write: if false;
+
+      // Compteur journalier de numéros de commande.
+      // Uniquement modifié par la Cloud Function createOrder (Admin SDK,
+      // qui n'est pas soumis aux règles de sécurité).
+      match /sessions/{dayKey} {
+        allow read: if true;
+        allow write: if false;
+      }
+
+      // Commandes. Lecture publique (affichées de toute façon sur l'écran
+      // TV du foodtruck). Création uniquement via la Cloud Function
+      // createOrder pour garantir l'unicité et la séquentialité des
+      // numéros. Les mises à jour de statut viennent de l'interface
+      // caisse et doivent suivre la progression attendue.
+      match /orders/{orderId} {
+        allow read: if true;
+        allow create: if false;
+        allow update: if isValidStatusUpdate();
+        allow delete: if false;
+      }
+    }
+  }
+
+  function isValidStatusUpdate() {
+    let before = resource.data;
+    let after = request.resource.data;
+    let changedKeys = after.diff(before).affectedKeys();
+    let allowedNextStatus = {
+      'waiting': 'preparing',
+      'preparing': 'ready',
+      'ready': 'delivered'
+    };
+
+    return changedKeys.hasOnly(['status', 'preparingAt', 'readyAt', 'deliveredAt'])
+      && before.status in allowedNextStatus
+      && after.status == allowedNextStatus[before.status]
+      && after.number == before.number
+      && after.dayKey == before.dayKey
+      && after.source == before.source
+      && after.fcmToken == before.fcmToken;
+  }
+}

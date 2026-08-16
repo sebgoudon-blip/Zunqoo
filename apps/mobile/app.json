@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Zunqoo",
+    "slug": "zunqoo",
+    "scheme": "zunqoo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "bundleIdentifier": "com.zunqoo.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Zunqoo utilise l'appareil photo pour scanner le QR code du foodtruck et vous attribuer un numéro de commande.",
+        "UIBackgroundModes": ["remote-notification"]
+      }
+    },
+    "android": {
+      "package": "com.zunqoo.app",
+      "permissions": ["CAMERA", "POST_NOTIFICATIONS"],
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Zunqoo utilise l'appareil photo pour scanner le QR code du foodtruck."
+        }
+      ],
+      "expo-notifications"
+    ]
+  }
+}

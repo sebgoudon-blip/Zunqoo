@@ -1,0 +1,19 @@
+{
+  "name": "zunqoo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Zunqoo - file d'attente pour foodtrucks et vendeurs événementiels",
+  "workspaces": [
+    "apps/web",
+    "firebase/functions"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace apps/web",
+    "build:web": "npm run build --workspace apps/web",
+    "build:functions": "npm run build --workspace firebase/functions",
+    "emulators": "firebase emulators:start",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:hosting": "firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes"
+  }
+}
