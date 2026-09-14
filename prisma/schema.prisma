@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // SQLite en local par defaut. Pour la production, passer a "postgresql"
+  // et fournir une DATABASE_URL Postgres (voir .env.example).
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Un commercant abonne a Avis Facile.
+model Commercant {
+  id                   String   @id @default(cuid())
+  nom                  String
+  email                String   @unique
+  motDePasseHash       String
+  telephone            String?
+  lienAvisGoogle       String?
+  // Delai (en heures) avant l'envoi du SMS de demande d'avis apres le passage en caisse.
+  delaiEnvoiHeures     Int      @default(3)
+  // "lancement" (19e/mois, 3 premiers mois) ou "standard" (39e/mois)
+  plan                 String   @default("lancement")
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  // essai | actif | impaye | annule
+  statutAbonnement     String   @default("essai")
+  creeLe               DateTime @default(now())
+
+  clients    ClientFinal[]
+  codesPromo PromoCode[]
+}
+
+// Le client final d'un commercant, dont le numero a ete recolte en caisse.
+model ClientFinal {
+  id           String   @id @default(cuid())
+  commercantId String
+  commercant   Commercant @relation(fields: [commercantId], references: [id], onDelete: Cascade)
+
+  telephone String
+  // Jeton unique utilise dans le lien SMS (avis + confirmation), independant de l'id.
+  token     String   @unique @default(cuid())
+
+  creeLe         DateTime  @default(now())
+  // Date/heure a partir de laquelle le SMS de demande d'avis peut partir.
+  envoyerApres   DateTime
+  smsEnvoyeLe    DateTime?
+  avisConfirmeLe DateTime?
+
+  codePromo PromoCode?
+}
+
+// Code promo genere des qu'un client confirme avoir laisse un avis.
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  pourcentage Int      @default(10)
+  utilise     Boolean  @default(false)
+  creeLe      DateTime @default(now())
+
+  commercantId String
+  commercant   Commercant @relation(fields: [commercantId], references: [id], onDelete: Cascade)
+
+  clientFinalId String      @unique
+  clientFinal   ClientFinal @relation(fields: [clientFinalId], references: [id], onDelete: Cascade)
+}
+
+// Prospect commercial identifie par le module de prospection (espace super-admin).
+model Lead {
+  id        String  @id @default(cuid())
+  nom       String
+  telephone String?
+  email     String?
+  adresse   String?
+  ville     String
+  source    String  @default("google_places")
+
+  // nouveau | contacte | interesse | converti | refuse
+  statut String @default("nouveau")
+  // Desinscription (STOP / opt-out) : plus aucun message ne doit etre envoye.
+  optOut Boolean @default(false)
+
+  ajouteLe   DateTime  @default(now())
+  contacteLe DateTime?
+  notes      String?
+
+  @@unique([nom, ville, telephone])
+}
