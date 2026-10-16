@@ -1,0 +1,21 @@
+# Déploiement type : un worker vocal + l'API d'administration.
+# Les fiches tenants et la base de consommation sont dans un volume partagé.
+services:
+  agent:
+    build: ..
+    env_file: ../.env
+    volumes: ["zunqoo-data:/app/data"]
+    restart: unless-stopped
+    deploy:
+      replicas: 1   # augmenter : chaque worker prend plusieurs appels en parallèle
+
+  admin-api:
+    build: ..
+    env_file: ../.env
+    command: ["uvicorn", "zunqoo_voice.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports: ["8000:8000"]
+    volumes: ["zunqoo-data:/app/data"]
+    restart: unless-stopped
+
+volumes:
+  zunqoo-data:

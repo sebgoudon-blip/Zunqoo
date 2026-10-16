@@ -16,6 +16,7 @@ firebase/
   functions/        Cloud Functions (création atomique des numéros, push FCM)
 firestore.rules      Règles de sécurité Firestore
 firestore.indexes.json
+voice-agent/         Agent vocal téléphonique IA (Python, LiveKit) — voir voice-agent/README.md
 ```
 
 ## Modèle de données

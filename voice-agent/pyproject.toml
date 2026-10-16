@@ -1,0 +1,47 @@
+[project]
+name = "zunqoo-voice"
+version = "0.1.0"
+description = "Agent vocal téléphonique multi-tenant pour commerces de bouche (Zunqoo Voice)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "livekit-agents[deepgram,openai,anthropic,elevenlabs,cartesia,silero]~=1.8",
+  "livekit-api>=1.2",
+  "anthropic>=1.15",
+  "openai>=3.0",
+  "httpx>=0.28",
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  "cryptography>=43",
+  "fastapi>=0.115",
+  "uvicorn>=0.32",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "respx>=0.21", "ruff>=0.7"]
+
+[project.scripts]
+zunqoo-onboard = "zunqoo_voice.scraper.cli:main"
+zunqoo-license = "zunqoo_voice.billing.cli:main"
+zunqoo-sip = "zunqoo_voice.telephony.provision:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zunqoo_voice"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header"]

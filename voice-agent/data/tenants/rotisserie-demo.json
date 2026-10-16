@@ -1,0 +1,40 @@
+{
+  "id": "rotisserie-demo",
+  "plan": "saas_pro",
+  "active": true,
+  "timezone": "Europe/Paris",
+  "source_url": "https://www.exemple-rotisserie.fr",
+  "phone_numbers": ["+33187000000"],
+  "transfer_number": "+33612345678",
+  "voice": {"tts_provider": "elevenlabs", "voice_id": null, "agent_name": "Camille", "language": "fr"},
+  "whatsapp": {"manager_numbers": ["33612345678"]},
+  "greeting": null,
+  "custom_instructions": "Les poulets se commandent au plus tard la veille avant 18 h. Le samedi, proposer de réserver car ils partent vite.",
+  "profile": {
+    "name": "La Rôtisserie du Marché",
+    "activity": "rôtisserie artisanale",
+    "description": "Volailles fermières rôties à la broche, présentes sur les marchés du secteur.",
+    "contact": {"phone": "0187000000", "email": "contact@exemple-rotisserie.fr", "address": null, "website": "https://www.exemple-rotisserie.fr", "social_links": []},
+    "opening_hours": [],
+    "market_presence": [
+      {"day": "mercredi", "place": "Marché de Vincennes", "opens": "08:00", "closes": "13:00"},
+      {"day": "vendredi", "place": "Marché de Montreuil", "opens": "08:00", "closes": "13:30"},
+      {"day": "samedi", "place": "Marché de Vincennes", "opens": "07:30", "closes": "13:30"},
+      {"day": "dimanche", "place": "Marché de Nogent-sur-Marne", "opens": "08:00", "closes": "13:00"}
+    ],
+    "delivery": {"available": false},
+    "products": [
+      {"name": "Poulet fermier Label Rouge", "category": "volailles", "price": 16.5, "unit": "pièce"},
+      {"name": "Demi-poulet fermier", "category": "volailles", "price": 9.0, "unit": "pièce"},
+      {"name": "Pintade fermière", "category": "volailles", "price": 19.0, "unit": "pièce"},
+      {"name": "Jarret de porc grillé", "category": "viandes", "price": 7.5, "unit": "pièce"},
+      {"name": "Pommes de terre au jus", "category": "accompagnements", "price": 5.0, "unit": "barquette"}
+    ],
+    "faq": [
+      {"question": "Peut-on réserver ?", "answer": "Oui, par téléphone, au plus tard la veille avant 18 h."}
+    ],
+    "ordering_rules": ["Commande au plus tard la veille avant 18 h", "Paiement sur place au retrait"],
+    "payment_methods": ["espèces", "carte bancaire"],
+    "extra_notes": []
+  }
+}
