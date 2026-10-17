@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # --- Déploiement -------------------------------------------------------
     deployment_mode: Literal["saas", "onprem"] = "saas"
     tenants_dir: Path = Path("data/tenants")
+    calls_dir: Path = Path("data/calls")  # archive des appels (transcription + compte-rendu)
     default_tenant_id: str | None = None  # utile en one-shot mono-commerce
     admin_api_token: SecretStr = SecretStr("")  # protège l'API d'administration
 
@@ -40,17 +41,21 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr = SecretStr("")
     # Modèle de conversation (latence critique) et modèle d'extraction (offline).
     anthropic_chat_model: str = "claude-sonnet-5-5"
+    # Onboarding (lecture du site, une fois par commerce) : le plus précis.
     anthropic_extract_model: str = "claude-opus-5-5"
+    # Compte-rendu d'appel (à chaque appel) : rapide et ~40x moins cher.
+    anthropic_report_model: str = "claude-haiku-5-5"
     openai_chat_model: str = "gpt-4o"
     openai_extract_model: str = "gpt-4o"
+    openai_report_model: str = "gpt-4o-mini"
 
     # --- TTS ---------------------------------------------------------------
-    tts_provider: Literal["elevenlabs", "cartesia"] = "elevenlabs"
+    tts_provider: Literal["elevenlabs", "cartesia"] = "cartesia"
     elevenlabs_api_key: SecretStr = SecretStr("")
     elevenlabs_model: str = "eleven_turbo_v2_5"
     elevenlabs_default_voice_id: str = ""
     cartesia_api_key: SecretStr = SecretStr("")
-    cartesia_model: str = "sonic-2"
+    cartesia_model: str = "sonic-3"
     cartesia_default_voice_id: str = ""
 
     # --- WhatsApp Cloud API (compte plateforme par défaut) -----------------

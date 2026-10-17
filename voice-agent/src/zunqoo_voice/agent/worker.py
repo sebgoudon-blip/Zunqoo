@@ -50,6 +50,7 @@ from livekit.plugins import silero
 from ..billing.guard import check_call_allowed
 from ..billing.plans import entitlements_for
 from ..billing.usage import UsageMeter
+from ..core.call_archive import CallArchive
 from ..core.config import Settings, get_settings
 from ..core.models import CallRecord, TenantConfig
 from ..core.structured_llm import StructuredLLM
@@ -116,6 +117,7 @@ async def finalize_call(
         transcript=transcript,
     )
     meter.record_call(state.tenant.id, state.call_id, state.started_at, duration)
+    archive = CallArchive(settings.calls_dir)
 
     # Appel décroché puis raccroché sans un mot : rien à signaler.
     if not any(line.startswith("Client") for line in transcript.splitlines()):
@@ -133,8 +135,12 @@ async def finalize_call(
     except Exception:
         log.exception("analyse post-appel échouée pour %s", state.call_id)
 
+    # Archivé AVANT l'envoi WhatsApp : si Meta est en panne, la commande
+    # n'est jamais perdue (relevable dans data/calls/ ou via l'API admin).
+    archive.save(record)
     if entitlements_for(state.tenant.plan).whatsapp_reports:
-        await send_call_report(state.tenant, record, settings)
+        sent = await send_call_report(state.tenant, record, settings)
+        archive.mark_notified(record, sent)
 
 
 @server.rtc_session(agent_name=get_settings().livekit_agent_name)

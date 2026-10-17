@@ -19,6 +19,7 @@ from .config import Settings
 T = TypeVar("T", bound=BaseModel)
 
 Effort = Literal["low", "medium", "high"]
+Purpose = Literal["onboarding", "report"]
 
 
 class StructuredLLMError(RuntimeError):
@@ -39,18 +40,29 @@ class StructuredLLM:
             )
 
     async def extract(
-        self, schema: type[T], *, system: str, user: str, effort: Effort = "medium"
+        self,
+        schema: type[T],
+        *,
+        system: str,
+        user: str,
+        effort: Effort = "medium",
+        purpose: Purpose = "onboarding",
     ) -> T:
+        s = self.settings
         if self.provider == "anthropic":
-            return await self._extract_anthropic(schema, system=system, user=user, effort=effort)
-        return await self._extract_openai(schema, system=system, user=user)
+            model = s.anthropic_report_model if purpose == "report" else s.anthropic_extract_model
+            return await self._extract_anthropic(
+                schema, model=model, system=system, user=user, effort=effort
+            )
+        model = s.openai_report_model if purpose == "report" else s.openai_extract_model
+        return await self._extract_openai(schema, model=model, system=system, user=user)
 
     async def _extract_anthropic(
-        self, schema: type[T], *, system: str, user: str, effort: Effort
+        self, schema: type[T], *, model: str, system: str, user: str, effort: Effort
     ) -> T:
         try:
             response = await self._anthropic.messages.parse(
-                model=self.settings.anthropic_extract_model,
+                model=model,
                 max_tokens=16000,
                 system=system,
                 messages=[{"role": "user", "content": user}],
@@ -72,10 +84,12 @@ class StructuredLLM:
             raise StructuredLLMError("Anthropic: pas de sortie structurée")
         return response.parsed_output
 
-    async def _extract_openai(self, schema: type[T], *, system: str, user: str) -> T:
+    async def _extract_openai(
+        self, schema: type[T], *, model: str, system: str, user: str
+    ) -> T:
         try:
             completion = await self._openai.chat.completions.parse(
-                model=self.settings.openai_extract_model,
+                model=model,
                 messages=[
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},

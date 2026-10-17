@@ -45,7 +45,10 @@ hors-ligne) ou **abonnement SaaS** (hébergé, minutes comptées par tenant).
 | Barge-in | Silero VAD, interruption à 0,3 s, reprise si fausse interruption | L'agent se tait dès que l'appelant parle ; une toux ne coupe pas la phrase pour de bon. |
 | Fin de tour | Détecteur sémantique LiveKit (multilingue) + endpointing 0,35–2,5 s | Répond vite quand la phrase est finie, attend quand le client hésite (« euh… et puis… »). |
 | Latence | Génération LLM anticipée sur la transcription partielle, VAD préchargée, accueil sans LLM, TTS qui démarre dès ~50 caractères | Objectif < 800 ms entre la fin de phrase et le premier son. |
-| Humain-first | Prompt « oral » strict, nombres écrits comme on les dit, bruits de clavier pendant les outils, voix ElevenLabs réglée (stabilité 0,45, style 0,2) | Pas de listes, pas de jargon, transitions naturelles. |
+| Humain-first | Prompt « oral » strict, nombres écrits comme on les dit, bruits de clavier pendant les outils | Pas de listes, pas de jargon, transitions naturelles. |
+| Voix | Cartesia Sonic-3 par défaut ; ElevenLabs Turbo v2.5 en option par tenant (`voice.tts_provider`) | Cartesia : 2 à 3 fois moins cher, latence plus basse. ElevenLabs reste la référence en naturel : à comparer à l'oreille au téléphone. |
+| Transparence IA | L'accueil annonce « l'assistante vocale » ; l'agent ne prétend jamais être humain | Obligation de l'AI Act (art. 50) depuis août 2026. |
+| Fiabilité | Chaque appel est archivé (`data/calls/`) avant l'envoi WhatsApp | Une commande n'est jamais perdue si WhatsApp échoue (`GET /calls/{tenant}/undelivered`). |
 | Extraction | Sorties structurées natives (Anthropic `messages.parse`, OpenAI `chat.completions.parse`) validées par Pydantic | Le JSON respecte toujours le schéma, pas de parsing de texte libre. |
 | WhatsApp | Template approuvé d'abord, repli texte | Meta n'accepte le texte libre que dans les 24 h suivant un message du gérant ; le template marche toujours. |
 | Licences | Ed25519, vérification hors-ligne | Le one-shot n'a pas besoin de serveur éditeur ; le client ne peut ni forger ni modifier sa licence. |
@@ -179,6 +182,27 @@ cd deploy && docker compose up -d --build
   Pour monter en charge, augmentez les replicas.
 - `admin-api` : `POST /tenants/onboard`, `GET /tenants/{id}`,
   `GET /billing/statement?month=2026-10` (en-tête `Authorization: Bearer $ADMIN_API_TOKEN`).
+
+## Coûts d'exploitation (estimation, à vérifier sur les grilles tarifaires)
+
+Configuration par défaut (Cartesia + Sonnet 5.5 pour la conversation + Haiku 5.5 pour le compte-rendu) :
+~0,10 € par appel de 2 minutes, soit ~50–90 €/mois pour ~450 appels, en comptant
+le numéro (~3 €/mois), l'abonnement Cartesia et un petit serveur (~10 €/mois).
+Passer la voix sur ElevenLabs ajoute ~20–90 €/mois selon le volume.
+
+## Checklist de lancement
+
+Démarches à lancer tout de suite (délais côté fournisseurs) :
+- [ ] Numéro français : dossier réglementaire chez l'opérateur (Kbis, justificatif d'adresse) — quelques jours.
+- [ ] Template WhatsApp `zunqoo_call_report` soumis à Meta — de quelques heures à quelques jours.
+- [ ] Jeton WhatsApp permanent (System User) et numéro Business vérifié.
+
+Tests avant mise en service :
+- [ ] Choisir la voix : comparer 2 ou 3 voix Cartesia FR (et une ElevenLabs) en mode `console`, puis au vrai téléphone.
+- [ ] Relire et compléter la fiche du commerce générée par l'onboarding.
+- [ ] 20 à 30 appels de test : commande simple, commande modifiée en cours de route, question hors fiche, client qui coupe la parole, numéro masqué, bruit de fond.
+- [ ] Vérifier la réception WhatsApp et l'archive `data/calls/`.
+- [ ] Mention RGPD : informer les clients que les appels sont transcrits (site web, ou phrase d'accueil si le gérant le souhaite).
 
 ## Modèles commerciaux
 

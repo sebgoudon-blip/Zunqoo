@@ -49,4 +49,5 @@ async def analyze_call(
     if confirmed_order:
         header.append(f"Commande confirmée via l'outil : {confirmed_order}")
     user = "\n".join(header) + "\n\nTRANSCRIPTION :\n" + transcript
-    return await llm.extract(CallReport, system=ANALYSIS_SYSTEM_PROMPT, user=user, effort="low")
+    return await llm.extract(CallReport, system=ANALYSIS_SYSTEM_PROMPT, user=user, effort="low",
+                             purpose="report")

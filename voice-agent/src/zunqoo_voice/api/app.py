@@ -14,6 +14,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, HttpUrl
 
 from ..billing.usage import UsageMeter
+from ..core.call_archive import CallArchive
 from ..core.config import Settings, get_settings
 from ..core.models import Plan, TenantConfig
 from ..core.tenant_store import FileTenantStore
@@ -64,3 +65,13 @@ def get_tenant(tenant_id: str, settings: Settings = Depends(get_settings)) -> Te
 def statement(month: str | None = None, settings: Settings = Depends(get_settings)) -> list[dict]:
     month = month or datetime.now().strftime("%Y-%m")
     return UsageMeter(settings.usage_db_path).monthly_statement(month)
+
+
+@app.get("/calls/{tenant_id}/undelivered", dependencies=[Depends(require_admin)])
+def undelivered(
+    tenant_id: str, month: str | None = None, settings: Settings = Depends(get_settings)
+) -> list[dict]:
+    """Appels dont le compte-rendu WhatsApp n'est arrivé chez aucun gérant."""
+    month = month or datetime.now().strftime("%Y-%m")
+    records = CallArchive(settings.calls_dir).unnotified(tenant_id, month)
+    return [r.model_dump(mode="json") for r in records]
