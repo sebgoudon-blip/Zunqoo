@@ -57,13 +57,13 @@ def test_call_archive_tracks_undelivered(tmp_path):
 
     now = datetime(2026, 10, 17, 10, 0)
     archive = CallArchive(tmp_path)
-    rec = [CallRecord(tenant_id="t", call_id=c, started_at=now, ended_at=now, duration_s=60,
+    rec = [CallRecord(tenant_id="demo", call_id=c, started_at=now, ended_at=now, duration_s=60,
                       transcript="Client : bonjour") for c in ("a", "b")]
     for r in rec:
         archive.save(r)
     archive.mark_notified(rec[0], {"336": "wamid"})
     archive.mark_notified(rec[1], {})
-    assert [r.call_id for r in archive.unnotified("t", "2026-10")] == ["b"]
+    assert [r.call_id for r in archive.unnotified("demo", "2026-10")] == ["b"]
 
 
 def test_planning_for_saturday(tenant):
