@@ -30,3 +30,6 @@ web-build/
 # Editors
 .vscode/
 .idea/
+
+# Python
+__pycache__/
