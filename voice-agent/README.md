@@ -183,6 +183,72 @@ cd deploy && docker compose up -d --build
 - `admin-api` : `POST /tenants/onboard`, `GET /tenants/{id}`,
   `GET /billing/statement?month=2026-10` (en-tête `Authorization: Bearer $ADMIN_API_TOKEN`).
 
+## CRM (étape 1)
+
+Application web `apps/crm` (React) + API `/api` (FastAPI, `crm/`). Le client
+n'active que ce dont il a besoin, depuis **Réglages** :
+
+| Module | État | Dépend de |
+|---|---|---|
+| Standard téléphonique | disponible | — |
+| Prise de commandes | disponible | Standard |
+| Rendez-vous, E-mails, Devis, Factures, Résumé du soir, Avis Google | « bientôt disponible » | Factures → Devis |
+
+- Activer un module active ses prérequis ; en désactiver un coupe ceux qui en
+  dépendent (avec confirmation). Trois formules de départ en un clic.
+- Chaque module qui produit des actions a un niveau d'autonomie : *je valide
+  tout*, *je valide l'important*, *automatique*.
+- Côté téléphone : sans « Prise de commandes », l'agent ne prend plus de
+  commande (il note la demande pour un rappel) ; sans « Standard », l'appel est
+  renvoyé vers `transfer_number`.
+
+**Écrans** : Accueil (chiffres + activité), À valider, Clients (fiche +
+historique de tous les échanges, notes), Catalogue (ajout à la main, import
+CSV/Excel, prix HT ou TTC, TVA), Réglages.
+
+**Catalogue** : rempli automatiquement depuis le site à l'onboarding, puis
+modifiable. Les prix sont stockés tels que saisis avec l'indication HT/TTC :
+l'agent annonce toujours le prix TTC exact. Taux de TVA et nature des prix
+par défaut : `default_vat_rate` et `prices_include_vat` dans la fiche tenant.
+
+**Validations** : les éléments préparés par l'assistant arrivent dans « À
+valider » et sur WhatsApp avec deux boutons. Une décision prise d'un côté
+disparaît de l'autre ; un double clic ne déclenche jamais deux envois. Les
+modules des étapes suivantes branchent leur action avec
+`@executor("devis_envoi")` (`crm/approvals.py`).
+
+### Mise en route du CRM
+
+```bash
+# Accès pour le gérant (le mot de passe est demandé au clavier)
+zunqoo-crm create-user --tenant rotisserie-dupont --email gerant@exemple.fr --name "Paul"
+zunqoo-crm seed-catalog rotisserie-dupont          # si l'onboarding date d'avant le CRM
+
+uvicorn zunqoo_voice.api.app:app --port 8000      # API
+npm install && npm run dev:crm                     # écrans (depuis la racine du dépôt)
+```
+
+En production : `npm run build:crm` produit `apps/crm/dist/` (fichiers
+statiques), à servir sur le même domaine que l'API (`/api` relayé vers le
+port 8000) ou avec `VITE_API_URL` pointant vers l'API.
+
+### Validation par WhatsApp
+
+1. Faire approuver le template **Utility** `zunqoo_validation` (langue `fr`) :
+
+   ```
+   ✅ À valider : {{1}}
+   {{2}}
+   Détail et modification : {{3}}
+   ```
+   avec deux boutons « réponse rapide » : **Valider** puis **Refuser**.
+2. Dans l'app Meta → WhatsApp → Configuration → Webhook : URL
+   `https://<votre-api>/webhooks/whatsapp`, jeton = `WHATSAPP_VERIFY_TOKEN`,
+   abonnement au champ `messages`. Renseigner `WHATSAPP_APP_SECRET`
+   (Paramètres de l'app → Général) : toute requête non signée est refusée.
+3. Seuls les numéros `whatsapp.manager_numbers` du commerce concerné peuvent
+   valider ; le gérant reçoit un accusé « ✅ Fait » ou « ❌ Refusé ».
+
 ## Coûts d'exploitation (estimation, à vérifier sur les grilles tarifaires)
 
 Configuration par défaut (Cartesia + Sonnet 5.5 pour la conversation + Haiku 5.5 pour le compte-rendu) :
