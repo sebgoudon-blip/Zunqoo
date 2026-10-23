@@ -68,7 +68,7 @@ MODULES: dict[ModuleKey, ModuleDef] = {
         ModuleDef(
             ModuleKey.QUOTES, "Devis",
             "Rédige les devis à partir de votre catalogue, avec relances automatiques.",
-            available=False, default_autonomy=Autonomy.VALIDATE_ALL,
+            default_autonomy=Autonomy.VALIDATE_ALL,
         ),
         ModuleDef(
             ModuleKey.INVOICES, "Factures",

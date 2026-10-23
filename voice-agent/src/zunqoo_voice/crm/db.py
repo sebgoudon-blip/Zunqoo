@@ -226,6 +226,73 @@ class MailMessage(Base):
     error: Mapped[str | None] = mapped_column(Text)
 
 
+class BusinessSettings(Base):
+    """Informations légales et réglages des documents (devis, factures)."""
+
+    __tablename__ = "business_settings"
+    tenant_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    legal_name: Mapped[str | None] = mapped_column(String(200))   # raison sociale
+    legal_form: Mapped[str | None] = mapped_column(String(80))    # SARL, EI, SAS…
+    address: Mapped[str | None] = mapped_column(String(255))
+    postal_code: Mapped[str | None] = mapped_column(String(10))
+    city: Mapped[str | None] = mapped_column(String(120))
+    siret: Mapped[str | None] = mapped_column(String(20))
+    vat_number: Mapped[str | None] = mapped_column(String(20))    # FR + 11 chiffres
+    rcs: Mapped[str | None] = mapped_column(String(120))          # « RCS Romans 123 456 789 »
+    capital: Mapped[str | None] = mapped_column(String(40))
+    email: Mapped[str | None] = mapped_column(String(255))
+    phone: Mapped[str | None] = mapped_column(String(32))
+    iban: Mapped[str | None] = mapped_column(String(40))
+    bic: Mapped[str | None] = mapped_column(String(20))
+    # Franchise en base de TVA (art. 293 B du CGI) : pas de TVA facturée.
+    vat_franchise: Mapped[bool] = mapped_column(Boolean, default=False)
+    quote_validity_days: Mapped[int] = mapped_column(Integer, default=30)
+    payment_terms_days: Mapped[int] = mapped_column(Integer, default=30)
+    quote_terms: Mapped[str | None] = mapped_column(Text)    # conditions affichées sur le devis
+    invoice_terms: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
+
+
+class DocumentCounter(Base):
+    """Compteur de numérotation continue par commerce, type et année."""
+
+    __tablename__ = "document_counters"
+    tenant_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(10), primary_key=True)  # DEV | FAC | AV
+    year: Mapped[int] = mapped_column(Integer, primary_key=True)
+    last: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Quote(Base):
+    __tablename__ = "quotes"
+    __table_args__ = (UniqueConstraint("tenant_id", "number"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    number: Mapped[str | None] = mapped_column(String(30))  # attribué à l'envoi
+    contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id"))
+    # brouillon | a_valider | envoye | accepte | refuse | expire | facture
+    status: Mapped[str] = mapped_column(String(20), default="brouillon", index=True)
+    title: Mapped[str] = mapped_column(String(255), default="")
+    lines: Mapped[list[dict]] = mapped_column(JSON, default=list)
+    prices_include_vat: Mapped[bool] = mapped_column(Boolean, default=True)
+    notes: Mapped[str | None] = mapped_column(Text)        # visibles par le client
+    internal_notes: Mapped[str | None] = mapped_column(Text)
+    issue_date: Mapped[datetime | None] = mapped_column()
+    valid_until: Mapped[datetime | None] = mapped_column()
+    source: Mapped[str] = mapped_column(String(20), default="manuel")  # manuel | email | appel
+    source_mail_id: Mapped[str | None] = mapped_column(String(32))
+    email_body: Mapped[str | None] = mapped_column(Text)   # message d'accompagnement
+    total_ht: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal(0))
+    total_ttc: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal(0))
+    sent_at: Mapped[datetime | None] = mapped_column()
+    reminders_sent: Mapped[int] = mapped_column(Integer, default=0)
+    decided_at: Mapped[datetime | None] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
+
+    contact: Mapped[Contact | None] = relationship()
+
+
 @lru_cache(maxsize=4)
 def get_engine(url: str) -> Engine:
     if url.startswith("sqlite:///") and not url.startswith("sqlite:///:memory:"):

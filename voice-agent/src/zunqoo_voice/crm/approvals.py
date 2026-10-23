@@ -34,6 +34,11 @@ class ApprovalError(RuntimeError):
     pass
 
 
+class ApprovalBlocked(ValueError):
+    """L'action ne peut pas encore partir (ex. ligne de devis sans prix) :
+    la demande reste en attente, le gérant corrige puis revalide."""
+
+
 async def decide(
     session: Session,
     settings: Settings,
@@ -76,6 +81,11 @@ async def decide(
     try:
         approval.result = await run(session, approval, settings)
         approval.status = "execute"
+    except ApprovalBlocked as exc:
+        approval.status, approval.result = "en_attente", str(exc)
+        approval.decided_at = approval.decided_by = approval.decision_channel = None
+        session.flush()
+        raise ApprovalError(str(exc)) from exc
     except Exception as exc:
         log.exception("exécution de %s (%s) échouée", approval.id, approval.kind)
         approval.status, approval.result = "echec", str(exc)

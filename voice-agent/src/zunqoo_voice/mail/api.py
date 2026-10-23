@@ -13,9 +13,10 @@ from sqlalchemy import func, select
 from ..core.config import Settings, get_settings
 from ..crm.api import DB, CurrentUser, require_admin, tenant_of
 from ..crm.db import MailAccount, MailMessage, User, session_scope
+from .account import _ACCESS, get_account
 from .crypto import MailCryptoError, encrypt
 from .google_oauth import GoogleAuthError, authorization_url, exchange_code, read_state, revoke
-from .processor import _ACCESS, get_account, sync_tenant
+from .processor import sync_tenant
 
 log = logging.getLogger(__name__)
 router = APIRouter()

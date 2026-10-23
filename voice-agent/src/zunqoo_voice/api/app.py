@@ -24,6 +24,7 @@ from ..core.models import Plan, TenantConfig
 from ..core.tenant_store import FileTenantStore
 from ..crm.api import router as crm_router
 from ..crm.webhook import router as webhook_router
+from ..documents.api import router as documents_router
 from ..mail.api import router as mail_router
 from ..scraper.onboarding import onboard_from_url
 
@@ -31,6 +32,7 @@ app = FastAPI(title="Zunqoo — API")
 app.include_router(crm_router)
 app.include_router(webhook_router)
 app.include_router(mail_router)
+app.include_router(documents_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[get_settings().crm_public_url.rstrip("/")],

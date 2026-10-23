@@ -22,8 +22,8 @@ from ..core.config import Settings
 from ..core.models import TenantConfig
 from ..core.structured_llm import StructuredLLM
 from ..crm.approvals import executor
-from ..crm.db import Approval, MailAccount, MailMessage, session_scope
-from ..crm.modules import ModuleKey
+from ..crm.db import Approval, MailMessage, session_scope
+from ..crm.modules import Autonomy, ModuleKey
 from ..crm.notify import request_approval
 from ..crm.services import (
     add_interaction,
@@ -32,16 +32,21 @@ from ..crm.services import (
     get_modules,
     list_catalog,
 )
-from .crypto import decrypt, encrypt
+from ..documents.quotes import (
+    QuoteError,
+    business_settings,
+    draft_quote,
+    missing_for_documents,
+    quote_from_draft,
+    quote_summary,
+    refresh_totals,
+    send_quote_email,
+)
+from .account import access_token, get_account
 from .gmail import GmailClient, InboundMail, build_reply
-from .google_oauth import refresh_access_token
 from .triage import CATEGORY_LABEL, decide_action, draft_reply, triage_mail
 
 log = logging.getLogger(__name__)
-
-# Jetons d'accès en mémoire (valables ~1 h) : {tenant_id: (jeton, expiration)}
-_ACCESS: dict[str, tuple[str, datetime]] = {}
-
 
 @dataclass
 class SyncResult:
@@ -51,22 +56,6 @@ class SyncResult:
     auto_sent: int = 0
     to_validate: int = 0
     errors: list[str] = field(default_factory=list)
-
-
-async def access_token(settings: Settings, account: MailAccount) -> str:
-    cached = _ACCESS.get(account.tenant_id)
-    if cached and cached[1] > datetime.now(UTC):
-        return cached[0]
-    tokens = await refresh_access_token(settings, decrypt(settings, account.refresh_token_enc))
-    if tokens.refresh_token:  # Google peut faire tourner le refresh token
-        account.refresh_token_enc = encrypt(settings, tokens.refresh_token)
-    _ACCESS[account.tenant_id] = (tokens.access_token, tokens.expires_at)
-    return tokens.access_token
-
-
-def get_account(session: Session, tenant_id: str) -> MailAccount | None:
-    return session.scalar(select(MailAccount).where(MailAccount.tenant_id == tenant_id,
-                                                    MailAccount.active.is_(True)))
 
 
 async def _send(gmail: GmailClient, from_email: str, tenant: TenantConfig,
@@ -85,6 +74,7 @@ async def sync_tenant(settings: Settings, tenant: TenantConfig, *,
         if account is None or not modules[ModuleKey.EMAIL].enabled:
             return result
         autonomy = modules[ModuleKey.EMAIL].autonomy
+        quotes_autonomy = modules[ModuleKey.QUOTES].autonomy
         enabled = {k for k, s in modules.items() if s.enabled}
         products = catalog_as_products(list_catalog(session, tenant.id, only_active=True)) \
             or tenant.profile.products
@@ -109,7 +99,8 @@ async def sync_tenant(settings: Settings, tenant: TenantConfig, *,
         for message_id in ids:
             try:
                 await _process_one(settings, tenant, gmail, llm, message_id, account_email,
-                                   label_id, autonomy, enabled, products, result, connected_at)
+                                   label_id, autonomy, enabled, products, result, connected_at,
+                                   quotes_autonomy)
             except Exception as exc:
                 log.exception("tenant %s: e-mail %s non traité", tenant.id, message_id)
                 result.errors.append(f"{message_id}: {exc}")
@@ -141,7 +132,7 @@ def _remember(session: Session, tenant_id: str, provider_id: str, **fields) -> M
 
 async def _process_one(settings, tenant, gmail, llm, message_id, account_email, label_id,
                        autonomy, enabled, products, result: SyncResult,
-                       connected_at: datetime) -> None:
+                       connected_at: datetime, quotes_autonomy: Autonomy) -> None:
     with session_scope(settings.database_url) as session:
         if session.scalar(select(MailMessage).where(MailMessage.tenant_id == tenant.id,
                                                     MailMessage.provider_id == message_id)):
@@ -174,6 +165,16 @@ async def _process_one(settings, tenant, gmail, llm, message_id, account_email, 
     if triage.needs_reply:
         draft = await draft_reply(llm, tenant, mail, triage, products=products, modules=enabled)
     action = decide_action(autonomy, triage, draft)
+
+    # Demande de devis + module Devis actif : on prépare un vrai devis chiffré
+    # depuis le catalogue, envoyé en pièce jointe après validation.
+    quote_draft, catalog = None, []
+    if triage.category == "devis" and ModuleKey.QUOTES in enabled and not triage.suspicious:
+        with session_scope(settings.database_url) as session:
+            catalog = list_catalog(session, tenant.id, only_active=True)
+        request = f"Objet : {mail.subject}\n{triage.request_details or ''}\n\n{mail.text}"
+        quote_draft = await draft_quote(llm, tenant, request, catalog)
+        action = "devis"
 
     sent_id = None
     if action == "envoi_auto":
@@ -208,6 +209,9 @@ async def _process_one(settings, tenant, gmail, llm, message_id, account_email, 
                             summary=draft.body[:300], body=draft.body, external_id=sent_id)
             row.status = "envoye_auto"
             result.auto_sent += 1
+        elif action == "devis":
+            await _prepare_quote(session, settings, tenant, contact, row, mail, triage, draft,
+                                 quote_draft, catalog, quotes_autonomy, result)
         elif action == "validation":
             warnings = []
             if triage.suspicious:
@@ -228,6 +232,43 @@ async def _process_one(settings, tenant, gmail, llm, message_id, account_email, 
             row.status, row.approval_id = "a_valider", approval.id
             result.to_validate += 1
     await gmail.add_label(message_id, label_id)
+
+
+async def _prepare_quote(session, settings, tenant, contact, row, mail, triage, draft,
+                         quote_draft, catalog, quotes_autonomy, result: SyncResult) -> None:
+    bs = business_settings(session, tenant)
+    quote = quote_from_draft(tenant, contact, quote_draft, catalog)
+    quote.source_mail_id = row.id
+    session.add(quote)
+    refresh_totals(quote, bs)
+    session.flush()
+    body = draft.body if draft else ""
+    complete = all(ln.get("unit_price") is not None for ln in quote.lines)
+    if (quotes_autonomy == Autonomy.AUTOMATIC and complete and not quote_draft.questions
+            and not triage.must_escalate and not missing_for_documents(bs)):
+        try:
+            await send_quote_email(session, settings, tenant, quote, body)
+            row.status = "envoye_auto"
+            result.auto_sent += 1
+            return
+        except QuoteError as exc:  # repli sur la validation
+            log.warning("devis %s non envoyé automatiquement : %s", quote.id, exc)
+    summary = [triage.summary, quote_summary(quote)]
+    if quote.internal_notes:
+        summary.append(quote.internal_notes)
+    if not complete:
+        summary.append("⚠️ Certains produits ne sont pas au catalogue : prix à compléter.")
+    approval = await request_approval(
+        session, settings, tenant, module=ModuleKey.QUOTES, kind="devis_envoi",
+        title=f"Devis à envoyer — {contact.display_name if contact else mail.from_email}"[:250],
+        summary="\n".join(summary),
+        payload={"quote_id": quote.id, "email_body": body, "incoming": mail.text[:4000],
+                 "to": mail.from_email},
+        contact=contact,
+    )
+    quote.status = "a_valider"
+    row.status, row.approval_id = "a_valider", approval.id
+    result.to_validate += 1
 
 
 @executor("email_reponse")

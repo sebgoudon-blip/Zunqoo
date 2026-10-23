@@ -15,9 +15,10 @@ from zunqoo_voice.crm.auth import hash_password
 from zunqoo_voice.crm.db import Approval, Interaction, MailAccount, MailMessage, User, session_scope
 from zunqoo_voice.crm.modules import Autonomy, ModuleKey
 from zunqoo_voice.crm.services import set_modules
+from zunqoo_voice.mail.account import _ACCESS
 from zunqoo_voice.mail.crypto import decrypt, encrypt, generate_key
 from zunqoo_voice.mail.gmail import build_reply, parse_message
-from zunqoo_voice.mail.processor import _ACCESS, sync_tenant
+from zunqoo_voice.mail.processor import sync_tenant
 from zunqoo_voice.mail.triage import MailDraft, MailTriage, decide_action
 
 GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me"

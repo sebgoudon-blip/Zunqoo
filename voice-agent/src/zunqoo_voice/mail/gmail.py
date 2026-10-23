@@ -118,7 +118,30 @@ def parse_message(msg: dict) -> InboundMail:
     )
 
 
-def build_reply(original: InboundMail, *, from_email: str, from_name: str, body: str) -> dict:
+Attachment = tuple[str, bytes, str]  # (nom de fichier, contenu, type MIME)
+
+
+def _attach(m: EmailMessage, attachments: list[Attachment] | None) -> None:
+    for filename, content, mime in attachments or []:
+        maintype, _, subtype = mime.partition("/")
+        m.add_attachment(content, maintype=maintype, subtype=subtype, filename=filename)
+
+
+def build_new(*, to_email: str, to_name: str | None, from_email: str, from_name: str,
+              subject: str, body: str, attachments: list[Attachment] | None = None) -> dict:
+    """Nouvel e-mail (hors fil existant)."""
+    m = EmailMessage()
+    m["From"] = formataddr((from_name, from_email))
+    m["To"] = formataddr((to_name or "", to_email))
+    m["Subject"] = subject
+    m["Message-ID"] = make_msgid(domain=from_email.split("@")[-1])
+    m.set_content(body)
+    _attach(m, attachments)
+    return {"raw": base64.urlsafe_b64encode(m.as_bytes()).decode()}
+
+
+def build_reply(original: InboundMail, *, from_email: str, from_name: str, body: str,
+                attachments: list[Attachment] | None = None) -> dict:
     """Réponse dans le même fil Gmail (In-Reply-To / References / threadId)."""
     m = EmailMessage()
     m["From"] = formataddr((from_name, from_email))
@@ -130,6 +153,7 @@ def build_reply(original: InboundMail, *, from_email: str, from_name: str, body:
         m["In-Reply-To"] = original.message_id
         m["References"] = f"{original.references or ''} {original.message_id}".strip()
     m.set_content(body)
+    _attach(m, attachments)
     raw = base64.urlsafe_b64encode(m.as_bytes()).decode()
     return {"raw": raw, "threadId": original.thread_id}
 

@@ -147,7 +147,9 @@ async def draft_reply(
             "Ne confirme aucun rendez-vous ni créneau : indique que vous revenez vers le client "
             "pour fixer le moment ensemble."),
         quotes=(
-            "Un devis détaillé sera préparé séparément : annonce-le sans donner de total."
+            "Pour une demande de devis, le devis chiffré est joint à ce message : présente-le "
+            "en une ou deux phrases chaleureuses, sans répéter ni calculer de montant, et "
+            "invite le client à répondre pour l'accepter ou l'ajuster."
             if ModuleKey.QUOTES in modules else
             "Pour une demande de devis, ne calcule pas de total : remercie, reformule la demande "
             "et indique qu'un devis sera envoyé rapidement."),

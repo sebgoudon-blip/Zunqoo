@@ -79,7 +79,7 @@ def test_modules_defaults_dependencies_and_cascade(settings):
         with pytest.raises(ModuleConfigError):
             set_modules(db, "t1", {ModuleKey.ORDERS})
         with pytest.raises(ModuleConfigError):  # pas encore livré
-            set_modules(db, "t1", {ModuleKey.PHONE, ModuleKey.QUOTES})
+            set_modules(db, "t1", {ModuleKey.PHONE, ModuleKey.APPOINTMENTS})
 
 
 # --- catalogue ---------------------------------------------------------------
@@ -158,7 +158,7 @@ def test_api_modules_and_catalog_flow(client):
 
     r = client.patch("/api/modules/commandes", json={"enabled": False}, headers=h)
     assert {m["key"]: m["enabled"] for m in r.json()["modules"]}["commandes"] is False
-    assert client.patch("/api/modules/devis", json={"enabled": True},
+    assert client.patch("/api/modules/rendez_vous", json={"enabled": True},
                         headers=h).status_code == 400
 
     r = client.post("/api/catalog", json={"name": "Pintade", "price": 19}, headers=h)
