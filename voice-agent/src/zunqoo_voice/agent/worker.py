@@ -61,7 +61,13 @@ from ..crm.services import catalog_as_products, enabled_modules, list_catalog, r
 from ..llm.call_analysis import analyze_call
 from ..llm.factory import build_chat_llm
 from ..llm.prompts import build_greeting, build_system_prompt
-from ..llm.tools import ALL_TOOLS, CallState, enregistrer_commande, transferer_appel
+from ..llm.tools import (
+    ALL_TOOLS,
+    APPOINTMENT_TOOLS,
+    CallState,
+    enregistrer_commande,
+    transferer_appel,
+)
 from ..stt.factory import build_stt
 from ..telephony.routing import caller_info, resolve_tenant
 from ..tts.factory import build_tts
@@ -74,9 +80,10 @@ class ShopAgent(Agent):
     """L'agent d'accueil téléphonique d'un commerce."""
 
     def __init__(
-        self, tenant: TenantConfig, *, instructions: str, orders_enabled: bool = True
+        self, tenant: TenantConfig, *, instructions: str, orders_enabled: bool = True,
+        appointments_enabled: bool = False,
     ) -> None:
-        tools = list(ALL_TOOLS)
+        tools = list(ALL_TOOLS) + (APPOINTMENT_TOOLS if appointments_enabled else [])
         if not (tenant.transfer_number and entitlements_for(tenant.plan).call_transfer):
             tools.remove(transferer_appel)
         if not orders_enabled:  # module « Prise de commandes » non coché
@@ -199,6 +206,7 @@ async def entrypoint(ctx: JobContext) -> None:
         tenant = tenant.model_copy(deep=True)
         tenant.profile.products = catalog_as_products(catalog)
     orders_enabled = ModuleKey.ORDERS in modules
+    appointments_enabled = ModuleKey.APPOINTMENTS in modules
 
     state = CallState(
         tenant=tenant, call_id=info.sip_call_id or ctx.room.name,
@@ -246,8 +254,10 @@ async def entrypoint(ctx: JobContext) -> None:
     agent = ShopAgent(
         tenant,
         instructions=build_system_prompt(tenant, now=now_local, caller_number=info.caller_number,
-                                         orders_enabled=orders_enabled),
+                                         orders_enabled=orders_enabled,
+                                         appointments_enabled=appointments_enabled),
         orders_enabled=orders_enabled,
+        appointments_enabled=appointments_enabled,
     )
     await session.start(
         agent=agent,

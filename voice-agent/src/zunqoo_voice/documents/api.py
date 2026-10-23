@@ -382,7 +382,8 @@ def _apply_invoice(session: Session, inv: Invoice, body: InvoiceIn, tenant_id: s
     if data.get("operation_category"):
         inv.operation_category = data["operation_category"]
     if "delivery_date" in data:
-        inv.delivery_date = data["delivery_date"]
+        d = data["delivery_date"]
+        inv.delivery_date = d.replace(tzinfo=UTC) if d is not None and d.tzinfo is None else d
     inv_refresh(inv, bs)
 
 
@@ -513,8 +514,10 @@ class PaymentIn(BaseModel):
 def add_payment(invoice_id: str, body: PaymentIn, user: CurrentUser, session: DB) -> dict:
     inv = _get_invoice(session, user.tenant_id, invoice_id)
     try:
+        paid_on = body.paid_on or datetime.now(UTC)
         record_payment(session, inv, body.amount, method=body.method,
-                       paid_on=body.paid_on or datetime.now(UTC), by=user.email, note=body.note)
+                       paid_on=paid_on if paid_on.tzinfo else paid_on.replace(tzinfo=UTC),
+                       by=user.email, note=body.note)
     except InvoiceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _inv_out(session, inv, full=True)

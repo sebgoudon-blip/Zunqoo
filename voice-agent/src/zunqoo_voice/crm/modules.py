@@ -56,7 +56,7 @@ MODULES: dict[ModuleKey, ModuleDef] = {
         ModuleDef(
             ModuleKey.APPOINTMENTS, "Rendez-vous",
             "Propose des créneaux libres, réserve dans votre agenda et rappelle la veille.",
-            available=False,
+            default_autonomy=Autonomy.VALIDATE_ALL,
         ),
         ModuleDef(
             ModuleKey.EMAIL, "E-mails",

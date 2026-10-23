@@ -21,6 +21,15 @@ log = logging.getLogger(__name__)
 
 Executor = Callable[[Session, Approval, Settings], Awaitable[str]]
 _EXECUTORS: dict[str, Executor] = {}
+_ON_REFUSE: dict[str, Executor] = {}
+
+
+def on_refuse(kind: str) -> Callable[[Executor], Executor]:
+    """Action à mener quand le gérant refuse (ex. libérer un créneau bloqué)."""
+    def register(fn: Executor) -> Executor:
+        _ON_REFUSE[kind] = fn
+        return fn
+    return register
 
 
 def executor(kind: str) -> Callable[[Executor], Executor]:
@@ -68,6 +77,13 @@ async def decide(
 
     if not approve:
         approval.status = "refuse"
+        undo = _ON_REFUSE.get(approval.kind)
+        if undo is not None:
+            try:
+                approval.result = await undo(session, approval, settings)
+            except Exception as exc:
+                log.exception("annulation après refus de %s échouée", approval.id)
+                approval.result = f"refusé, mais : {exc}"
         session.flush()
         return approval
 

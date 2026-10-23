@@ -157,4 +157,97 @@ async def terminer_appel(context: RunContext[CallState]) -> None:
     await get_job_context().delete_room()
 
 
+@function_tool
+async def proposer_creneaux(context: RunContext[CallState], type_rendez_vous: str | None = None,
+                            jour: str | None = None) -> str:
+    """Cherche les prochains créneaux libres pour un rendez-vous.
+
+    Args:
+        type_rendez_vous: le type demandé par le client (laisser vide si un seul type existe).
+        jour: "demain", un jour de la semaine ("jeudi") ou une date AAAA-MM-JJ ; vide = au plus tôt.
+    """
+    from ..agenda.service import AgendaError, find_slots
+    from ..agenda.slots import spoken, spread
+    from ..core.config import get_settings
+    from ..crm.db import session_scope
+
+    state = context.userdata
+    settings = get_settings()
+    on_day = _resolve_day(jour, state.tenant.timezone)[1].date() if jour else None
+    try:
+        with session_scope(settings.database_url) as db:
+            appt_type, slots = await find_slots(db, settings, state.tenant, type_ref=type_rendez_vous,
+                                                on_day=on_day)
+    except AgendaError as exc:
+        raise ToolError(f"agenda indisponible : {exc}. Propose de noter la demande pour un rappel.") from exc
+    if not slots:
+        return "Aucun créneau libre" + (" ce jour-là" if jour else "") + ". Propose un autre jour."
+    tz = ZoneInfo(state.tenant.timezone)
+    today = datetime.now(tz).date()
+    choix = [f"{spoken(s.astimezone(tz), today=today)} [{s.isoformat()}]" for s in spread(slots, 3)]
+    return (f"Type : {appt_type['name']} ({appt_type['duration']} min). Créneaux libres : "
+            + " ; ".join(choix) + ". Propose-les oralement sans lire la partie entre crochets, "
+            "qui sert uniquement à réserver.")
+
+
+@function_tool
+async def reserver_rendez_vous(
+    context: RunContext[CallState],
+    debut: str,
+    prenom: str,
+    nom: str,
+    telephone: str,
+    type_rendez_vous: str | None = None,
+    remarques: str | None = None,
+) -> str:
+    """Réserve le créneau choisi par le client, après lui avoir répété le jour et l'heure.
+
+    Args:
+        debut: la valeur exacte entre crochets renvoyée par proposer_creneaux.
+        prenom: prénom du client.
+        nom: nom du client.
+        telephone: numéro du client, chiffres uniquement.
+        type_rendez_vous: type de rendez-vous choisi.
+        remarques: précisions du client.
+    """
+    from ..agenda.service import AgendaError, book
+    from ..core.config import get_settings
+    from ..crm.db import session_scope
+    from ..crm.modules import Autonomy, ModuleKey
+    from ..crm.notify import request_approval
+    from ..crm.services import find_or_create_contact, get_modules
+
+    state = context.userdata
+    settings = get_settings()
+    try:
+        start = datetime.fromisoformat(debut)
+    except ValueError as exc:
+        raise ToolError("créneau invalide : rappelle proposer_creneaux") from exc
+    try:
+        with session_scope(settings.database_url) as db:
+            autonomy = get_modules(db, state.tenant.id)[ModuleKey.APPOINTMENTS].autonomy
+            confirmed = autonomy != Autonomy.VALIDATE_ALL
+            contact = find_or_create_contact(db, state.tenant.id,
+                                             phone=telephone or state.caller_number,
+                                             first_name=prenom, last_name=nom)
+            appt = await book(db, settings, state.tenant, type_ref=type_rendez_vous, start=start,
+                              contact=contact, source="appel", notes=remarques, confirmed=confirmed)
+            if not confirmed:
+                await request_approval(
+                    db, settings, state.tenant, module=ModuleKey.APPOINTMENTS,
+                    kind="rdv_confirmation",
+                    title=f"Rendez-vous à confirmer — {contact.display_name if contact else prenom}",
+                    summary=f"{appt.type_name}, {start:%d/%m à %H:%M} (pris par téléphone). "
+                            "Le créneau est bloqué dans l'agenda en attendant.",
+                    payload={"appointment_id": appt.id, "email_body": ""}, contact=contact)
+    except AgendaError as exc:
+        raise ToolError(f"{exc}. Propose un autre créneau.") from exc
+    state.extra["appointment"] = {"start": debut, "confirmed": confirmed}
+    if confirmed:
+        return "Rendez-vous réservé dans l'agenda. Confirme-le au client en une phrase."
+    return ("Créneau bloqué, en attente de confirmation par le gérant. Dis au client que sa "
+            "demande est bien notée et qu'on lui confirme très vite.")
+
+
 ALL_TOOLS = [consulter_planning, enregistrer_commande, transferer_appel, terminer_appel]
+APPOINTMENT_TOOLS = [proposer_creneaux, reserver_rendez_vous]

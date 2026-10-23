@@ -27,6 +27,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    TypeDecorator,
     UniqueConstraint,
     create_engine,
     event,
@@ -50,8 +51,29 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+class UTCDateTime(TypeDecorator):
+    """Dates toujours stockées en UTC et relues avec leur fuseau.
+
+    SQLite ne conserve pas le décalage horaire : sans cette conversion, un
+    rendez-vous à 9 h (heure de Paris) serait relu comme 9 h UTC.
+    """
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            raise ValueError("date sans fuseau horaire refusée (utiliser une date « aware »)")
+        return value.astimezone(UTC).replace(tzinfo=None)
+
+    def process_result_value(self, value, dialect):
+        return None if value is None else value.replace(tzinfo=UTC)
+
+
 class Base(DeclarativeBase):
-    type_annotation_map: ClassVar[dict] = {dict[str, Any]: JSON, datetime: DateTime(timezone=True)}
+    type_annotation_map: ClassVar[dict] = {dict[str, Any]: JSON, datetime: UTCDateTime()}
 
 
 class User(Base):
@@ -350,6 +372,50 @@ class Payment(Base):
     recorded_by: Mapped[str | None] = mapped_column(String(255))
 
     invoice: Mapped[Invoice] = relationship(back_populates="payments")
+
+
+def _default_weekly() -> dict:
+    return {j: [["09:00", "12:00"], ["14:00", "18:00"]]
+            for j in ("lundi", "mardi", "mercredi", "jeudi", "vendredi")}
+
+
+def _default_types() -> list:
+    return [{"id": "rdv", "name": "Rendez-vous", "duration": 30, "description": ""}]
+
+
+class AppointmentSettings(Base):
+    __tablename__ = "appointment_settings"
+    tenant_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    calendar_id: Mapped[str] = mapped_column(String(255), default="primary")
+    types: Mapped[list[dict]] = mapped_column(JSON, default=_default_types)
+    weekly: Mapped[dict[str, Any]] = mapped_column(default=_default_weekly)
+    buffer_min: Mapped[int] = mapped_column(Integer, default=10)
+    step_min: Mapped[int] = mapped_column(Integer, default=30)
+    min_notice_hours: Mapped[int] = mapped_column(Integer, default=2)
+    horizon_days: Mapped[int] = mapped_column(Integer, default=21)
+    location: Mapped[str | None] = mapped_column(String(255))
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
+
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id"))
+    type_id: Mapped[str] = mapped_column(String(40))
+    type_name: Mapped[str] = mapped_column(String(120))
+    start: Mapped[datetime] = mapped_column(index=True)
+    end: Mapped[datetime] = mapped_column()
+    # a_confirmer | confirme | annule
+    status: Mapped[str] = mapped_column(String(20), default="confirme", index=True)
+    source: Mapped[str] = mapped_column(String(20), default="manuel")  # appel | email | manuel
+    notes: Mapped[str | None] = mapped_column(Text)
+    google_event_id: Mapped[str | None] = mapped_column(String(255))
+    source_mail_id: Mapped[str | None] = mapped_column(String(32))
+    reminder_sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+    contact: Mapped[Contact | None] = relationship()
 
 
 @lru_cache(maxsize=4)

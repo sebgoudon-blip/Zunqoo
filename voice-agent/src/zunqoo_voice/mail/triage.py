@@ -140,10 +140,12 @@ async def draft_reply(
     *,
     products: list[Product],
     modules: set[ModuleKey],
+    extra: str | None = None,
 ) -> MailDraft:
     system = DRAFT_SYSTEM.format(
         appointments=(
-            "Tu peux proposer des créneaux libres." if ModuleKey.APPOINTMENTS in modules else
+            "Ne propose que les créneaux indiqués dans la consigne ; n'en invente aucun."
+            if ModuleKey.APPOINTMENTS in modules else
             "Ne confirme aucun rendez-vous ni créneau : indique que vous revenez vers le client "
             "pour fixer le moment ensemble."),
         quotes=(
@@ -163,6 +165,8 @@ async def draft_reply(
     if tenant.custom_instructions:
         parts.append("CONSIGNES DU GÉRANT :\n" + tenant.custom_instructions)
     parts.append(f"ANALYSE : {triage.model_dump_json(exclude_none=True)}")
+    if extra:
+        parts.append("CONSIGNE POUR CETTE RÉPONSE :\n" + extra)
     parts.append(_mail_for_prompt(mail))
     return await llm.extract(MailDraft, system=system, user="\n\n".join(parts), effort="medium",
                              purpose="draft")

@@ -83,6 +83,7 @@ def build_system_prompt(
     now: datetime,
     caller_number: str | None,
     orders_enabled: bool = True,
+    appointments_enabled: bool = False,
 ) -> str:
     profile = tenant.profile
     persona = (
@@ -100,6 +101,13 @@ def build_system_prompt(
         parts.append("# Consignes particulières du gérant\n" + tenant.custom_instructions)
     if not tenant.transfer_number:
         parts.append("Le transfert d'appel n'est pas disponible : propose un rappel à la place.")
+    if appointments_enabled:
+        parts.append(
+            "# Rendez-vous\nTu peux prendre des rendez-vous. Demande ce que souhaite le client, "
+            "appelle proposer_creneaux, propose au plus trois créneaux à l'oral, puis répète le "
+            "jour et l'heure choisis avant d'appeler reserver_rendez_vous. Ne promets jamais un "
+            "créneau sans l'avoir réservé avec l'outil."
+        )
     if not orders_enabled:
         parts.append(
             "Tu ne prends pas de commande par téléphone. Si un client veut commander, note son "

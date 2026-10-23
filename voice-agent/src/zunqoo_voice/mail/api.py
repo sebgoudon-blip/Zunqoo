@@ -37,6 +37,8 @@ def email_status(user: CurrentUser, session: DB, settings: Settings = Depends(ge
         "email": account.email if account else None,
         "last_sync_at": account.last_sync_at.isoformat() if account and account.last_sync_at else None,
         "last_error": account.last_error if account else None,
+        "gmail": bool(account and "gmail.modify" in account.scopes),
+        "calendar": bool(account and "calendar.events" in account.scopes),
         "today": counts,
     }
 
@@ -93,8 +95,8 @@ async def google_callback(
         tokens = await exchange_code(settings, code)
         if not tokens.refresh_token:
             raise GoogleAuthError("Google n'a pas fourni d'accès durable, recommencez")
-        if "gmail.modify" not in tokens.scope:
-            raise GoogleAuthError("l'accès à Gmail n'a pas été coché sur la page Google")
+        if "gmail.modify" not in tokens.scope and "calendar.events" not in tokens.scope:
+            raise GoogleAuthError("aucun accès n'a été coché sur la page Google (Gmail, Agenda)")
         with session_scope(settings.database_url) as session:
             user = session.get(User, claims["uid"])
             if user is None or user.tenant_id != claims["tid"] or user.role != "admin":

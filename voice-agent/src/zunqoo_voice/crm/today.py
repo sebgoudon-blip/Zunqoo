@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .db import Approval, Contact, Interaction, Invoice, MailMessage, Quote
+from .db import Appointment, Approval, Contact, Interaction, Invoice, MailMessage, Quote
 from .modules import ModuleKey
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -193,7 +193,30 @@ def today_overview(session: Session, tenant_id: str, tz: str, modules: set[Modul
                          if i.contact else None} for i in overdue[:5]],
         }
 
+    appointments = None
+    if ModuleKey.APPOINTMENTS in modules:
+        end_of_day = start_of_day + timedelta(days=1)
+        rows = list(session.scalars(select(Appointment).where(
+            Appointment.tenant_id == tenant_id, Appointment.status != "annule",
+            Appointment.start >= start_of_day, Appointment.start < end_of_day + timedelta(days=1))
+            .order_by(Appointment.start)))
+
+        def local(d: datetime) -> datetime:
+            return (d if d.tzinfo else d.replace(tzinfo=UTC)).astimezone(ZoneInfo(tz))
+
+        def out(a: Appointment) -> dict:
+            return {"id": a.id, "time": f"{local(a.start):%H:%M}", "end": f"{local(a.end):%H:%M}",
+                    "type_name": a.type_name, "status": a.status, "notes": a.notes,
+                    "contact": {"id": a.contact.id, "name": a.contact.display_name,
+                                "phone": a.contact.phone} if a.contact else None}
+
+        appointments = {
+            "today": [out(a) for a in rows if local(a.start).date() == today],
+            "tomorrow_count": sum(1 for a in rows if local(a.start).date() == today + timedelta(days=1)),
+        }
+
     return {
+        "appointments": appointments,
         "quotes": quotes,
         "invoices": invoices,
         "date_label": f"{JOURS[today.weekday()].capitalize()} {today.day} {MOIS[today.month - 1]}",

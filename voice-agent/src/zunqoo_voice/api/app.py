@@ -17,6 +17,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 
+from ..agenda.api import router as agenda_router
 from ..billing.usage import UsageMeter
 from ..core.call_archive import CallArchive
 from ..core.config import Settings, get_settings
@@ -33,6 +34,7 @@ app.include_router(crm_router)
 app.include_router(webhook_router)
 app.include_router(mail_router)
 app.include_router(documents_router)
+app.include_router(agenda_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[get_settings().crm_public_url.rstrip("/")],

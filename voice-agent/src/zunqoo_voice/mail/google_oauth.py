@@ -24,11 +24,10 @@ TOKEN_URL = "https://oauth2.googleapis.com/token"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 
 # gmail.modify : lire, classer (libellés) et envoyer ; pas de suppression définitive.
-SCOPES = [
-    "openid",
-    "email",
-    "https://www.googleapis.com/auth/gmail.modify",
-]
+# calendar.events : lire les événements et créer / annuler les rendez-vous.
+GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.modify"
+CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
+SCOPES = ["openid", "email", GMAIL_SCOPE, CALENDAR_SCOPE]
 
 
 class GoogleAuthError(RuntimeError):

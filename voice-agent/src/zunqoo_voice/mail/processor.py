@@ -18,6 +18,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..agenda.service import AgendaError, book
 from ..core.config import Settings
 from ..core.models import TenantConfig
 from ..core.structured_llm import StructuredLLM
@@ -43,6 +44,7 @@ from ..documents.quotes import (
     send_quote_email,
 )
 from .account import access_token, get_account
+from .appointments import plan_appointment
 from .gmail import GmailClient, InboundMail, build_reply
 from .triage import CATEGORY_LABEL, decide_action, draft_reply, triage_mail
 
@@ -73,8 +75,11 @@ async def sync_tenant(settings: Settings, tenant: TenantConfig, *,
         account = get_account(session, tenant.id)
         if account is None or not modules[ModuleKey.EMAIL].enabled:
             return result
+        if account.scopes and "gmail.modify" not in account.scopes:
+            return result  # compte Google connecté pour l'agenda seulement
         autonomy = modules[ModuleKey.EMAIL].autonomy
         quotes_autonomy = modules[ModuleKey.QUOTES].autonomy
+        appointments_autonomy = modules[ModuleKey.APPOINTMENTS].autonomy
         enabled = {k for k, s in modules.items() if s.enabled}
         products = catalog_as_products(list_catalog(session, tenant.id, only_active=True)) \
             or tenant.profile.products
@@ -100,7 +105,7 @@ async def sync_tenant(settings: Settings, tenant: TenantConfig, *,
             try:
                 await _process_one(settings, tenant, gmail, llm, message_id, account_email,
                                    label_id, autonomy, enabled, products, result, connected_at,
-                                   quotes_autonomy)
+                                   quotes_autonomy, appointments_autonomy)
             except Exception as exc:
                 log.exception("tenant %s: e-mail %s non traité", tenant.id, message_id)
                 result.errors.append(f"{message_id}: {exc}")
@@ -132,7 +137,8 @@ def _remember(session: Session, tenant_id: str, provider_id: str, **fields) -> M
 
 async def _process_one(settings, tenant, gmail, llm, message_id, account_email, label_id,
                        autonomy, enabled, products, result: SyncResult,
-                       connected_at: datetime, quotes_autonomy: Autonomy) -> None:
+                       connected_at: datetime, quotes_autonomy: Autonomy,
+                       appointments_autonomy: Autonomy) -> None:
     with session_scope(settings.database_url) as session:
         if session.scalar(select(MailMessage).where(MailMessage.tenant_id == tenant.id,
                                                     MailMessage.provider_id == message_id)):
@@ -161,10 +167,20 @@ async def _process_one(settings, tenant, gmail, llm, message_id, account_email, 
         return
 
     triage = await triage_mail(llm, tenant, mail)
+    # Rendez-vous + module actif : créneaux réels proposés, ou réservation du choix.
+    appt_plan = None
+    if (triage.category == "rendez_vous" and ModuleKey.APPOINTMENTS in enabled
+            and not triage.suspicious):
+        appt_plan = await plan_appointment(llm, settings, tenant, mail)
     draft = None
     if triage.needs_reply:
-        draft = await draft_reply(llm, tenant, mail, triage, products=products, modules=enabled)
+        draft = await draft_reply(llm, tenant, mail, triage, products=products, modules=enabled,
+                                  extra=appt_plan.instruction if appt_plan else None)
     action = decide_action(autonomy, triage, draft)
+    if appt_plan and appt_plan.kind == "book" and draft is not None:
+        action = "rdv"
+    offer = (appt_plan.offer_payload(mail.thread_id)
+             if appt_plan and appt_plan.kind == "offer" else None)
 
     # Demande de devis + module Devis actif : on prépare un vrai devis chiffré
     # depuis le catalogue, envoyé en pièce jointe après validation.
@@ -206,9 +222,13 @@ async def _process_one(settings, tenant, gmail, llm, message_id, account_email, 
         if action == "envoi_auto":
             add_interaction(session, contact, tenant_id=tenant.id, channel="email",
                             direction="sortant", title="Réponse envoyée par l'assistant",
-                            summary=draft.body[:300], body=draft.body, external_id=sent_id)
+                            summary=draft.body[:300], body=draft.body, external_id=sent_id,
+                            data=offer or {})
             row.status = "envoye_auto"
             result.auto_sent += 1
+        elif action == "rdv":
+            await _book_from_email(session, settings, tenant, gmail, contact, row, mail, draft,
+                                   appt_plan, appointments_autonomy, account_email, result)
         elif action == "devis":
             await _prepare_quote(session, settings, tenant, contact, row, mail, triage, draft,
                                  quote_draft, catalog, quotes_autonomy, result)
@@ -226,12 +246,52 @@ async def _process_one(settings, tenant, gmail, llm, message_id, account_email, 
                 summary="\n".join([triage.summary, *warnings]),
                 payload={"mail_id": row.id, "to": mail.from_email, "subject": mail.subject,
                          "incoming": mail.text[:4000], "body": draft.body,
-                         "category": triage.category},
+                         "category": triage.category, **({"appt_offer": offer} if offer else {})},
                 contact=contact,
             )
             row.status, row.approval_id = "a_valider", approval.id
             result.to_validate += 1
     await gmail.add_label(message_id, label_id)
+
+
+async def _book_from_email(session, settings, tenant, gmail, contact, row, mail, draft, plan,
+                           autonomy: Autonomy, account_email: str, result: SyncResult) -> None:
+    """Le client a choisi un des créneaux proposés : réservation puis confirmation."""
+    confirmed = autonomy != Autonomy.VALIDATE_ALL
+    try:
+        appt = await book(session, settings, tenant, type_ref=plan.type_ref, start=plan.start,
+                          contact=contact, source="email", confirmed=confirmed,
+                          source_mail_id=row.id)
+    except AgendaError as exc:
+        # Créneau pris entre-temps : le gérant reprend la main.
+        approval = await request_approval(
+            session, settings, tenant, module=ModuleKey.EMAIL, kind="email_reponse",
+            title=f"Rendez-vous impossible — {mail.from_name or mail.from_email}"[:250],
+            summary=f"Le client a choisi un créneau qui n'est plus libre ({exc}). "
+                    "Adaptez la réponse avant l'envoi.",
+            payload={"mail_id": row.id, "to": mail.from_email, "subject": mail.subject,
+                     "incoming": mail.text[:4000], "body": draft.body, "category": "rendez_vous"},
+            contact=contact)
+        row.status, row.approval_id = "a_valider", approval.id
+        result.to_validate += 1
+        return
+    if confirmed:
+        sent_id = await _send(gmail, account_email, tenant, mail, draft.body)
+        add_interaction(session, contact, tenant_id=tenant.id, channel="email", direction="sortant",
+                        intent="rendez_vous", title="Rendez-vous confirmé par e-mail",
+                        summary=draft.body[:300], body=draft.body, external_id=sent_id)
+        row.status = "envoye_auto"
+        result.auto_sent += 1
+        return
+    approval = await request_approval(
+        session, settings, tenant, module=ModuleKey.APPOINTMENTS, kind="rdv_confirmation",
+        title=f"Rendez-vous à confirmer — {contact.display_name if contact else mail.from_email}",
+        summary=f"{appt.type_name}, {plan.start:%d/%m à %H:%M}, choisi par e-mail. Le créneau est "
+                "bloqué dans l'agenda ; valider envoie la confirmation au client.",
+        payload={"appointment_id": appt.id, "email_body": draft.body, "incoming": mail.text[:4000]},
+        contact=contact)
+    row.status, row.approval_id = "a_valider", approval.id
+    result.to_validate += 1
 
 
 async def _prepare_quote(session, settings, tenant, contact, row, mail, triage, draft,
@@ -292,6 +352,7 @@ async def send_validated_reply(session: Session, approval: Approval, settings: S
         await gmail.aclose()
     add_interaction(session, approval.contact, tenant_id=approval.tenant_id, channel="email",
                     direction="sortant", title="Réponse envoyée (validée)",
-                    summary=body[:300], body=body, external_id=sent_id)
+                    summary=body[:300], body=body, external_id=sent_id,
+                    data=approval.payload.get("appt_offer") or {})
     row.status = "envoye"
     return f"e-mail envoyé à {original.from_email}"
