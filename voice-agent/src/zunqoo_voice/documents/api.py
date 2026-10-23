@@ -335,7 +335,8 @@ def _inv_out(session: Session, inv: Invoice, *, full: bool = False) -> dict:
         "total_ttc": float(inv.total_ttc), "amount_paid": float(inv.amount_paid),
         "remaining": float(remaining_due(session, inv)) if inv.status != "brouillon" else float(inv.total_ttc),
         "overdue": is_overdue(inv, now),
-        "contact": {"id": inv.contact.id, "name": inv.contact.display_name,
+        # Client professionnel : on affiche la société (comme sur la facture).
+        "contact": {"id": inv.contact.id, "name": inv.contact.company or inv.contact.display_name,
                     "email": inv.contact.email} if inv.contact else None,
         "quote_id": inv.quote_id, "credited_invoice_id": inv.credited_invoice_id,
         "issue_date": inv.issue_date.isoformat() if inv.issue_date else None,

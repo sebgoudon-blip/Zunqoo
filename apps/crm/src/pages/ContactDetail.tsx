@@ -128,12 +128,16 @@ function EditContact({ contact, onSaved }: { contact: Contact; onSaved: (c: Cont
     phone: contact.phone ?? "",
     email: contact.email ?? "",
     address: contact.address ?? "",
+    siren: contact.siren ?? "",
+    vat_number: contact.vat_number ?? "",
   });
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const body = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v.trim() || null]));
+    const body = Object.fromEntries(Object.entries(form).map(([k, v]) => [
+      k, (k === "siren" || k === "vat_number" ? v.replace(/\s/g, "").toUpperCase() : v.trim()) || null,
+    ]));
     try {
       onSaved(await api.patch<Contact>(`/api/contacts/${contact.id}`, body));
     } catch (err) {
@@ -143,7 +147,8 @@ function EditContact({ contact, onSaved }: { contact: Contact; onSaved: (c: Cont
 
   const labels: Record<keyof typeof form, string> = {
     first_name: "Prénom", last_name: "Nom", company: "Société", phone: "Téléphone",
-    email: "E-mail", address: "Adresse",
+    email: "E-mail", address: "Adresse", siren: "SIREN (client professionnel)",
+    vat_number: "N° de TVA (client professionnel)",
   };
   return (
     <form className="card form-grid" onSubmit={onSubmit}>

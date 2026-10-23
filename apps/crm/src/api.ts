@@ -157,6 +157,8 @@ export interface Contact {
   phone: string | null;
   email: string | null;
   address: string | null;
+  siren: string | null;
+  vat_number: string | null;
   notes: string | null;
   tags: string[];
   created_at: string;
@@ -216,6 +218,14 @@ export interface UpcomingOrder {
 
 export interface Today {
   date_label: string;
+  invoices: {
+    unpaid_count: number;
+    unpaid_total: number;
+    overdue_count: number;
+    overdue_total: number;
+    overdue: { id: string; number: string | null; total_ttc: number; remaining: number;
+               due_date: string; contact: { id: string; name: string } | null }[];
+  } | null;
   quotes: {
     awaiting_count: number;
     awaiting_total_ttc: number;
@@ -321,4 +331,37 @@ export interface QuoteFull extends QuoteSummary {
   internal_notes: string | null;
   email_body: string | null;
   reminders_sent: number;
+}
+
+export type InvoiceStatus = "brouillon" | "emise" | "partiellement_payee" | "payee" | "annulee";
+
+export interface InvoiceSummary {
+  id: string;
+  kind: "facture" | "avoir";
+  number: string | null;
+  status: InvoiceStatus;
+  title: string;
+  total_ht: number;
+  total_vat: number;
+  total_ttc: number;
+  amount_paid: number;
+  remaining: number;
+  overdue: boolean;
+  contact: { id: string; name: string; email: string | null } | null;
+  quote_id: string | null;
+  credited_invoice_id: string | null;
+  issue_date: string | null;
+  due_date: string | null;
+  sent_at: string | null;
+  created_at: string;
+}
+
+export interface InvoiceFull extends InvoiceSummary {
+  lines: QuoteLine[];
+  notes: string | null;
+  prices_include_vat: boolean;
+  operation_category: "biens" | "services" | "mixte";
+  delivery_date: string | null;
+  payments: { id: string; amount: number; method: string; paid_on: string; note: string | null }[];
+  credit_notes: { id: string; number: string | null; status: InvoiceStatus; total_ttc: number }[];
 }

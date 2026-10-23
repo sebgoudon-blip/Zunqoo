@@ -193,7 +193,9 @@ n'active que ce dont il a besoin, depuis **Réglages** :
 | Standard téléphonique | disponible | — |
 | Prise de commandes | disponible | Standard |
 | E-mails (Gmail) | disponible | — |
-| Rendez-vous, Devis, Factures, Résumé du soir, Avis Google | « bientôt disponible » | Factures → Devis |
+| Devis | disponible | — |
+| Factures | disponible | Devis |
+| Rendez-vous, Résumé du soir, Avis Google | « bientôt disponible » | — |
 
 - Activer un module active ses prérequis ; en désactiver un coupe ceux qui en
   dépendent (avec confirmation). Trois formules de départ en un clic.
@@ -305,6 +307,46 @@ part dans le même fil de discussion Gmail.
 zunqoo-mail run                     # relève en continu (service « mail » du compose)
 zunqoo-mail sync rotisserie-dupont  # une relève immédiate, pour tester
 ```
+
+## Devis et factures (étape 3)
+
+**Informations légales** (*Réglages → Informations de l'entreprise*) : raison
+sociale, adresse, SIRET, n° de TVA (ou franchise art. 293 B), IBAN, délais.
+Aucun devis ni aucune facture ne part tant que les mentions obligatoires
+manquent : l'écran dit lesquelles.
+
+### Devis
+- Créés à la main (*Ventes → Devis*) ou **préparés par l'assistant** quand
+  une demande de devis arrive par e-mail (modules E-mails + Devis actifs).
+- **Les prix viennent toujours du catalogue** : l'IA ne choisit que les
+  produits et les quantités. Un produit absent du catalogue donne une ligne
+  « prix à compléter » qui bloque l'envoi.
+- Numéro `DEV-AAAA-NNNN` attribué seulement à l'envoi ; PDF avec ventilation
+  de TVA, date de validité et case « Bon pour accord ».
+- Envoi en PDF joint dans le fil de l'e-mail du client, ou « remis en main
+  propre » (PDF téléchargé). Relances proposées à J+3 et J+7, arrêtées dès
+  que la réponse (accepté / refusé) est notée ; expiration automatique.
+
+### Factures et avoirs
+- Créées depuis un devis accepté (l'assistant prépare la facture et la met
+  à valider) ou à partir de rien.
+- Numérotation continue `FAC-AAAA-NNNN` / `AV-AAAA-NNNN` à l'émission. Une
+  facture émise est **figée** : PDF archivé, ni modification ni suppression ;
+  on la corrige ou l'annule par un **avoir** (total ou partiel).
+- Mentions : date de la vente, échéance, nature de l'opération, IBAN ; pour un
+  client professionnel (société ou SIREN renseigné sur sa fiche) : pénalités
+  de retard, indemnité de 40 €, pas d'escompte, SIREN du client.
+- **Factur-X** (EN 16931) : les données de la facture sont intégrées au PDF en
+  XML, vérifié contre le schéma officiel (XSD). Les validations complètes
+  (schematron) et la conformité PDF/A-3 stricte seront à contrôler avec la
+  plateforme agréée choisie avant l'obligation d'émission (PME : sept. 2027).
+- Paiements (virement, carte, espèces, chèque), partiels ou complets ; les
+  factures échues apparaissent dans « Ma journée » et des relances sont
+  proposées à échéance +3 et +15 jours.
+
+> Base de données : les nouvelles colonnes s'ajoutent automatiquement sur une
+> base neuve. Avant la mise en production, prévoir des migrations (Alembic)
+> pour faire évoluer une base existante sans la recréer.
 
 ## Coûts d'exploitation (estimation, à vérifier sur les grilles tarifaires)
 

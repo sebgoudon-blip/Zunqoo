@@ -9,6 +9,8 @@ import { ContactsPage } from "./pages/Contacts";
 import { DashboardPage } from "./pages/Dashboard";
 import { LoginPage } from "./pages/Login";
 import { ModulesPage } from "./pages/Modules";
+import { InvoiceEditorPage } from "./pages/InvoiceEditor";
+import { InvoicesPage } from "./pages/Invoices";
 import { QuoteEditorPage } from "./pages/QuoteEditor";
 import { QuotesPage } from "./pages/Quotes";
 import { Icon, Spinner, type IconName } from "./ui";
@@ -17,7 +19,8 @@ const NAV: { to: string; label: string; icon: IconName; module?: string; desktop
   { to: "/", label: "Accueil", icon: "home" },
   { to: "/a-valider", label: "À valider", icon: "checkCircle" },
   { to: "/clients", label: "Clients", icon: "users" },
-  { to: "/devis", label: "Devis", icon: "note", module: "devis" },
+  { to: "/devis", label: "Ventes", icon: "note", module: "devis" },
+  { to: "/factures", label: "Factures", icon: "note", module: "factures", desktopOnly: true },
   // Sur téléphone, le catalogue est accessible depuis Réglages (5 onglets maximum).
   { to: "/catalogue", label: "Catalogue", icon: "box", desktopOnly: true },
   { to: "/reglages", label: "Réglages", icon: "settings" },
@@ -63,7 +66,7 @@ function Layout() {
             <NavLink key={item.to} to={item.to} end={item.to === "/"}
                      className={`nav-link ${item.desktopOnly ? "desktop-only" : ""}`}>
               <Icon name={item.icon} />
-              <span>{item.label}</span>
+              <span>{item.to === "/devis" && hasModule("factures") ? <><span className="desktop-only">Devis</span><span className="mobile-only">Ventes</span></> : item.to === "/devis" ? "Devis" : item.label}</span>
               {item.to === "/a-valider" && pending > 0 && (
                 <span className="badge" aria-label={`${pending} en attente`}>
                   {pending}
@@ -111,6 +114,8 @@ export function App() {
             <Route path="catalogue" element={<CatalogPage />} />
             <Route path="devis" element={<QuotesPage />} />
             <Route path="devis/:id" element={<QuoteEditorPage />} />
+            <Route path="factures" element={<InvoicesPage />} />
+            <Route path="factures/:id" element={<InvoiceEditorPage />} />
             <Route path="reglages" element={<ModulesPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

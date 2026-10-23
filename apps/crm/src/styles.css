@@ -382,3 +382,34 @@ a.list-row:hover { background: var(--bg); }
   .sticky-actions { bottom: 64px; }
   .presets select { min-width: 0; width: 100%; }
 }
+
+/* --- Factures ----------------------------------------------------------------- */
+.sales-switch { display: inline-flex; gap: 4px; background: var(--surface); border: 1px solid var(--border);
+                border-radius: 999px; padding: 4px; margin-bottom: 16px; }
+.sales-switch a { padding: 6px 16px; border-radius: 999px; text-decoration: none; color: var(--muted);
+                  font-weight: 600; min-height: 36px; display: inline-flex; align-items: center; }
+.sales-switch a[aria-current="page"] { background: var(--primary-soft); color: var(--primary); }
+.pill-inv-emise, .pill-inv-partiellement_payee { background: #e6edfb; color: #1e3f8a; }
+.pill-inv-payee { background: var(--green-soft); color: #173f29; }
+.pill-inv-retard { background: var(--danger-soft); color: #7a1a14; }
+.pill-inv-annulee, .pill-inv-brouillon { background: #eef0f4; color: #3d4656; }
+.invoice-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.invoice-amounts { display: flex; gap: 20px; flex-wrap: wrap; align-items: baseline; }
+.invoice-amounts span { color: var(--muted); }
+.invoice-amounts strong { color: var(--text); font-size: 1.1rem; margin-left: 4px; }
+.invoice-amounts .due strong { color: var(--primary); }
+.payment-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-top: 12px; }
+.payment-form .field { margin: 0; }
+.chip-link { margin-right: 8px; font-weight: 600; }
+.mobile-only { display: none; }
+@media (max-width: 760px) {
+  .mobile-only { display: inline; }
+  .payment-form { grid-template-columns: 1fr; }
+}
+
+/* Onglets : défilent horizontalement au lieu d'élargir la page. */
+.tabs { overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { white-space: nowrap; flex: none; }
+.list-main strong { overflow-wrap: anywhere; }
+.content { min-width: 0; }

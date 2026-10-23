@@ -32,7 +32,10 @@ export function ApprovalsPage() {
 
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   // Champ de texte modifiable selon le type de validation.
-  const EDIT_KEY: Record<string, string> = { email_reponse: "body", devis_envoi: "email_body", devis_relance: "body" };
+  const EDIT_KEY: Record<string, string> = {
+    email_reponse: "body", devis_envoi: "email_body", devis_relance: "body",
+    facture_emission: "email_body", facture_relance: "body",
+  };
 
   async function decide(a: Approval, approve: boolean) {
     setBusy(a.id);
@@ -97,6 +100,15 @@ export function ApprovalsPage() {
                 </button>
               </div>
             )}
+            {(a.kind === "facture_emission" || a.kind === "facture_relance") && typeof a.payload.invoice_id === "string" && (
+              <div className="presets">
+                <Link className="btn btn-small btn-ghost" to={`/factures/${a.payload.invoice_id}`}>Ouvrir la facture</Link>
+                <button className="btn btn-small btn-ghost"
+                        onClick={() => api.openPdf(`/api/invoices/${a.payload.invoice_id}/pdf`).catch((e) => setError(e.message))}>
+                  Voir le PDF
+                </button>
+              </div>
+            )}
             {EDIT_KEY[a.kind] && (
               <>
                 {typeof a.payload.incoming === "string" && (
@@ -107,7 +119,7 @@ export function ApprovalsPage() {
                 )}
                 {a.status === "en_attente" ? (
                   <label className="field reply-editor">
-                    <span>{a.kind === "email_reponse" ? "Réponse proposée" : "Message d'accompagnement"} (vous pouvez le modifier)</span>
+                    <span>{a.kind === "email_reponse" ? "Réponse proposée" : "Message d'accompagnement"} (vous pouvez le modifier{a.kind === "facture_emission" ? " ; vide = message standard" : ""})</span>
                     <textarea rows={8} value={drafts[a.id] ?? String(a.payload[EDIT_KEY[a.kind]] ?? "")}
                               onChange={(e) => setDrafts({ ...drafts, [a.id]: e.target.value })} />
                   </label>

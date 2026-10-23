@@ -167,6 +167,37 @@ export function DashboardPage() {
         )}
       </div>
 
+      {today.invoices && today.invoices.unpaid_count > 0 && (
+        <section className="card" aria-labelledby="inv-title">
+          <div className="order-day-head">
+            <h2 id="inv-title">Factures à encaisser</h2>
+            <Link to="/factures">
+              {today.invoices.unpaid_count} facture(s) · {formatEuro(today.invoices.unpaid_total)}
+            </Link>
+          </div>
+          {today.invoices.overdue_count > 0 ? (
+            <>
+              <p className="status-echec">
+                {today.invoices.overdue_count} en retard · {formatEuro(today.invoices.overdue_total)}
+              </p>
+              <ul className="order-list">
+                {today.invoices.overdue.map((i) => (
+                  <li key={i.id}>
+                    <div className="todo-main">
+                      <strong><Link to={`/factures/${i.id}`}>{i.number}</Link></strong>
+                      <span className="muted">
+                        {[i.contact?.name, `échue le ${new Date(i.due_date).toLocaleDateString("fr-FR")}`].filter(Boolean).join(" · ")}
+                      </span>
+                    </div>
+                    <strong className="nowrap">{formatEuro(i.remaining)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : <p className="muted">Aucune facture en retard.</p>}
+        </section>
+      )}
+
       {today.quotes && today.quotes.awaiting_count > 0 && (
         <section className="card" aria-labelledby="quotes-title">
           <div className="order-day-head">

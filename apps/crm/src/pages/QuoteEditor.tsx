@@ -1,35 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, type BusinessInfo, type CatalogItem, type Contact, type QuoteFull,
-         type QuoteLine } from "../api";
+import { api, type BusinessInfo, type CatalogItem, type Contact, type QuoteFull } from "../api";
 import { useAuth } from "../auth";
-import { formatEuro, parseEuroInput } from "../format";
+import { formatEuro } from "../format";
 import { ErrorBanner, Icon, Spinner } from "../ui";
+import { LinesEditor, linesPayload, previewTotal, toEdit, validateLines, type EditLine } from "./LinesEditor";
 import { QUOTE_STATUS } from "./Quotes";
-
-const VAT_RATES = ["5.5", "10", "20", "2.1", "0"];
-
-interface EditLine {
-  description: string;
-  detail: string;
-  catalog_item_id: string | null;
-  quantity: string;
-  unit: string;
-  price: string;   // saisie française « 12,50 »
-  vat_rate: string;
-}
-
-const toEdit = (l: QuoteLine): EditLine => ({
-  description: l.description,
-  detail: l.detail ?? "",
-  catalog_item_id: l.catalog_item_id,
-  quantity: l.quantity.replace(".", ","),
-  unit: l.unit ?? "",
-  price: l.unit_price == null ? "" : l.unit_price.replace(".", ","),
-  vat_rate: l.vat_rate,
-});
-
-const num = (text: string) => Number(text.replace(",", ".").replace(/\s/g, ""));
 
 function defaultEmail(q: QuoteFull, signature: string): string {
   const first = q.contact?.name.split(" ")[0];
@@ -41,7 +17,7 @@ function defaultEmail(q: QuoteFull, signature: string): string {
 export function QuoteEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { me } = useAuth();
+  const { me, hasModule } = useAuth();
   const [quote, setQuote] = useState<QuoteFull | null>(null);
   const [lines, setLines] = useState<EditLine[]>([]);
   const [title, setTitle] = useState("");
@@ -73,51 +49,18 @@ export function QuoteEditorPage() {
   }, [id]);
 
   const editable = quote?.status === "brouillon" || quote?.status === "a_valider";
-  const preview = useMemo(() => lines.reduce((sum, l) => {
-    const total = num(l.quantity) * num(l.price);
-    return Number.isFinite(total) && l.price ? sum + total : sum;
-  }, 0), [lines]);
-
-  function change(i: number, patch: Partial<EditLine>) {
-    setLines(lines.map((l, j) => (j === i ? { ...l, ...patch } : l)));
-    setDirty(true);
-  }
-
-  function addFromCatalog(itemId: string) {
-    const item = catalog.find((c) => c.id === itemId);
-    if (!item || !quote) return;
-    const price = quote.prices_include_vat ? item.price_ttc : item.price_ht;
-    setLines([...lines, {
-      description: item.name, detail: "", catalog_item_id: item.id, quantity: "1",
-      unit: item.unit ?? "", price: price == null ? "" : String(price).replace(".", ","),
-      vat_rate: String(item.vat_rate),
-    }]);
-    setDirty(true);
-  }
-
-  function addFreeLine() {
-    setLines([...lines, { description: "", detail: "", catalog_item_id: null, quantity: "1", unit: "",
-                          price: "", vat_rate: String(me?.business.default_vat_rate ?? 20) }]);
-    setDirty(true);
-  }
+  const preview = previewTotal(lines);
 
   async function save(): Promise<QuoteFull | null> {
     if (!quote) return null;
-    for (const l of lines) {
-      if (!l.description.trim()) { setError("Chaque ligne doit avoir une désignation."); return null; }
-      if (!(num(l.quantity) > 0)) { setError(`Quantité invalide pour « ${l.description} ».`); return null; }
-      if (l.price && Number.isNaN(parseEuroInput(l.price))) { setError(`Prix invalide pour « ${l.description} ».`); return null; }
-    }
+    const invalid = validateLines(lines);
+    if (invalid) { setError(invalid); return null; }
     setBusy(true);
     setError(null);
     try {
       const saved = await api.patch<QuoteFull>(`/api/quotes/${quote.id}`, {
         title, contact_id: contactId || null, notes: notes || null,
-        lines: lines.map((l) => ({
-          description: l.description, detail: l.detail || null, catalog_item_id: l.catalog_item_id,
-          quantity: l.quantity.replace(",", "."), unit: l.unit || null,
-          unit_price: l.price ? String(parseEuroInput(l.price)) : null, vat_rate: l.vat_rate,
-        })),
+        lines: linesPayload(lines),
       });
       load(saved);
       return saved;
@@ -212,59 +155,9 @@ export function QuoteEditorPage() {
 
       <section className="card">
         <h2>Lignes ({quote.prices_include_vat ? "prix TTC" : "prix HT"})</h2>
-        <div className="quote-lines" role="table" aria-label="Lignes du devis">
-          <div className="quote-line head" role="row">
-            <span role="columnheader">Désignation</span><span role="columnheader">Qté</span>
-            <span role="columnheader">Prix unit.</span><span role="columnheader">TVA</span>
-            <span role="columnheader">Total</span><span />
-          </div>
-          {lines.map((l, i) => {
-            const total = num(l.quantity) * num(l.price);
-            return (
-              <div className={`quote-line ${l.price ? "" : "missing-price"}`} role="row" key={i}>
-                <span className="ql-desc">
-                  <input aria-label="Désignation" value={l.description} disabled={!editable}
-                         onChange={(e) => change(i, { description: e.target.value })} />
-                  <input aria-label="Précision" className="ql-detail" placeholder="Précision (facultatif)"
-                         value={l.detail} disabled={!editable} onChange={(e) => change(i, { detail: e.target.value })} />
-                </span>
-                <span className="ql-qty">
-                  <input aria-label="Quantité" inputMode="decimal" value={l.quantity} disabled={!editable}
-                         onChange={(e) => change(i, { quantity: e.target.value })} />
-                  <input aria-label="Unité" placeholder="unité" value={l.unit} disabled={!editable}
-                         onChange={(e) => change(i, { unit: e.target.value })} />
-                </span>
-                <input aria-label="Prix unitaire" inputMode="decimal" value={l.price} disabled={!editable}
-                       placeholder="à compléter" onChange={(e) => change(i, { price: e.target.value })} />
-                <select aria-label="TVA" value={l.vat_rate} disabled={!editable}
-                        onChange={(e) => change(i, { vat_rate: e.target.value })}>
-                  {[...new Set([...VAT_RATES, l.vat_rate])].map((r) => (
-                    <option key={r} value={r}>{r.replace(".", ",")} %</option>
-                  ))}
-                </select>
-                <span className="ql-total">{l.price && Number.isFinite(total) ? formatEuro(total) : "—"}</span>
-                {editable ? (
-                  <button className="btn btn-small btn-icon" aria-label={`Retirer ${l.description}`}
-                          onClick={() => { setLines(lines.filter((_, j) => j !== i)); setDirty(true); }}>
-                    <Icon name="trash" size={16} />
-                  </button>
-                ) : <span />}
-              </div>
-            );
-          })}
-        </div>
-        {editable && (
-          <div className="presets">
-            <label className="visually-hidden" htmlFor="add-catalog">Ajouter un produit du catalogue</label>
-            <select id="add-catalog" value="" onChange={(e) => addFromCatalog(e.target.value)}>
-              <option value="">+ Ajouter un produit du catalogue…</option>
-              {catalog.map((c) => (
-                <option key={c.id} value={c.id}>{c.name} — {formatEuro(quote.prices_include_vat ? c.price_ttc : c.price_ht)}</option>
-              ))}
-            </select>
-            <button className="btn btn-ghost" onClick={addFreeLine}><Icon name="plus" />Ligne libre</button>
-          </div>
-        )}
+        <LinesEditor lines={lines} editable={editable} catalog={catalog} label="Lignes du devis"
+                     pricesIncludeVat={quote.prices_include_vat} defaultVat={me?.business.default_vat_rate ?? 20}
+                     onChange={(next) => { setLines(next); setDirty(true); }} />
         <div className="quote-totals">
           {dirty ? (
             <p className="muted">Total estimé : <strong>{formatEuro(preview)}</strong> — enregistrez pour le calcul exact de la TVA.</p>
@@ -343,6 +236,21 @@ export function QuoteEditorPage() {
               <Icon name="x" />Refusé
             </button>
           </div>
+        </section>
+      )}
+      {(quote.status === "accepte" || quote.status === "facture") && hasModule("factures") && (
+        <section className="card">
+          <h2>Facturation</h2>
+          <p className="muted">
+            {quote.status === "facture" ? "Ce devis a été facturé." : "Le devis est accepté : préparez la facture en un clic, vous la vérifierez avant de l'émettre."}
+          </p>
+          <button className="btn btn-primary" disabled={busy}
+                  onClick={() => act(async () => {
+                    const inv = await api.post<{ id: string }>(`/api/quotes/${quote.id}/invoice`);
+                    navigate(`/factures/${inv.id}`);
+                  })}>
+            {quote.status === "facture" ? "Voir la facture" : "Créer la facture"}
+          </button>
         </section>
       )}
     </>

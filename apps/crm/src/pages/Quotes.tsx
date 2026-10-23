@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, type QuoteFull, type QuoteStatus, type QuoteSummary } from "../api";
 import { formatEuro, formatWhen } from "../format";
+import { useAuth } from "../auth";
 import { EmptyState, ErrorBanner, Icon, PageHeader, Spinner } from "../ui";
+import { SalesSwitch } from "./Invoices";
 
 export const QUOTE_STATUS: Record<QuoteStatus, string> = {
   brouillon: "Brouillon",
@@ -23,6 +25,7 @@ const TABS: { key: string; label: string; match: (s: QuoteStatus) => boolean }[]
 
 export function QuotesPage() {
   const navigate = useNavigate();
+  const { hasModule } = useAuth();
   const [params, setParams] = useSearchParams();
   const tab = TABS.find((t) => t.key === params.get("vue")) ?? TABS[0];
   const [quotes, setQuotes] = useState<QuoteSummary[] | null>(null);
@@ -44,6 +47,7 @@ export function QuotesPage() {
   const shown = quotes?.filter((q) => tab.match(q.status)) ?? null;
   return (
     <>
+      {hasModule("factures") && <SalesSwitch current="devis" />}
       <PageHeader
         title="Devis"
         intro="Les devis préparés par l'assistant à partir des demandes reçues, et ceux que vous créez vous-même."
