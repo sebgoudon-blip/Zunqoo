@@ -93,8 +93,9 @@ async def sync_tenant(settings: Settings, tenant: TenantConfig, *,
             gmail = gmail or GmailClient(await access_token(settings, account))
             if not account.label_id:
                 account.label_id = await gmail.ensure_label()
+            connected_at = account.connected_at.replace(tzinfo=account.connected_at.tzinfo or UTC)
             ids = await gmail.list_new(label_id=account.label_id,
-                                       max_results=settings.mail_max_per_sync)
+                                       max_results=settings.mail_max_per_sync, since=connected_at)
             account_email, label_id = account.email.lower(), account.label_id
         except Exception as exc:  # noqa: BLE001 - affiché au gérant dans Réglages
             account.last_error = str(exc)[:500]
@@ -108,7 +109,7 @@ async def sync_tenant(settings: Settings, tenant: TenantConfig, *,
         for message_id in ids:
             try:
                 await _process_one(settings, tenant, gmail, llm, message_id, account_email,
-                                   label_id, autonomy, enabled, products, result)
+                                   label_id, autonomy, enabled, products, result, connected_at)
             except Exception as exc:
                 log.exception("tenant %s: e-mail %s non traité", tenant.id, message_id)
                 result.errors.append(f"{message_id}: {exc}")
@@ -139,7 +140,8 @@ def _remember(session: Session, tenant_id: str, provider_id: str, **fields) -> M
 
 
 async def _process_one(settings, tenant, gmail, llm, message_id, account_email, label_id,
-                       autonomy, enabled, products, result: SyncResult) -> None:
+                       autonomy, enabled, products, result: SyncResult,
+                       connected_at: datetime) -> None:
     with session_scope(settings.database_url) as session:
         if session.scalar(select(MailMessage).where(MailMessage.tenant_id == tenant.id,
                                                     MailMessage.provider_id == message_id)):
@@ -149,6 +151,13 @@ async def _process_one(settings, tenant, gmail, llm, message_id, account_email, 
     base = {"thread_id": mail.thread_id, "from_email": mail.from_email, "subject": mail.subject,
             "received_at": mail.date}
 
+    if mail.date < connected_at:
+        # Arrivé avant la connexion de la boîte : on n'y touche pas (ni libellé,
+        # ni réponse), le gérant l'a peut-être déjà traité.
+        with session_scope(settings.database_url) as session:
+            _remember(session, tenant.id, message_id, status="ignore", category="anterieur", **base)
+        result.ignored += 1
+        return
     if mail.from_email == account_email:
         with session_scope(settings.database_url) as session:
             _remember(session, tenant.id, message_id, status="ignore", category="personnel", **base)

@@ -61,6 +61,9 @@ MODULES: dict[ModuleKey, ModuleDef] = {
         ModuleDef(
             ModuleKey.EMAIL, "E-mails",
             "Lit votre boîte Gmail, trie les messages et prépare ou envoie les réponses.",
+            # Vraie boîte, vrais clients : rien ne part sans accord tant que le
+            # gérant n'a pas choisi d'aller plus loin.
+            default_autonomy=Autonomy.VALIDATE_ALL,
         ),
         ModuleDef(
             ModuleKey.QUOTES, "Devis",

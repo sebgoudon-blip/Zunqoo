@@ -1,5 +1,6 @@
 import base64
 import json
+from datetime import UTC, datetime
 from email import message_from_bytes
 from urllib.parse import parse_qs, urlparse
 
@@ -144,7 +145,8 @@ def mail_settings(tmp_path, tenant):
         set_modules(db, tenant.id, {ModuleKey.PHONE, ModuleKey.EMAIL},
                     {ModuleKey.EMAIL: Autonomy.VALIDATE_IMPORTANT})
         db.add(MailAccount(tenant_id=tenant.id, email="boutique@gmail.com",
-                           refresh_token_enc=encrypt(s, "1//refresh")))
+                           refresh_token_enc=encrypt(s, "1//refresh"),
+                           connected_at=datetime(2026, 1, 1, tzinfo=UTC)))
         db.add(User(tenant_id=tenant.id, email="gerant@roti.fr", name="Paul",
                     password_hash=hash_password("motdepasse-solide")))
     _ACCESS.clear()
@@ -264,3 +266,23 @@ def test_oauth_connect_and_callback(mail_settings, respx_mock):
 
 def test_httpx_available():
     assert httpx.__version__
+
+
+async def test_mail_received_before_connection_is_left_alone(mail_settings, tenant, respx_mock):
+    send, modify, _ = mock_google(respx_mock)
+    with session_scope(mail_settings.database_url) as db:
+        db.query(MailAccount).one().connected_at = datetime(2027, 1, 1, tzinfo=UTC)
+    llm = FakeLLM()
+    r = await sync_tenant(mail_settings, tenant, llm=llm)
+    assert (r.seen, r.ignored, r.filed) == (4, 4, 0)
+    assert llm.calls == [] and not send.called and not modify.called  # aucune trace dans Gmail
+    query = next(c.request.url.params["q"] for c in respx_mock.calls
+                 if c.request.url.path.endswith("/messages"))
+    assert f"after:{int(datetime(2027, 1, 1, tzinfo=UTC).timestamp())}" in query
+
+
+def test_email_module_starts_in_validate_all(mail_settings, tenant):
+    from zunqoo_voice.crm.services import get_modules
+    with session_scope(mail_settings.database_url) as db:
+        set_modules(db, "nouveau", {ModuleKey.EMAIL})
+        assert get_modules(db, "nouveau")[ModuleKey.EMAIL].autonomy == Autonomy.VALIDATE_ALL

@@ -158,10 +158,14 @@ class GmailClient:
     async def profile(self) -> dict:
         return await self._call("GET", "/profile")
 
-    async def list_new(self, *, label_id: str | None, max_results: int) -> list[str]:
+    async def list_new(self, *, label_id: str | None, max_results: int,
+                       since: datetime | None = None) -> list[str]:
         # Boîte de réception, 3 derniers jours, hors promotions/réseaux sociaux,
-        # pas encore marqués par Zunqoo.
+        # pas encore marqués par Zunqoo, et jamais avant la connexion de la boîte :
+        # les e-mails déjà présents (souvent déjà traités par le gérant) sont laissés.
         query = "in:inbox newer_than:3d -category:promotions -category:social"
+        if since:
+            query += f" after:{int(since.timestamp())}"
         if label_id:
             query += f" -label:{LABEL_NAME}"
         data = await self._call("GET", "/messages", params={"q": query, "maxResults": max_results})

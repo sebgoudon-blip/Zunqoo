@@ -8,3 +8,6 @@ data/usage.sqlite3
 licence*.txt
 data/crm.sqlite3*
 data/calls/
+# Fiches des vrais commerces : jamais dans le dépôt (seule la démo y est)
+data/tenants/*
+!data/tenants/rotisserie-demo.json
