@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -13,8 +14,23 @@ from sqlalchemy.orm import Session
 
 from ..core.config import Settings, get_settings
 from ..crm.api import DB, CurrentUser, require_admin, tenant_of
-from ..crm.db import Approval, BusinessSettings, CatalogItem, Contact, Quote, User
-from ..crm.services import add_interaction
+from ..crm.db import Approval, BusinessSettings, CatalogItem, Contact, Invoice, Quote, User
+from ..crm.modules import ModuleKey
+from ..crm.services import add_interaction, enabled_modules
+from .invoices import (
+    InvoiceError,
+    credit_note_for,
+    invoice_from_quote,
+    is_overdue,
+    issue_invoice,
+    preview_pdf,
+    propose_invoice_for_quote,
+    record_payment,
+    remaining_due,
+    send_invoice_email,
+)
+from .invoices import default_email as invoice_default_email
+from .invoices import refresh_totals as inv_refresh
 from .pdf import fmt_money
 from .quotes import (
     EDITABLE,
@@ -276,8 +292,10 @@ class StatusIn(BaseModel):
 
 
 @router.post("/quotes/{quote_id}/status")
-def set_quote_status(quote_id: str, body: StatusIn, user: CurrentUser, session: DB) -> dict:
+async def set_quote_status(quote_id: str, body: StatusIn, user: CurrentUser, session: DB,
+                           settings: Settings = Depends(get_settings)) -> dict:
     q = _get_quote(session, user.tenant_id, quote_id)
+    was_accepted = q.status == "accepte"
     if q.status not in ("envoye", "expire", "accepte", "refuse"):
         raise HTTPException(status_code=409, detail="envoyez le devis avant de noter la réponse")
     q.status, q.decided_at = body.status, datetime.now(UTC)
@@ -286,4 +304,232 @@ def set_quote_status(quote_id: str, body: StatusIn, user: CurrentUser, session: 
                     intent="devis",
                     title=f"Devis {q.number} {'accepté' if body.status == 'accepte' else 'refusé'}",
                     summary=q.title, data={"quote_id": q.id})
+    # Devis accepté + module Factures : l'assistant prépare la facture à valider.
+    if (body.status == "accepte" and not was_accepted
+            and ModuleKey.INVOICES in enabled_modules(session, user.tenant_id)
+            and not session.scalar(select(Invoice).where(Invoice.quote_id == q.id))):
+        await propose_invoice_for_quote(session, settings, tenant_of(user, settings), q)
     return _q_out(q, full=True)
+
+
+# ---------------------------------------------------------------------------
+# Factures et avoirs
+# ---------------------------------------------------------------------------
+
+
+class InvoiceIn(BaseModel):
+    contact_id: str | None = None
+    title: str | None = Field(default=None, max_length=255)
+    lines: list[LineIn] | None = None
+    prices_include_vat: bool | None = None
+    notes: str | None = None
+    operation_category: str | None = Field(default=None, pattern="^(biens|services|mixte)$")
+    delivery_date: datetime | None = None
+
+
+def _inv_out(session: Session, inv: Invoice, *, full: bool = False) -> dict:
+    now = datetime.now(UTC)
+    out = {
+        "id": inv.id, "kind": inv.kind, "number": inv.number, "status": inv.status,
+        "title": inv.title, "total_ht": float(inv.total_ht), "total_vat": float(inv.total_vat),
+        "total_ttc": float(inv.total_ttc), "amount_paid": float(inv.amount_paid),
+        "remaining": float(remaining_due(session, inv)) if inv.status != "brouillon" else float(inv.total_ttc),
+        "overdue": is_overdue(inv, now),
+        "contact": {"id": inv.contact.id, "name": inv.contact.display_name,
+                    "email": inv.contact.email} if inv.contact else None,
+        "quote_id": inv.quote_id, "credited_invoice_id": inv.credited_invoice_id,
+        "issue_date": inv.issue_date.isoformat() if inv.issue_date else None,
+        "due_date": inv.due_date.isoformat() if inv.due_date else None,
+        "sent_at": inv.sent_at.isoformat() if inv.sent_at else None,
+        "created_at": inv.created_at.isoformat(),
+    }
+    if full:
+        out |= {
+            "lines": inv.lines, "notes": inv.notes, "prices_include_vat": inv.prices_include_vat,
+            "operation_category": inv.operation_category,
+            "delivery_date": inv.delivery_date.isoformat() if inv.delivery_date else None,
+            "payments": [{"id": p.id, "amount": float(p.amount), "method": p.method,
+                          "paid_on": p.paid_on.isoformat(), "note": p.note} for p in inv.payments],
+            "credit_notes": [{"id": n.id, "number": n.number, "status": n.status,
+                              "total_ttc": float(n.total_ttc)}
+                             for n in session.scalars(select(Invoice).where(
+                                 Invoice.credited_invoice_id == inv.id))],
+        }
+    return out
+
+
+def _get_invoice(session: Session, tenant_id: str, invoice_id: str) -> Invoice:
+    inv = session.get(Invoice, invoice_id)
+    if inv is None or inv.tenant_id != tenant_id:
+        raise HTTPException(status_code=404, detail="facture introuvable")
+    return inv
+
+
+def _apply_invoice(session: Session, inv: Invoice, body: InvoiceIn, tenant_id: str,
+                   bs: BusinessSettings) -> None:
+    as_quote = QuoteIn(**body.model_dump(include={"contact_id", "title", "lines",
+                                                  "prices_include_vat", "notes"},
+                                         exclude_unset=True))
+    # Mêmes contrôles que les devis, appliqués sur un simple objet (hors base).
+    holder = SimpleNamespace(lines=inv.lines, contact=inv.contact, title=inv.title,
+                             notes=inv.notes, prices_include_vat=inv.prices_include_vat,
+                             internal_notes=None, total_ht=None, total_ttc=None)
+    _apply(session, holder, as_quote, tenant_id, bs)
+    inv.contact, inv.lines, inv.title = holder.contact, holder.lines, holder.title
+    inv.notes, inv.prices_include_vat = holder.notes, holder.prices_include_vat
+    data = body.model_dump(exclude_unset=True)
+    if data.get("operation_category"):
+        inv.operation_category = data["operation_category"]
+    if "delivery_date" in data:
+        inv.delivery_date = data["delivery_date"]
+    inv_refresh(inv, bs)
+
+
+@router.get("/invoices")
+def list_invoices(user: CurrentUser, session: DB) -> list[dict]:
+    rows = session.scalars(select(Invoice).where(Invoice.tenant_id == user.tenant_id)
+                           .order_by(Invoice.created_at.desc()).limit(500))
+    return [_inv_out(session, i) for i in rows]
+
+
+@router.post("/invoices", status_code=201)
+def create_invoice(body: InvoiceIn, user: CurrentUser, session: DB,
+                   settings: Settings = Depends(get_settings)) -> dict:
+    tenant = tenant_of(user, settings)
+    bs = business_settings(session, tenant)
+    inv = Invoice(tenant_id=user.tenant_id, prices_include_vat=tenant.prices_include_vat, lines=[],
+                  delivery_date=datetime.now(UTC))
+    session.add(inv)
+    _apply_invoice(session, inv, body, user.tenant_id, bs)
+    session.flush()
+    return _inv_out(session, inv, full=True)
+
+
+@router.post("/quotes/{quote_id}/invoice", status_code=201)
+def invoice_from_quote_route(quote_id: str, user: CurrentUser, session: DB,
+                             settings: Settings = Depends(get_settings)) -> dict:
+    q = _get_quote(session, user.tenant_id, quote_id)
+    if q.status not in ("accepte", "facture"):
+        raise HTTPException(status_code=409, detail="le devis doit d'abord être accepté")
+    existing = session.scalar(select(Invoice).where(Invoice.quote_id == q.id,
+                                                    Invoice.kind == "facture"))
+    if existing:
+        return _inv_out(session, existing, full=True)
+    inv = invoice_from_quote(session, q, business_settings(session, tenant_of(user, settings)))
+    return _inv_out(session, inv, full=True)
+
+
+@router.get("/invoices/{invoice_id}")
+def get_invoice(invoice_id: str, user: CurrentUser, session: DB) -> dict:
+    return _inv_out(session, _get_invoice(session, user.tenant_id, invoice_id), full=True)
+
+
+@router.patch("/invoices/{invoice_id}")
+def update_invoice(invoice_id: str, body: InvoiceIn, user: CurrentUser, session: DB,
+                   settings: Settings = Depends(get_settings)) -> dict:
+    inv = _get_invoice(session, user.tenant_id, invoice_id)
+    if inv.status != "brouillon":
+        raise HTTPException(status_code=409,
+                            detail="une facture émise ne se modifie plus : faites un avoir")
+    _apply_invoice(session, inv, body, user.tenant_id,
+                   business_settings(session, tenant_of(user, settings)))
+    return _inv_out(session, inv, full=True)
+
+
+@router.delete("/invoices/{invoice_id}", status_code=204)
+def delete_invoice(invoice_id: str, user: CurrentUser, session: DB) -> Response:
+    inv = _get_invoice(session, user.tenant_id, invoice_id)
+    if inv.status != "brouillon" or inv.number:
+        raise HTTPException(status_code=409,
+                            detail="une facture émise ne se supprime jamais : faites un avoir")
+    for a in session.scalars(select(Approval).where(Approval.tenant_id == inv.tenant_id,
+                                                    Approval.status == "en_attente",
+                                                    Approval.kind == "facture_emission")):
+        if a.payload.get("invoice_id") == inv.id:
+            a.status, a.decided_by, a.decided_at = "refuse", user.email, datetime.now(UTC)
+    session.delete(inv)
+    return Response(status_code=204)
+
+
+@router.get("/invoices/{invoice_id}/pdf")
+def invoice_pdf_route(invoice_id: str, user: CurrentUser, session: DB,
+                      settings: Settings = Depends(get_settings)) -> Response:
+    inv = _get_invoice(session, user.tenant_id, invoice_id)
+    pdf = preview_pdf(session, inv, business_settings(session, tenant_of(user, settings)))
+    label = "Avoir" if inv.kind == "avoir" else "Facture"
+    return Response(pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f'inline; filename="{label}-{inv.number or "projet"}.pdf"'})
+
+
+def _close_invoice_approvals(session: Session, inv: Invoice, by: str) -> None:
+    for a in session.scalars(select(Approval).where(Approval.tenant_id == inv.tenant_id,
+                                                    Approval.status == "en_attente",
+                                                    Approval.kind == "facture_emission")):
+        if a.payload.get("invoice_id") == inv.id:
+            a.status, a.decided_by, a.decision_channel = "execute", by, "web"
+            a.decided_at = datetime.now(UTC)
+
+
+@router.post("/invoices/{invoice_id}/issue")
+def issue_invoice_route(invoice_id: str, user: CurrentUser, session: DB,
+                        settings: Settings = Depends(get_settings)) -> dict:
+    inv = _get_invoice(session, user.tenant_id, invoice_id)
+    try:
+        issue_invoice(session, inv, business_settings(session, tenant_of(user, settings)),
+                      datetime.now(UTC))
+    except InvoiceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _close_invoice_approvals(session, inv, user.email)
+    return _inv_out(session, inv, full=True)
+
+
+class InvoiceSendIn(BaseModel):
+    email_body: str | None = None
+
+
+@router.post("/invoices/{invoice_id}/send")
+async def send_invoice_route(invoice_id: str, body: InvoiceSendIn, user: CurrentUser, session: DB,
+                             settings: Settings = Depends(get_settings)) -> dict:
+    tenant = tenant_of(user, settings)
+    inv = _get_invoice(session, user.tenant_id, invoice_id)
+    bs = business_settings(session, tenant)
+    try:
+        await send_invoice_email(session, settings, tenant, inv,
+                                 (body.email_body or "").strip() or invoice_default_email(inv, bs))
+    except InvoiceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _inv_out(session, inv, full=True)
+
+
+class PaymentIn(BaseModel):
+    amount: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
+    method: str = "virement"
+    paid_on: datetime | None = None
+    note: str | None = Field(default=None, max_length=255)
+
+
+@router.post("/invoices/{invoice_id}/payments", status_code=201)
+def add_payment(invoice_id: str, body: PaymentIn, user: CurrentUser, session: DB) -> dict:
+    inv = _get_invoice(session, user.tenant_id, invoice_id)
+    try:
+        record_payment(session, inv, body.amount, method=body.method,
+                       paid_on=body.paid_on or datetime.now(UTC), by=user.email, note=body.note)
+    except InvoiceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _inv_out(session, inv, full=True)
+
+
+class CreditIn(BaseModel):
+    lines: list[LineIn] | None = None  # vide = avoir total
+
+
+@router.post("/invoices/{invoice_id}/credit-note", status_code=201)
+def create_credit_note(invoice_id: str, body: CreditIn, user: CurrentUser, session: DB,
+                       settings: Settings = Depends(get_settings)) -> dict:
+    inv = _get_invoice(session, user.tenant_id, invoice_id)
+    try:
+        note = credit_note_for(session, inv, business_settings(session, tenant_of(user, settings)),
+                               [ln.model_dump() for ln in body.lines] if body.lines else None)
+    except (InvoiceError, QuoteError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _inv_out(session, note, full=True)

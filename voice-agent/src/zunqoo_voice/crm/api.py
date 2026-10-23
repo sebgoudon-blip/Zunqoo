@@ -243,6 +243,8 @@ class ContactIn(BaseModel):
     phone: str | None = None
     email: EmailStr | None = None
     address: str | None = None
+    siren: str | None = Field(default=None, pattern=r"^\d{9}(\d{5})?$")
+    vat_number: str | None = Field(default=None, pattern=r"^[A-Z]{2}[0-9A-Z]{2,13}$")
     notes: str | None = None
     tags: list[str] | None = None
 
@@ -251,7 +253,8 @@ def _contact_out(c: Contact) -> dict:
     return {
         "id": c.id, "name": c.display_name, "first_name": c.first_name,
         "last_name": c.last_name, "company": c.company, "phone": c.phone, "email": c.email,
-        "address": c.address, "notes": c.notes, "tags": c.tags or [],
+        "address": c.address, "siren": c.siren, "vat_number": c.vat_number,
+        "notes": c.notes, "tags": c.tags or [],
         "created_at": c.created_at.isoformat(),
         "last_interaction_at": c.last_interaction_at.isoformat()
         if c.last_interaction_at else None,

@@ -73,8 +73,7 @@ MODULES: dict[ModuleKey, ModuleDef] = {
         ModuleDef(
             ModuleKey.INVOICES, "Factures",
             "Transforme un devis accepté en facture conforme et suit les paiements.",
-            requires=(ModuleKey.QUOTES,), available=False,
-            default_autonomy=Autonomy.VALIDATE_ALL,
+            requires=(ModuleKey.QUOTES,), default_autonomy=Autonomy.VALIDATE_ALL,
         ),
         ModuleDef(
             ModuleKey.DAILY_SUMMARY, "Résumé du soir",

@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .db import Approval, Contact, Interaction, MailMessage, Quote
+from .db import Approval, Contact, Interaction, Invoice, MailMessage, Quote
 from .modules import ModuleKey
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -169,8 +169,33 @@ def today_overview(session: Session, tenant_id: str, tz: str, modules: set[Modul
                           if q.contact else None} for q in awaiting[:5]],
         }
 
+    invoices = None
+    if ModuleKey.INVOICES in modules:
+        unpaid = list(session.scalars(
+            select(Invoice).where(Invoice.tenant_id == tenant_id, Invoice.kind == "facture",
+                                  Invoice.status.in_(("emise", "partiellement_payee")))
+            .order_by(Invoice.due_date)))
+
+        def due_day(inv: Invoice):
+            d = inv.due_date
+            return (d if d.tzinfo else d.replace(tzinfo=UTC)).astimezone(ZoneInfo(tz)).date() if d else None
+
+        overdue = [i for i in unpaid if due_day(i) and due_day(i) < today]
+        invoices = {
+            "unpaid_count": len(unpaid),
+            "unpaid_total": float(sum((i.total_ttc - i.amount_paid for i in unpaid), 0)),
+            "overdue_count": len(overdue),
+            "overdue_total": float(sum((i.total_ttc - i.amount_paid for i in overdue), 0)),
+            "overdue": [{"id": i.id, "number": i.number, "total_ttc": float(i.total_ttc),
+                         "remaining": float(i.total_ttc - i.amount_paid),
+                         "due_date": i.due_date.isoformat(),
+                         "contact": {"id": i.contact.id, "name": i.contact.display_name}
+                         if i.contact else None} for i in overdue[:5]],
+        }
+
     return {
         "quotes": quotes,
+        "invoices": invoices,
         "date_label": f"{JOURS[today.weekday()].capitalize()} {today.day} {MOIS[today.month - 1]}",
         "todo": {
             "approvals_count": pending_count,

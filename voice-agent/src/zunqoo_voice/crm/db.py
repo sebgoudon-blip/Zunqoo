@@ -23,6 +23,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     Numeric,
     String,
     Text,
@@ -92,6 +93,9 @@ class Contact(Base):
     phone: Mapped[str | None] = mapped_column(String(32))   # E.164
     email: Mapped[str | None] = mapped_column(String(255))
     address: Mapped[str | None] = mapped_column(Text)
+    # Client professionnel : mentions obligatoires sur les factures
+    siren: Mapped[str | None] = mapped_column(String(14))
+    vat_number: Mapped[str | None] = mapped_column(String(20))
     notes: Mapped[str | None] = mapped_column(Text)
     tags: Mapped[list[str]] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(default=_now)
@@ -291,6 +295,61 @@ class Quote(Base):
     updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
 
     contact: Mapped[Contact | None] = relationship()
+
+
+class Invoice(Base):
+    """Facture ou avoir. Une fois émis, le document est figé : on ne le modifie
+    ni ne le supprime, on le corrige par un avoir."""
+
+    __tablename__ = "invoices"
+    __table_args__ = (UniqueConstraint("tenant_id", "number"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    kind: Mapped[str] = mapped_column(String(10), default="facture")  # facture | avoir
+    number: Mapped[str | None] = mapped_column(String(30))  # attribué à l'émission
+    # brouillon | emise | partiellement_payee | payee | annulee
+    status: Mapped[str] = mapped_column(String(25), default="brouillon", index=True)
+    contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id"))
+    quote_id: Mapped[str | None] = mapped_column(ForeignKey("quotes.id"))
+    credited_invoice_id: Mapped[str | None] = mapped_column(ForeignKey("invoices.id"))
+    title: Mapped[str] = mapped_column(String(255), default="")
+    lines: Mapped[list[dict]] = mapped_column(JSON, default=list)
+    prices_include_vat: Mapped[bool] = mapped_column(Boolean, default=True)
+    notes: Mapped[str | None] = mapped_column(Text)
+    operation_category: Mapped[str] = mapped_column(String(10), default="biens")  # biens|services|mixte
+    delivery_date: Mapped[datetime | None] = mapped_column()  # date de la vente / prestation
+    issue_date: Mapped[datetime | None] = mapped_column()
+    due_date: Mapped[datetime | None] = mapped_column()
+    # Instantanés figés à l'émission (le document ne bouge plus si la fiche change)
+    seller: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    buyer: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    total_ht: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal(0))
+    total_vat: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal(0))
+    total_ttc: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal(0))
+    amount_paid: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal(0))
+    pdf: Mapped[bytes | None] = mapped_column(LargeBinary)  # PDF Factur-X archivé à l'émission
+    sent_at: Mapped[datetime | None] = mapped_column()
+    reminders_sent: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
+
+    contact: Mapped[Contact | None] = relationship()
+    payments: Mapped[list[Payment]] = relationship(back_populates="invoice",
+                                                    order_by="Payment.paid_on")
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    invoice_id: Mapped[str] = mapped_column(ForeignKey("invoices.id"), index=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    paid_on: Mapped[datetime] = mapped_column(default=_now)
+    method: Mapped[str] = mapped_column(String(20), default="virement")  # virement|carte|especes|cheque
+    note: Mapped[str | None] = mapped_column(String(255))
+    recorded_by: Mapped[str | None] = mapped_column(String(255))
+
+    invoice: Mapped[Invoice] = relationship(back_populates="payments")
 
 
 @lru_cache(maxsize=4)
