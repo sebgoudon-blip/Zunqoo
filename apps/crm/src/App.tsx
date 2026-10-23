@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes } from "react-router-dom";
 import { api } from "./api";
 import { AuthProvider, useAuth } from "./auth";
+import { AgendaPage } from "./pages/Agenda";
 import { ApprovalsPage } from "./pages/Approvals";
 import { CatalogPage } from "./pages/Catalog";
 import { ContactDetailPage } from "./pages/ContactDetail";
@@ -20,6 +21,7 @@ const NAV: { to: string; label: string; icon: IconName; module?: string; desktop
   { to: "/a-valider", label: "À valider", icon: "checkCircle" },
   { to: "/clients", label: "Clients", icon: "users" },
   { to: "/devis", label: "Ventes", icon: "note", module: "devis" },
+  { to: "/agenda", label: "Agenda", icon: "calendar", module: "rendez_vous", desktopOnly: true },
   { to: "/factures", label: "Factures", icon: "note", module: "factures", desktopOnly: true },
   // Sur téléphone, le catalogue est accessible depuis Réglages (5 onglets maximum).
   { to: "/catalogue", label: "Catalogue", icon: "box", desktopOnly: true },
@@ -114,6 +116,7 @@ export function App() {
             <Route path="catalogue" element={<CatalogPage />} />
             <Route path="devis" element={<QuotesPage />} />
             <Route path="devis/:id" element={<QuoteEditorPage />} />
+            <Route path="agenda" element={<AgendaPage />} />
             <Route path="factures" element={<InvoicesPage />} />
             <Route path="factures/:id" element={<InvoiceEditorPage />} />
             <Route path="reglages" element={<ModulesPage />} />

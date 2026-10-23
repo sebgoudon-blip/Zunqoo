@@ -136,6 +136,29 @@ export function DashboardPage() {
           )}
         </section>
 
+        {today.appointments && (today.appointments.today.length > 0 || today.appointments.tomorrow_count > 0) && (
+          <section className="card" aria-labelledby="appt-title">
+            <div className="card-head">
+              <h2 id="appt-title">Rendez-vous du jour</h2>
+              <Link to="/agenda" className="link">Agenda</Link>
+            </div>
+            {today.appointments.today.length === 0 && <p className="muted">Aucun rendez-vous aujourd'hui.</p>}
+            <ul className="order-list">
+              {today.appointments.today.map((a) => (
+                <li key={a.id}>
+                  <strong className="appt-time">{a.time}</strong>
+                  <div className="todo-main">
+                    <strong>{a.contact ? <Link to={`/clients/${a.contact.id}`}>{a.contact.name}</Link> : "Client"}</strong>
+                    <span className="muted">{a.type_name}{a.notes ? ` — ${a.notes}` : ""}</span>
+                  </div>
+                  {a.status === "a_confirmer" && <Link className="pill pill-a_valider" to="/a-valider">À confirmer</Link>}
+                </li>
+              ))}
+            </ul>
+            {today.appointments.tomorrow_count > 0 && <p className="muted">Demain : {today.appointments.tomorrow_count} rendez-vous.</p>}
+          </section>
+        )}
+
         {orders && (
           <section className="card" aria-labelledby="orders-title">
             <h2 id="orders-title">Commandes à préparer</h2>

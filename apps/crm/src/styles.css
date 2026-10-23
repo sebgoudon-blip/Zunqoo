@@ -413,3 +413,22 @@ a.list-row:hover { background: var(--bg); }
 .tabs button { white-space: nowrap; flex: none; }
 .list-main strong { overflow-wrap: anywhere; }
 .content { min-width: 0; }
+
+/* Rendez-vous */
+.card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.appt-time { min-width: 3.5em; font-variant-numeric: tabular-nums; color: var(--primary); }
+.agenda-panel { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+.agenda-panel > summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.agenda-settings h3 { margin: 20px 0 8px; font-size: 1rem; }
+.type-row { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto; gap: 12px; align-items: end; }
+.day-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.day-toggle { display: flex; align-items: center; gap: 8px; min-width: 130px; min-height: 44px; font-weight: 600; }
+.ranges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.range { display: inline-flex; align-items: center; gap: 6px; }
+.range input[type="time"] { width: auto; }
+.agenda-settings > .btn-primary { margin-top: 16px; }
+@media (max-width: 640px) {
+  .type-row { grid-template-columns: minmax(0, 1fr) 90px auto; }
+  .ranges, .range { width: 100%; }
+  .range input[type="time"] { flex: 1 1 0; min-width: 0; }
+}

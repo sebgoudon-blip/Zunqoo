@@ -282,10 +282,12 @@ part dans le même fil de discussion Gmail.
 ### Configurer Google (une fois pour toute la plateforme, ~15 min)
 
 1. https://console.cloud.google.com → créer un projet « Zunqoo ».
-2. *API et services → Bibliothèque* : activer **Gmail API**.
+2. *API et services → Bibliothèque* : activer **Gmail API** et
+   **Google Calendar API** (rendez-vous).
 3. *Écran de consentement OAuth* : type **Externe**, nom « Zunqoo »,
    e-mail d'assistance, logo facultatif. Ajouter le champ d'application
-   `https://www.googleapis.com/auth/gmail.modify`. Tant que l'application est
+   `https://www.googleapis.com/auth/gmail.modify` et
+   `https://www.googleapis.com/auth/calendar.events`. Tant que l'application est
    « En test », ajouter chaque adresse Gmail de test dans **Utilisateurs test**.
 4. *Identifiants → Créer → ID client OAuth* : type **Application Web**,
    URI de redirection autorisée : `https://<votre-api>/oauth/google/callback`
@@ -347,6 +349,31 @@ manquent : l'écran dit lesquelles.
 > Base de données : les nouvelles colonnes s'ajoutent automatiquement sur une
 > base neuve. Avant la mise en production, prévoir des migrations (Alembic)
 > pour faire évoluer une base existante sans la recréer.
+
+## Rendez-vous et Google Agenda (étape 4)
+
+Module « Rendez-vous » : l'assistant prend des rendez-vous **au téléphone**
+et **par e-mail**, directement dans l'agenda Google du commerce.
+
+- *Réglages → Rendez-vous* : connexion Google Agenda (même compte que Gmail ;
+  un compte déjà connecté pour les e-mails doit cliquer « Autoriser l'agenda »),
+  types de rendez-vous (nom, durée), plages horaires de chaque jour, marge
+  entre deux rendez-vous, délai minimum, horizon de réservation, adresse.
+- Créneaux proposés = plages horaires − événements déjà présents dans
+  l'agenda Google (les événements « disponible » sont ignorés, un événement
+  sur la journée entière bloque le jour) − rendez-vous Zunqoo. Le créneau est
+  **revérifié juste avant la réservation**.
+- Téléphone : l'assistant propose 2 à 3 créneaux à l'oral, puis réserve.
+- E-mail : la réponse propose trois créneaux ; quand le client répond « mardi
+  10 h me va », l'IA reconnaît le créneau choisi **parmi ceux proposés**
+  (jamais une heure inventée), le réserve et confirme.
+- Autonomie « tout valider » (par défaut) : le créneau est posé « provisoire »
+  dans l'agenda et la confirmation au client attend votre accord (écran
+  « À valider » ou WhatsApp). Refuser libère le créneau.
+- Écran **Agenda** (liste, prise de rendez-vous manuelle, annulation qui
+  retire l'événement de Google Agenda) ; « Ma journée » affiche les
+  rendez-vous du jour ; rappel par e-mail la veille.
+- Les heures sont toujours affichées dans le fuseau du commerce.
 
 ## Coûts d'exploitation (estimation, à vérifier sur les grilles tarifaires)
 

@@ -105,7 +105,8 @@ def me(user: CurrentUser, session: DB, settings: Settings = Depends(get_settings
         "business": {"id": tenant.id, "name": tenant.profile.name,
                      "activity": tenant.profile.activity,
                      "default_vat_rate": tenant.default_vat_rate,
-                     "prices_include_vat": tenant.prices_include_vat},
+                     "prices_include_vat": tenant.prices_include_vat,
+                     "timezone": tenant.timezone},
         "modules": sorted(k.value for k in enabled),
     }
 

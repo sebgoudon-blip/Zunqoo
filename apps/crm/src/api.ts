@@ -105,6 +105,7 @@ export interface Me {
     activity: string;
     default_vat_rate: number;
     prices_include_vat: boolean;
+    timezone: string;
   };
   modules: string[];
 }
@@ -218,6 +219,11 @@ export interface UpcomingOrder {
 
 export interface Today {
   date_label: string;
+  appointments: {
+    today: { id: string; time: string; end: string; type_name: string; status: string; notes: string | null;
+             contact: { id: string; name: string; phone: string | null } | null }[];
+    tomorrow_count: number;
+  } | null;
   invoices: {
     unpaid_count: number;
     unpaid_total: number;
@@ -262,6 +268,8 @@ export interface EmailStatus {
   email: string | null;
   last_sync_at: string | null;
   last_error: string | null;
+  gmail: boolean;
+  calendar: boolean;
   today: Record<string, number>;
 }
 
@@ -364,4 +372,29 @@ export interface InvoiceFull extends InvoiceSummary {
   delivery_date: string | null;
   payments: { id: string; amount: number; method: string; paid_on: string; note: string | null }[];
   credit_notes: { id: string; number: string | null; status: InvoiceStatus; total_ttc: number }[];
+}
+
+export interface AppointmentType { id: string; name: string; duration: number; description?: string | null }
+
+export interface AgendaSettings {
+  types: AppointmentType[];
+  weekly: Record<string, [string, string][]>;
+  buffer_min: number;
+  step_min: number;
+  min_notice_hours: number;
+  horizon_days: number;
+  location: string | null;
+  calendar_id: string;
+}
+
+export interface AppointmentOut {
+  id: string;
+  type_name: string;
+  type_id: string;
+  start: string;
+  end: string;
+  status: "a_confirmer" | "confirme" | "annule";
+  source: string;
+  notes: string | null;
+  contact: { id: string; name: string; phone: string | null } | null;
 }

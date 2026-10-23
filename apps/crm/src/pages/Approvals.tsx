@@ -34,7 +34,7 @@ export function ApprovalsPage() {
   // Champ de texte modifiable selon le type de validation.
   const EDIT_KEY: Record<string, string> = {
     email_reponse: "body", devis_envoi: "email_body", devis_relance: "body",
-    facture_emission: "email_body", facture_relance: "body",
+    facture_emission: "email_body", facture_relance: "body", rdv_confirmation: "email_body",
   };
 
   async function decide(a: Approval, approve: boolean) {
@@ -107,6 +107,11 @@ export function ApprovalsPage() {
                         onClick={() => api.openPdf(`/api/invoices/${a.payload.invoice_id}/pdf`).catch((e) => setError(e.message))}>
                   Voir le PDF
                 </button>
+              </div>
+            )}
+            {a.kind === "rdv_confirmation" && (
+              <div className="presets">
+                <Link className="btn btn-small btn-ghost" to="/agenda">Voir l'agenda</Link>
               </div>
             )}
             {EDIT_KEY[a.kind] && (
