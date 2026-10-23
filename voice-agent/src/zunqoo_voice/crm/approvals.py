@@ -22,6 +22,10 @@ log = logging.getLogger(__name__)
 Executor = Callable[[Session, Approval, Settings], Awaitable[str]]
 _EXECUTORS: dict[str, Executor] = {}
 _ON_REFUSE: dict[str, Executor] = {}
+# Seuls ces champs (le texte relu par le gérant) peuvent être modifiés à la
+# validation. Jamais les clés qui désignent l'objet à traiter (mail_id,
+# quote_id, invoice_id…) : les réécrire changerait l'action validée.
+_EDITABLE_FIELDS: dict[str, frozenset[str]] = {}
 
 
 def on_refuse(kind: str) -> Callable[[Executor], Executor]:
@@ -32,9 +36,10 @@ def on_refuse(kind: str) -> Callable[[Executor], Executor]:
     return register
 
 
-def executor(kind: str) -> Callable[[Executor], Executor]:
+def executor(kind: str, *, editable: tuple[str, ...] = ()) -> Callable[[Executor], Executor]:
     def register(fn: Executor) -> Executor:
         _EXECUTORS[kind] = fn
+        _EDITABLE_FIELDS[kind] = frozenset(editable)
         return fn
     return register
 
@@ -88,7 +93,11 @@ async def decide(
         return approval
 
     if edits:
-        approval.payload = {**approval.payload, **edits}
+        # On ne garde que les champs de texte autorisés pour ce type d'action.
+        allowed = _EDITABLE_FIELDS.get(approval.kind, frozenset())
+        safe = {k: v for k, v in edits.items() if k in allowed}
+        if safe:
+            approval.payload = {**approval.payload, **safe}
     run = _EXECUTORS.get(approval.kind)
     if run is None:
         approval.status, approval.result = "approuve", "validé (aucune action automatique)"

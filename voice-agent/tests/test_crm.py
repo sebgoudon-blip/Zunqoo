@@ -214,7 +214,7 @@ def test_contact_notes_and_search(client):
 def pending(settings):
     calls = []
 
-    @approvals_mod.executor("test_envoi")
+    @approvals_mod.executor("test_envoi", editable=("body",))
     async def _run(db, approval, s):
         calls.append(approval.payload)
         return "envoyé"
@@ -222,7 +222,7 @@ def pending(settings):
     with session_scope(settings.database_url) as db:
         a = create_approval(db, tenant_id="rotisserie-demo", module=ModuleKey.ORDERS,
                             kind="test_envoi", title="Devis Dupont", summary="3 plateaux",
-                            payload={"montant": 60})
+                            payload={"montant": 60, "body": "texte initial"})
     return a.id, calls
 
 
@@ -230,10 +230,11 @@ def test_web_decision_runs_once(client, pending):
     approval_id, calls = pending
     h = login(client)
     assert [a["id"] for a in client.get("/api/approvals", headers=h).json()] == [approval_id]
+    # Le gérant corrige le texte (body) ; une clé non autorisée (montant) est ignorée.
     r = client.post(f"/api/approvals/{approval_id}/decision",
-                    json={"approve": True, "edits": {"montant": 55}}, headers=h)
+                    json={"approve": True, "edits": {"body": "texte corrigé", "montant": 55}}, headers=h)
     assert r.json()["status"] == "execute" and r.json()["decision_channel"] == "web"
-    assert calls == [{"montant": 55}]
+    assert calls == [{"montant": 60, "body": "texte corrigé"}]
     again = client.post(f"/api/approvals/{approval_id}/decision", json={"approve": True},
                         headers=h)
     assert again.status_code == 409 and len(calls) == 1
@@ -267,7 +268,7 @@ def test_whatsapp_webhook_security_and_decision(client, pending, settings, respx
 
     raw, headers = _signed(_click("33612345678", f"ok:{approval_id}"))
     assert client.post("/webhooks/whatsapp", content=raw, headers=headers).status_code == 200
-    assert calls == [{"montant": 60}]
+    assert calls == [{"montant": 60, "body": "texte initial"}]
     with session_scope(settings.database_url) as db:
         a = db.get(Approval, approval_id)
         assert (a.status, a.decision_channel) == ("execute", "whatsapp")

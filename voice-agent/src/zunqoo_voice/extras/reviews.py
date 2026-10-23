@@ -202,7 +202,7 @@ def _tenant(settings: Settings, tenant_id: str) -> TenantConfig:
     return tenant
 
 
-@executor("avis_demande")
+@executor("avis_demande", editable=("body",))
 async def run_review_approval(session: Session, approval: Approval, settings: Settings) -> str:
     req = session.get(ReviewRequest, approval.payload["review_id"])
     if req is None or req.tenant_id != approval.tenant_id:

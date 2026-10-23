@@ -331,7 +331,7 @@ async def _prepare_quote(session, settings, tenant, contact, row, mail, triage, 
     result.to_validate += 1
 
 
-@executor("email_reponse")
+@executor("email_reponse", editable=("body",))
 async def send_validated_reply(session: Session, approval: Approval, settings: Settings) -> str:
     """Exécuté quand le gérant valide la réponse (web ou WhatsApp)."""
     from ..core.tenant_store import FileTenantStore

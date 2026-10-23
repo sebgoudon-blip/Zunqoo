@@ -226,7 +226,7 @@ def _tenant(settings: Settings, tenant_id: str) -> TenantConfig:
     return tenant
 
 
-@executor("rdv_confirmation")
+@executor("rdv_confirmation", editable=("email_body",))
 async def confirm_appointment(session: Session, approval: Approval, settings: Settings) -> str:
     appt = session.get(Appointment, approval.payload["appointment_id"])
     if appt is None or appt.status == "annule":

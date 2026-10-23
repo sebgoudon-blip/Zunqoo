@@ -385,7 +385,7 @@ def _tenant(settings: Settings, tenant_id: str) -> TenantConfig:
     return tenant
 
 
-@executor("devis_envoi")
+@executor("devis_envoi", editable=("email_body",))
 async def run_quote_approval(session: Session, approval: Approval, settings: Settings) -> str:
     quote = session.get(Quote, approval.payload["quote_id"])
     if quote is None or quote.tenant_id != approval.tenant_id:
@@ -399,7 +399,7 @@ async def run_quote_approval(session: Session, approval: Approval, settings: Set
     return f"devis {quote.number} envoyé à {quote.contact.email}"
 
 
-@executor("devis_relance")
+@executor("devis_relance", editable=("body",))
 async def run_quote_reminder(session: Session, approval: Approval, settings: Settings) -> str:
     from ..mail.account import access_token, get_account
     from ..mail.gmail import GmailClient, build_new

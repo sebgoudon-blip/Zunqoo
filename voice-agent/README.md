@@ -452,6 +452,28 @@ Intégrée au CRM, sans service tiers ni abonnement supplémentaire.
   - En production, mettre l'API derrière le reverse proxy, qui transmet
     `X-Forwarded-For` pour l'adresse IP réelle du client.
 
+## Sécurité
+
+Audit d'intrusion réalisé sur l'ensemble des 74 routes HTTP, avec une suite
+de tests automatisés (`tests/test_security.py`) qui tourne à chaque livraison.
+
+Vérifié et résistant : cloisonnement strict entre commerces (un commerce ne
+voit ni ne modifie jamais les données d'un autre), rôles (un employé n'a pas
+les droits d'administrateur), jetons de session infalsifiables (JWT signé,
+« alg=none » et jetons expirés rejetés), liens de signature impossibles à
+deviner (identifiant aléatoire + HMAC), code de signature limité en essais,
+e-mail jamais exposé en entier, webhook WhatsApp refusé sans la signature de
+Meta, pas d'injection SQL (requêtes paramétrées), pas d'énumération de comptes.
+
+Protections en place par conception : mots de passe en scrypt + sel, jetons
+Google chiffrés en base (Fernet), aucune page HTML rendue côté serveur, CORS
+limité à l'adresse du CRM.
+
+À configurer au déploiement (côté reverse proxy) : limitation des tentatives
+de connexion par IP, en-têtes de sécurité (HSTS, CSP…), HTTPS partout, et
+transmission de `X-Forwarded-For` (adresse IP dans les preuves de signature).
+Prévoir des sauvegardes chiffrées de la base et de `MAIL_TOKEN_KEY`.
+
 ## Coûts d'exploitation (estimation, à vérifier sur les grilles tarifaires)
 
 Configuration par défaut (Cartesia + Sonnet 5.5 pour la conversation + Haiku 5.5 pour le compte-rendu) :

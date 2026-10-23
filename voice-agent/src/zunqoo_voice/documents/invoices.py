@@ -355,7 +355,7 @@ def _tenant(settings: Settings, tenant_id: str) -> TenantConfig:
     return tenant
 
 
-@executor("facture_emission")
+@executor("facture_emission", editable=("email_body",))
 async def run_invoice_approval(session: Session, approval: Approval, settings: Settings) -> str:
     """Validation proposée après un devis accepté : émet puis envoie si possible."""
     inv = session.get(Invoice, approval.payload["invoice_id"])
@@ -373,7 +373,7 @@ async def run_invoice_approval(session: Session, approval: Approval, settings: S
         return f"facture {inv.number} émise (non envoyée : {exc})"
 
 
-@executor("facture_relance")
+@executor("facture_relance", editable=("body",))
 async def run_invoice_reminder(session: Session, approval: Approval, settings: Settings) -> str:
     inv = session.get(Invoice, approval.payload["invoice_id"])
     if inv is None or inv.status not in UNPAID:
