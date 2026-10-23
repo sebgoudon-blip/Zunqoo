@@ -418,6 +418,42 @@ class Appointment(Base):
     contact: Mapped[Contact | None] = relationship()
 
 
+def _all_days() -> list[int]:
+    return [0, 1, 2, 3, 4, 5, 6]
+
+
+class ExtrasSettings(Base):
+    """Résumé du soir et demandes d'avis Google (une ligne par commerce)."""
+
+    __tablename__ = "extras_settings"
+    tenant_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    summary_time: Mapped[str] = mapped_column(String(5), default="19:00")   # heure locale
+    summary_days: Mapped[list[int]] = mapped_column(JSON, default=_all_days)  # 0 = lundi
+    summary_last_sent: Mapped[str | None] = mapped_column(String(10))       # AAAA-MM-JJ local
+    review_link: Mapped[str | None] = mapped_column(String(500))
+    review_delay_hours: Mapped[int] = mapped_column(Integer, default=24)
+    review_message: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
+
+
+class ReviewRequest(Base):
+    """Une demande d'avis, liée à ce qui l'a déclenchée (jamais deux fois)."""
+
+    __tablename__ = "review_requests"
+    __table_args__ = (UniqueConstraint("tenant_id", "source", "source_id"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    contact_id: Mapped[str | None] = mapped_column(ForeignKey("contacts.id"), index=True)
+    source: Mapped[str] = mapped_column(String(20))      # commande | rendez_vous | facture
+    source_id: Mapped[str] = mapped_column(String(32))
+    # a_valider | envoye | refuse | sans_email | deja_demande | echec
+    status: Mapped[str] = mapped_column(String(20), index=True)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+    sent_at: Mapped[datetime | None] = mapped_column()
+
+    contact: Mapped[Contact | None] = relationship()
+
+
 @lru_cache(maxsize=4)
 def get_engine(url: str) -> Engine:
     if url.startswith("sqlite:///") and not url.startswith("sqlite:///:memory:"):

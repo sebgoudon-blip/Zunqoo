@@ -398,3 +398,19 @@ export interface AppointmentOut {
   notes: string | null;
   contact: { id: string; name: string; phone: string | null } | null;
 }
+
+export interface ExtrasSettings {
+  summary_time: string;
+  summary_days: number[];
+  summary_last_sent: string | null;
+  review_link: string | null;
+  review_delay_hours: number;
+  review_message: string | null;
+  default_review_message: string;
+  whatsapp_numbers: number;
+}
+
+export interface ReviewsOverview {
+  last_30_days: Record<"envoye" | "a_valider" | "refuse" | "sans_email" | "deja_demande" | "echec", number>;
+  preview: string;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, type Contact, type Interaction } from "../api";
+import { useAuth } from "../auth";
 import { formatPhone, formatWhen } from "../format";
 import { CHANNEL_ICON, ErrorBanner, Icon, Spinner } from "../ui";
 
@@ -120,6 +121,8 @@ export function ContactDetailPage() {
   );
 }
 
+const NO_REVIEW = "pas_d_avis";
+
 function EditContact({ contact, onSaved }: { contact: Contact; onSaved: (c: Contact) => void }) {
   const [form, setForm] = useState({
     first_name: contact.first_name ?? "",
@@ -132,12 +135,15 @@ function EditContact({ contact, onSaved }: { contact: Contact; onSaved: (c: Cont
     vat_number: contact.vat_number ?? "",
   });
   const [error, setError] = useState<string | null>(null);
+  const reviews = useAuth().hasModule("avis_google");
+  const [noReview, setNoReview] = useState(contact.tags.includes(NO_REVIEW));
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const body = Object.fromEntries(Object.entries(form).map(([k, v]) => [
+    const body: Record<string, unknown> = Object.fromEntries(Object.entries(form).map(([k, v]) => [
       k, (k === "siren" || k === "vat_number" ? v.replace(/\s/g, "").toUpperCase() : v.trim()) || null,
     ]));
+    body.tags = [...contact.tags.filter((t) => t !== NO_REVIEW), ...(noReview ? [NO_REVIEW] : [])];
     try {
       onSaved(await api.patch<Contact>(`/api/contacts/${contact.id}`, body));
     } catch (err) {
@@ -160,6 +166,12 @@ function EditContact({ contact, onSaved }: { contact: Contact; onSaved: (c: Cont
                  onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
         </label>
       ))}
+      {reviews && (
+        <label className="check span-2">
+          <input type="checkbox" checked={noReview} onChange={(e) => setNoReview(e.target.checked)} />
+          <span>Ne jamais lui demander d'avis Google</span>
+        </label>
+      )}
       <div className="form-actions">
         <button className="btn btn-primary">Enregistrer</button>
       </div>

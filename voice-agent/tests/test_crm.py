@@ -78,8 +78,17 @@ def test_modules_defaults_dependencies_and_cascade(settings):
         assert enabled_modules(db, "t1") == {ModuleKey.PHONE, ModuleKey.ORDERS}
         with pytest.raises(ModuleConfigError):
             set_modules(db, "t1", {ModuleKey.ORDERS})
-        with pytest.raises(ModuleConfigError):  # pas encore livré
+        with pytest.MonkeyPatch.context() as mp, pytest.raises(ModuleConfigError):
+            _unavailable(mp, ModuleKey.DAILY_SUMMARY)  # module pas encore livré
             set_modules(db, "t1", {ModuleKey.PHONE, ModuleKey.DAILY_SUMMARY})
+
+
+def _unavailable(mp: pytest.MonkeyPatch, key: ModuleKey) -> None:
+    from dataclasses import replace
+
+    from zunqoo_voice.crm.modules import MODULES
+
+    mp.setitem(MODULES, key, replace(MODULES[key], available=False))
 
 
 # --- catalogue ---------------------------------------------------------------
@@ -158,8 +167,10 @@ def test_api_modules_and_catalog_flow(client):
 
     r = client.patch("/api/modules/commandes", json={"enabled": False}, headers=h)
     assert {m["key"]: m["enabled"] for m in r.json()["modules"]}["commandes"] is False
-    assert client.patch("/api/modules/resume_quotidien", json={"enabled": True},
-                        headers=h).status_code == 400
+    with pytest.MonkeyPatch.context() as mp:
+        _unavailable(mp, ModuleKey.DAILY_SUMMARY)
+        assert client.patch("/api/modules/resume_quotidien", json={"enabled": True},
+                            headers=h).status_code == 400
 
     r = client.post("/api/catalog", json={"name": "Pintade", "price": 19}, headers=h)
     assert r.status_code == 201

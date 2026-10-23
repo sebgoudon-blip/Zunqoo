@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     whatsapp_app_secret: SecretStr = SecretStr("")    # signature X-Hub-Signature-256
     whatsapp_verify_token: SecretStr = SecretStr("")  # vérification initiale par Meta
     whatsapp_approval_template: str = "zunqoo_validation"
+    whatsapp_summary_template: str = "zunqoo_resume_soir"
 
     # --- E-mails (Gmail) ----------------------------------------------------
     google_client_id: str = ""

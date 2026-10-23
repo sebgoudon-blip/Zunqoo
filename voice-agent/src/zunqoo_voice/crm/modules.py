@@ -78,12 +78,12 @@ MODULES: dict[ModuleKey, ModuleDef] = {
         ModuleDef(
             ModuleKey.DAILY_SUMMARY, "Résumé du soir",
             "Chaque soir sur WhatsApp : appels, demandes, éléments à valider, agenda du lendemain.",
-            has_autonomy=False, available=False,
+            has_autonomy=False,
         ),
         ModuleDef(
             ModuleKey.REVIEWS, "Avis Google",
-            "Demande un avis Google aux clients satisfaits après une commande.",
-            available=False,
+            "Demande un avis Google à vos clients après une commande ou un rendez-vous.",
+            default_autonomy=Autonomy.VALIDATE_ALL,
         ),
     ]
 }

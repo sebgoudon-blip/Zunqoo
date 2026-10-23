@@ -34,7 +34,7 @@ export function ApprovalsPage() {
   // Champ de texte modifiable selon le type de validation.
   const EDIT_KEY: Record<string, string> = {
     email_reponse: "body", devis_envoi: "email_body", devis_relance: "body",
-    facture_emission: "email_body", facture_relance: "body", rdv_confirmation: "email_body",
+    facture_emission: "email_body", facture_relance: "body", rdv_confirmation: "email_body", avis_demande: "body",
   };
 
   async function decide(a: Approval, approve: boolean) {

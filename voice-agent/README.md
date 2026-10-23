@@ -166,7 +166,18 @@ WhatsApp Manager → Message templates un template **Utility**, langue
 📝 Notes : {{5}}
 ```
 
-Tant qu'il n'est pas approuvé, le système envoie le message texte complet,
+Pour le **résumé du soir** (module « Résumé du soir »), un second template
+**Utility**, langue `fr`, nommé `zunqoo_resume_soir` :
+
+```
+🌙 Résumé du {{1}}
+📊 Aujourd'hui : {{2}}
+✅ À faire : {{3}}
+📅 Demain : {{4}}
+Détails : {{5}}
+```
+
+Tant qu'un template n'est pas approuvé, le système envoie le message texte complet,
 ce qui ne passe que si le gérant a écrit au numéro Business dans les
 dernières 24 h. Pour la production, prenez un jeton permanent de *System
 User* (Business Manager → Utilisateurs système), pas le jeton de test qui
@@ -374,6 +385,33 @@ et **par e-mail**, directement dans l'agenda Google du commerce.
   retire l'événement de Google Agenda) ; « Ma journée » affiche les
   rendez-vous du jour ; rappel par e-mail la veille.
 - Les heures sont toujours affichées dans le fuseau du commerce.
+
+## Résumé du soir et avis Google (étape 5)
+
+**Résumé du soir** (WhatsApp, au gérant) : chaque soir à l'heure choisie
+(19 h par défaut, jours au choix), le bilan de la journée — appels et
+commandes, e-mails traités, nouveaux clients, devis acceptés, encaissements —
+ce qui reste à faire (validations, rappels, commandes sans date, factures en
+retard) et ce qui est prévu demain (commandes avec les quantités à préparer,
+rendez-vous). Un seul envoi par jour, même si le service redémarre. Réglages
+→ Résumé du soir : aperçu et bouton « M'envoyer un essai ».
+
+**Avis Google** (e-mail, aux clients) :
+- Déclenchement : commande marquée « faite » dans Ma journée, rendez-vous
+  passé, facture réglée ; après le délai choisi (1 jour par défaut), et
+  jamais au-delà de 14 jours.
+- Une demande par client tous les 6 mois au plus ; un client peut être exclu
+  (fiche client → « Ne jamais lui demander d'avis Google »).
+- Par défaut, chaque demande attend votre accord (« À valider » / WhatsApp),
+  avec le message modifiable.
+- Règles Google respectées : tous les clients sont sollicités de la même
+  façon (pas de tri des clients « satisfaits »), sans contrepartie.
+- Clients sans e-mail (souvent ceux du téléphone) : **affiche A5 avec QR
+  code** à imprimer pour le comptoir ou le stand du marché.
+- Le lien se récupère dans Google (fiche d'établissement → *Demander des
+  avis*), il ressemble à `https://g.page/r/…/review`.
+
+Les deux tâches tournent dans le service `zunqoo-mail run`, avec les relances.
 
 ## Coûts d'exploitation (estimation, à vérifier sur les grilles tarifaires)
 

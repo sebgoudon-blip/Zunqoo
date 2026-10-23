@@ -1,7 +1,7 @@
 """Relève périodique des e-mails de tous les commerces.
 
     zunqoo-mail genkey              # clé MAIL_TOKEN_KEY (une fois)
-    zunqoo-mail run                 # boucle : relève toutes les MAIL_POLL_SECONDS
+    zunqoo-mail run                 # boucle : relève, relances, résumé du soir, avis
     zunqoo-mail sync rotisserie-x   # une relève immédiate, pour tester
 """
 
@@ -22,6 +22,8 @@ from ..crm.modules import ModuleKey
 from ..crm.services import enabled_modules
 from ..documents.invoices import schedule_invoice_reminders
 from ..documents.quotes import due_reminders, schedule_reminders
+from ..extras.reviews import schedule_review_requests
+from ..extras.summary import send_due_summary
 from .account import get_account
 from .crypto import generate_key
 from .processor import sync_tenant
@@ -87,12 +89,36 @@ async def appointment_followups(settings: Settings, store: FileTenantStore) -> N
                 log.info("%s: %d rappel(s) de rendez-vous envoyé(s)", tenant_id, n)
 
 
+async def evening_summaries(settings: Settings, store: FileTenantStore) -> None:
+    """Résumé du soir sur WhatsApp, à l'heure choisie par chaque commerce."""
+    now = datetime.now(UTC)
+    for tenant in store.list():
+        if not tenant.active:
+            continue
+        with session_scope(settings.database_url) as session:
+            if await send_due_summary(session, settings, tenant, now):
+                log.info("%s: résumé du soir envoyé", tenant.id)
+
+
+async def review_followups(settings: Settings, store: FileTenantStore) -> None:
+    """Demandes d'avis Google, après le délai choisi."""
+    now = datetime.now(UTC)
+    for tenant in store.list():
+        if not tenant.active:
+            continue
+        with session_scope(settings.database_url) as session:
+            n = await schedule_review_requests(session, settings, tenant, now)
+            if n:
+                log.info("%s: %d demande(s) d'avis", tenant.id, n)
+
+
 async def sync_all(settings: Settings) -> None:
     with session_scope(settings.database_url) as session:
         tenant_ids = list(session.scalars(select(MailAccount.tenant_id)
                                           .where(MailAccount.active.is_(True))))
     store = FileTenantStore(settings.tenants_dir)
-    for followup in (quote_followups, invoice_followups, appointment_followups):
+    for followup in (quote_followups, invoice_followups, appointment_followups,
+                     evening_summaries, review_followups):
         try:
             await followup(settings, store)
         except Exception:

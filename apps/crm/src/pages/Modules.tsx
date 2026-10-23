@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { api, type Autonomy, type EmailStatus, type ModuleInfo, type ModulesResponse,
          type SyncResult } from "../api";
 import { AgendaSettingsForm, GoogleCalendarStatus } from "./AgendaSettings";
+import { ReviewSettings, SummarySettings } from "./ExtrasSettings";
 import { formatWhen } from "../format";
 import { Link } from "react-router-dom";
 import { BusinessForm } from "./BusinessForm";
@@ -102,6 +103,18 @@ export function ModulesPage() {
                   )}
                 </div>
                 {m.enabled && m.key === "emails" && <EmailConnection isAdmin={isAdmin} />}
+                {m.enabled && m.key === "resume_quotidien" && (
+                  <details className="agenda-panel">
+                    <summary>Heure, jours et aperçu du résumé</summary>
+                    <SummarySettings isAdmin={isAdmin} />
+                  </details>
+                )}
+                {m.enabled && m.key === "avis_google" && (
+                  <details className="agenda-panel">
+                    <summary>Lien Google, délai, message et affiche</summary>
+                    <ReviewSettings isAdmin={isAdmin} emailReady={!!data?.modules.find((x) => x.key === "emails")?.enabled} />
+                  </details>
+                )}
                 {m.enabled && m.key === "rendez_vous" && (
                   <details className="agenda-panel">
                     <summary>Agenda, types de rendez-vous et disponibilités</summary>
