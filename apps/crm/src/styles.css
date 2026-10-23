@@ -297,3 +297,37 @@ a.list-row:hover { background: var(--bg); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation-duration: 1ms !important; }
 }
+
+/* --- Ma journée ------------------------------------------------------------- */
+.eyebrow { color: var(--primary); font-weight: 600; margin: 0 0 2px; }
+.day-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.day-grid > .card { margin-bottom: 0; }
+.day-grid + .card { margin-top: 16px; }
+.all-good { display: flex; align-items: center; gap: 8px; color: var(--green); font-weight: 600; }
+.todo-list, .order-list { list-style: none; margin: 0; padding: 0; }
+.todo-list li, .order-list li {
+  display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border);
+}
+.todo-list li:first-child, .order-list li:first-child { border-top: 0; }
+.todo-main { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.todo-main a { color: var(--text); }
+.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.todo-kind {
+  flex: none; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+}
+.kind-approval { background: var(--primary-soft); color: var(--primary); }
+.kind-callback { background: #e6edfb; color: #1e3f8a; }
+.todo-actions { display: flex; gap: 6px; flex: none; }
+.todo-more a { font-weight: 600; }
+.order-day + .order-day { margin-top: 20px; padding-top: 16px; border-top: 2px solid var(--border); }
+.order-day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.order-day h3 { margin: 0; font-size: 1rem; }
+.totals { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip {
+  background: var(--green-soft); color: #173f29; border-radius: 999px; padding: 4px 10px;
+  font-weight: 600; font-size: 0.9rem; font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1000px) {
+  .day-grid { grid-template-columns: 1fr; }
+}
+.nowrap { white-space: nowrap; }

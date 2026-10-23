@@ -181,3 +181,41 @@ export interface Approval {
   result: string | null;
   contact: { id: string; name: string } | null;
 }
+
+export interface OrderLineOut {
+  product: string;
+  quantity: number;
+  unit?: string | null;
+  notes?: string | null;
+}
+
+export interface UpcomingOrder {
+  id: string;
+  contact: { id: string; name: string; phone: string | null } | null;
+  lines: OrderLineOut[];
+  slot: string | null;
+  location: string | null;
+  fulfillment: string | null;
+  notes: string | null;
+  occurred_at: string;
+}
+
+export interface Today {
+  date_label: string;
+  todo: {
+    approvals_count: number;
+    approvals: { id: string; title: string; summary: string; created_at: string }[];
+    callbacks: {
+      id: string;
+      title: string;
+      summary: string | null;
+      occurred_at: string;
+      contact: { id: string; name: string; phone: string | null } | null;
+    }[];
+  };
+  orders: {
+    upcoming: { date: string; label: string; orders: UpcomingOrder[]; totals: OrderLineOut[] }[];
+    undated: UpcomingOrder[];
+  } | null;
+  today: { calls: number | null; orders: number | null; new_contacts: number };
+}

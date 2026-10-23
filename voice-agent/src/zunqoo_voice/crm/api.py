@@ -27,6 +27,7 @@ from .approvals import ApprovalError, decide
 from .auth import issue_token, read_token, verify_password
 from .db import Approval, CatalogItem, Contact, Interaction, User, session_scope
 from .modules import MODULES, PRESETS, Autonomy, ModuleConfigError, ModuleKey, preset_selection
+from .today import mark_handled, today_overview
 
 router = APIRouter(prefix="/api")
 
@@ -207,6 +208,27 @@ def dashboard(user: CurrentUser, session: DB) -> dict:
         "contacts": count(select(Contact).where(Contact.tenant_id == tid)),
         "recent": [_interaction_out(i) for i in recent],
     }
+
+
+@router.get("/today")
+def today(user: CurrentUser, session: DB, settings: Settings = Depends(get_settings)) -> dict:
+    """« Ma journée » : à faire, commandes à préparer, chiffres du jour."""
+    tenant = tenant_of(user, settings)
+    return today_overview(session, user.tenant_id, tenant.timezone,
+                          services.enabled_modules(session, user.tenant_id))
+
+
+class HandledIn(BaseModel):
+    done: bool = True
+
+
+@router.post("/interactions/{interaction_id}/handled")
+def set_handled(interaction_id: str, body: HandledIn, user: CurrentUser, session: DB) -> dict:
+    """Rappel passé / commande retirée (ou annulation de ce marquage)."""
+    item = mark_handled(session, user.tenant_id, interaction_id, user.email, body.done)
+    if item is None:
+        raise HTTPException(status_code=404, detail="élément introuvable")
+    return {"id": item.id, "handled": body.done}
 
 
 # ---------------------------------------------------------------------------

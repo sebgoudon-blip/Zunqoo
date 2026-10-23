@@ -1,7 +1,7 @@
 import hashlib
 import hmac
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -260,3 +260,63 @@ def test_whatsapp_webhook_security_and_decision(client, pending, settings, respx
     with session_scope(settings.database_url) as db:
         a = db.get(Approval, approval_id)
         assert (a.status, a.decision_channel) == ("execute", "whatsapp")
+
+
+# --- Ma journée ---------------------------------------------------------------
+
+
+def _order_call(db, call_id, *, called, day=None, iso=None, qty=2, phone="+33612345678",
+                callback=False):
+    report = CallReport(
+        intent=CallIntent.ORDER, customer_first_name="Jean", summary="commande",
+        order_lines=[OrderLine(product="Poulet fermier", quantity=qty)],
+        requested_day=day, requested_date=iso, needs_callback=callback,
+    )
+    return record_call(db, CallRecord(
+        tenant_id="t1", call_id=call_id, caller_number=phone, started_at=called,
+        ended_at=called, duration_s=60, transcript="…", report=report))
+
+
+def test_resolve_order_date():
+    from datetime import date
+
+    from zunqoo_voice.crm.today import resolve_order_date
+    thursday = date(2026, 10, 22)
+    assert resolve_order_date({"requested_day": "samedi matin"}, thursday) == date(2026, 10, 24)
+    assert resolve_order_date({"requested_day": "demain midi"}, thursday) == date(2026, 10, 23)
+    assert resolve_order_date({"requested_date": "2026-11-02"}, thursday) == date(2026, 11, 2)
+    assert resolve_order_date({"requested_day": "dès que possible"}, thursday) is None
+
+
+def test_today_overview_groups_orders_and_callbacks(settings):
+    from zunqoo_voice.crm.today import mark_handled, today_overview
+    now = datetime(2026, 10, 22, 9, 0, tzinfo=UTC)  # jeudi
+    mods = {ModuleKey.PHONE, ModuleKey.ORDERS}
+    with session_scope(settings.database_url) as db:
+        _order_call(db, "a", called=now - timedelta(days=1), day="samedi matin", qty=2)
+        _order_call(db, "b", called=now - timedelta(hours=1), day="samedi", qty=3,
+                    phone="+33600000001")
+        _order_call(db, "c", called=now - timedelta(hours=2), day="aujourd'hui midi", qty=1,
+                    phone="+33600000002", callback=True)
+        _order_call(db, "d", called=now - timedelta(hours=3), day=None, phone="+33600000003")
+        done = _order_call(db, "e", called=now, day="samedi", qty=9, phone="+33600000004")
+        mark_handled(db, "t1", done.id, "gerant")
+
+        view = today_overview(db, "t1", "Europe/Paris", mods, now=now)
+        days = {d["label"]: d for d in view["orders"]["upcoming"]}
+        assert list(days) == ["Aujourd'hui 22 octobre", "Samedi 24 octobre"]
+        assert days["Samedi 24 octobre"]["totals"] == [
+            {"product": "Poulet fermier", "unit": None, "quantity": 5}]  # retirée exclue
+        assert len(view["orders"]["undated"]) == 1
+        assert [c["contact"]["phone"] for c in view["todo"]["callbacks"]] == ["+33600000002"]
+        assert view["today"]["calls"] == 4
+
+        assert today_overview(db, "t1", "Europe/Paris", {ModuleKey.PHONE}, now=now)["orders"] is None
+
+
+def test_today_api_and_handled(client):
+    h = login(client)
+    view = client.get("/api/today", headers=h).json()
+    assert view["todo"]["approvals_count"] == 0 and view["orders"] == {"upcoming": [], "undated": []}
+    assert client.post("/api/interactions/inconnu/handled", json={"done": True},
+                       headers=h).status_code == 404
