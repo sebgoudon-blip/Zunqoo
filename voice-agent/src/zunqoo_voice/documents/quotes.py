@@ -21,7 +21,15 @@ from ..core.config import Settings
 from ..core.models import TenantConfig
 from ..core.structured_llm import StructuredLLM
 from ..crm.approvals import ApprovalBlocked, executor
-from ..crm.db import Approval, BusinessSettings, CatalogItem, Contact, MailMessage, Quote
+from ..crm.db import (
+    Approval,
+    BusinessSettings,
+    CatalogItem,
+    Contact,
+    Invoice,
+    MailMessage,
+    Quote,
+)
 from ..crm.modules import ModuleKey
 from ..crm.services import add_interaction
 from .numbering import next_number
@@ -273,12 +281,23 @@ def quote_summary(quote: Quote) -> str:
 # ---------------------------------------------------------------------------
 
 
+SIGN_LINK = "[lien de signature]"  # remplacé à l'envoi par le lien personnel du client
+
+
+def with_sign_link(body: str, url: str) -> str:
+    if SIGN_LINK in body:
+        return body.replace(SIGN_LINK, url)
+    if url in body:
+        return body
+    return f"{body.rstrip()}\n\nPour accepter et signer ce devis en ligne :\n{url}"
+
+
 def default_email(quote: Quote, bs: BusinessSettings) -> str:
     first = quote.contact.first_name if quote.contact and quote.contact.first_name else ""
     return (f"Bonjour{(' ' + first) if first else ''},\n\n"
             f"Veuillez trouver ci-joint notre devis n° {quote.number or ''} "
-            f"« {quote.title} ».\nPour l'accepter, il vous suffit de répondre à cet e-mail "
-            "ou de nous le renvoyer signé.\n\nNous restons à votre disposition pour toute "
+            f"« {quote.title} ».\nVous pouvez l'accepter et le signer en ligne, en une minute, "
+            f"depuis votre téléphone ou votre ordinateur :\n{SIGN_LINK}\n\nNous restons à votre disposition pour toute "
             f"question.\n\nBien cordialement,\n{bs.legal_name or ''}\n{bs.phone or ''}").strip()
 
 
@@ -294,9 +313,13 @@ async def send_quote_email(session: Session, settings: Settings, tenant: TenantC
     account = get_account(session, tenant.id)
     if account is None:
         raise QuoteError("aucune boîte Gmail connectée : téléchargez le PDF pour l'envoyer vous-même")
+    from .signature import open_signature, sign_url
+
     issue(session, quote, bs, datetime.now(UTC))
-    body = body.strip() or default_email(quote, bs)
-    attachment = (f"Devis-{quote.number}.pdf", quote_pdf(quote, bs), "application/pdf")
+    sig = open_signature(session, quote, bs)
+    body = with_sign_link(body.strip() or default_email(quote, bs), sign_url(settings, sig))
+    # La pièce jointe est exactement le document que le client signera en ligne.
+    attachment = (f"Devis-{quote.number}.pdf", sig.document_pdf, "application/pdf")
     gmail = GmailClient(await access_token(settings, account))
     try:
         source = session.get(MailMessage, quote.source_mail_id) if quote.source_mail_id else None
@@ -319,6 +342,38 @@ async def send_quote_email(session: Session, settings: Settings, tenant: TenantC
                     summary=quote.title, body=body, external_id=sent_id,
                     data={"quote_id": quote.id})
     return sent_id
+
+
+def close_quote_approvals(session: Session, quote: Quote, status: str, by: str,
+                          channel: str = "web") -> None:
+    """Le devis a été traité ailleurs : la validation en attente est close."""
+    for a in session.scalars(select(Approval).where(
+            Approval.tenant_id == quote.tenant_id, Approval.status == "en_attente",
+            Approval.kind.in_(("devis_envoi", "devis_relance")))):
+        if a.payload.get("quote_id") == quote.id:
+            a.status, a.decided_by, a.decision_channel = status, by, channel
+            a.decided_at = datetime.now(UTC)
+
+
+async def record_decision(session: Session, settings: Settings, tenant: TenantConfig,
+                          quote: Quote, status: str, *, by: str, title: str | None = None,
+                          channel: str = "web", data: dict | None = None) -> None:
+    """Réponse du client (acceptation ou refus) : historique, fin des relances
+    et, si le module Factures est actif, facture préparée à valider."""
+    from ..crm.services import enabled_modules
+    from .invoices import propose_invoice_for_quote
+
+    was_accepted = quote.status == "accepte"
+    quote.status, quote.decided_at = status, datetime.now(UTC)
+    close_quote_approvals(session, quote, "refuse", by, channel)  # plus de relance
+    add_interaction(session, quote.contact, tenant_id=quote.tenant_id, channel="note",
+                    direction="interne", intent="devis",
+                    title=title or f"Devis {quote.number} {'accepté' if status == 'accepte' else 'refusé'}",
+                    summary=quote.title, data={"quote_id": quote.id, **(data or {})})
+    if (status == "accepte" and not was_accepted
+            and ModuleKey.INVOICES in enabled_modules(session, quote.tenant_id)
+            and not session.scalar(select(Invoice).where(Invoice.quote_id == quote.id))):
+        await propose_invoice_for_quote(session, settings, tenant, quote)
 
 
 def _tenant(settings: Settings, tenant_id: str) -> TenantConfig:
@@ -356,20 +411,24 @@ async def run_quote_reminder(session: Session, approval: Approval, settings: Set
     account = get_account(session, tenant.id)
     if account is None or quote.contact is None or not quote.contact.email:
         raise QuoteError("relance impossible : boîte Gmail ou e-mail du client manquant")
+    from .signature import open_signature, sign_url
+
     bs = business_settings(session, tenant)
+    sig = open_signature(session, quote, bs, by="relance")
+    body = with_sign_link(str(approval.payload.get("body") or ""), sign_url(settings, sig))
     gmail = GmailClient(await access_token(settings, account))
     try:
         await gmail.send(build_new(
             to_email=quote.contact.email, to_name=quote.contact.display_name,
             from_email=account.email, from_name=tenant.profile.name,
             subject=f"Votre devis {quote.number} – {tenant.profile.name}",
-            body=str(approval.payload.get("body") or ""),
-            attachments=[(f"Devis-{quote.number}.pdf", quote_pdf(quote, bs), "application/pdf")]))
+            body=body,
+            attachments=[(f"Devis-{quote.number}.pdf", sig.document_pdf, "application/pdf")]))
     finally:
         await gmail.aclose()
     add_interaction(session, quote.contact, tenant_id=tenant.id, channel="email",
                     direction="sortant", intent="devis", title=f"Relance du devis {quote.number}",
-                    summary=quote.title, body=str(approval.payload.get("body") or ""))
+                    summary=quote.title, body=body)
     return f"relance envoyée à {quote.contact.email}"
 
 
@@ -378,7 +437,8 @@ def reminder_text(quote: Quote, bs: BusinessSettings) -> str:
     return (f"Bonjour{(' ' + first) if first else ''},\n\n"
             f"Je me permets de revenir vers vous au sujet de notre devis n° {quote.number} "
             f"« {quote.title} », que je vous remets en pièce jointe.\n"
-            "Avez-vous pu en prendre connaissance ? Je reste disponible pour l'ajuster si "
+            "Avez-vous pu en prendre connaissance ? S'il vous convient, vous pouvez le signer "
+            f"en ligne ici :\n{SIGN_LINK}\n\nJe reste disponible pour l'ajuster si "
             f"besoin.\n\nBien cordialement,\n{bs.legal_name or ''}\n{bs.phone or ''}").strip()
 
 

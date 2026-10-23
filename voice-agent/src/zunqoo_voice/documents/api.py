@@ -14,9 +14,17 @@ from sqlalchemy.orm import Session
 
 from ..core.config import Settings, get_settings
 from ..crm.api import DB, CurrentUser, require_admin, tenant_of
-from ..crm.db import Approval, BusinessSettings, CatalogItem, Contact, Invoice, Quote, User
-from ..crm.modules import ModuleKey
-from ..crm.services import add_interaction, enabled_modules
+from ..crm.db import (
+    Approval,
+    BusinessSettings,
+    CatalogItem,
+    Contact,
+    Invoice,
+    Quote,
+    QuoteSignature,
+    User,
+)
+from ..crm.services import add_interaction
 from .invoices import (
     InvoiceError,
     credit_note_for,
@@ -24,7 +32,6 @@ from .invoices import (
     is_overdue,
     issue_invoice,
     preview_pdf,
-    propose_invoice_for_quote,
     record_payment,
     remaining_due,
     send_invoice_email,
@@ -37,13 +44,16 @@ from .quotes import (
     QuoteError,
     business_settings,
     clean_lines,
+    close_quote_approvals,
     issue,
     line_from_catalog,
     missing_for_documents,
     quote_pdf,
+    record_decision,
     refresh_totals,
     send_quote_email,
 )
+from .signature import current_signature, open_signature, signature_out
 
 router = APIRouter(prefix="/api")
 
@@ -186,7 +196,10 @@ def list_quotes(user: CurrentUser, session: DB, status: str = "tous") -> list[di
     query = select(Quote).where(Quote.tenant_id == user.tenant_id)
     if status != "tous":
         query = query.where(Quote.status == status)
-    return [_q_out(q) for q in session.scalars(query.order_by(Quote.created_at.desc()).limit(300))]
+    signed = set(session.scalars(select(QuoteSignature.quote_id).where(
+        QuoteSignature.tenant_id == user.tenant_id, QuoteSignature.status == "signe")))
+    return [_q_out(q) | {"signed_online": q.id in signed}
+            for q in session.scalars(query.order_by(Quote.created_at.desc()).limit(300))]
 
 
 @router.post("/quotes", status_code=201)
@@ -249,14 +262,37 @@ def quote_pdf_route(quote_id: str, user: CurrentUser, session: DB,
                     headers={"Content-Disposition": f'inline; filename="{name}"'})
 
 
+@router.get("/quotes/{quote_id}/signature")
+def get_signature(quote_id: str, user: CurrentUser, session: DB,
+                  settings: Settings = Depends(get_settings)) -> dict:
+    q = _get_quote(session, user.tenant_id, quote_id)
+    return {"signature": signature_out(settings, current_signature(session, q))}
+
+
+@router.post("/quotes/{quote_id}/signature")
+def create_signature_link(quote_id: str, user: CurrentUser, session: DB,
+                          settings: Settings = Depends(get_settings)) -> dict:
+    """Lien à transmettre soi-même (SMS, WhatsApp), pour un devis déjà envoyé."""
+    q = _get_quote(session, user.tenant_id, quote_id)
+    if q.status != "envoye":
+        raise HTTPException(status_code=409, detail="seul un devis envoyé, sans réponse, peut être signé")
+    sig = open_signature(session, q, business_settings(session, tenant_of(user, settings)),
+                         by=user.email)
+    return {"signature": signature_out(settings, sig)}
+
+
+@router.get("/quotes/{quote_id}/signed.pdf")
+def signed_quote_pdf(quote_id: str, user: CurrentUser, session: DB) -> Response:
+    q = _get_quote(session, user.tenant_id, quote_id)
+    sig = current_signature(session, q)
+    if sig is None or sig.status != "signe" or not sig.signed_pdf:
+        raise HTTPException(status_code=404, detail="ce devis n'a pas été signé en ligne")
+    return Response(sig.signed_pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'inline; filename="Devis-{q.number}-signe.pdf"'})
+
+
 def _close_approvals(session: Session, q: Quote, status: str, by: str) -> None:
-    """Le devis a été traité depuis l'éditeur : la validation en attente est close."""
-    for a in session.scalars(select(Approval).where(
-            Approval.tenant_id == q.tenant_id, Approval.status == "en_attente",
-            Approval.kind.in_(("devis_envoi", "devis_relance")))):
-        if a.payload.get("quote_id") == q.id:
-            a.status, a.decided_by, a.decision_channel = status, by, "web"
-            a.decided_at = datetime.now(UTC)
+    close_quote_approvals(session, q, status, by)
 
 
 class SendIn(BaseModel):
@@ -275,7 +311,9 @@ async def send_quote(quote_id: str, body: SendIn, user: CurrentUser, session: DB
         if body.by_email:
             await send_quote_email(session, settings, tenant, q, body.email_body or "")
         else:
-            issue(session, q, business_settings(session, tenant), datetime.now(UTC))
+            bs = business_settings(session, tenant)
+            issue(session, q, bs, datetime.now(UTC))
+            open_signature(session, q, bs, by="remis_en_main")
             q.status, q.sent_at = "envoye", datetime.now(UTC)
             add_interaction(session, q.contact, tenant_id=tenant.id, channel="note",
                             direction="sortant", intent="devis",
@@ -295,20 +333,10 @@ class StatusIn(BaseModel):
 async def set_quote_status(quote_id: str, body: StatusIn, user: CurrentUser, session: DB,
                            settings: Settings = Depends(get_settings)) -> dict:
     q = _get_quote(session, user.tenant_id, quote_id)
-    was_accepted = q.status == "accepte"
     if q.status not in ("envoye", "expire", "accepte", "refuse"):
         raise HTTPException(status_code=409, detail="envoyez le devis avant de noter la réponse")
-    q.status, q.decided_at = body.status, datetime.now(UTC)
-    _close_approvals(session, q, "refuse", user.email)  # plus de relance
-    add_interaction(session, q.contact, tenant_id=q.tenant_id, channel="note", direction="interne",
-                    intent="devis",
-                    title=f"Devis {q.number} {'accepté' if body.status == 'accepte' else 'refusé'}",
-                    summary=q.title, data={"quote_id": q.id})
-    # Devis accepté + module Factures : l'assistant prépare la facture à valider.
-    if (body.status == "accepte" and not was_accepted
-            and ModuleKey.INVOICES in enabled_modules(session, user.tenant_id)
-            and not session.scalar(select(Invoice).where(Invoice.quote_id == q.id))):
-        await propose_invoice_for_quote(session, settings, tenant_of(user, settings), q)
+    await record_decision(session, settings, tenant_of(user, settings), q, body.status,
+                          by=user.email)
     return _q_out(q, full=True)
 
 

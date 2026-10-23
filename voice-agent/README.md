@@ -413,6 +413,45 @@ rendez-vous). Un seul envoi par jour, même si le service redémarre. Réglages
 
 Les deux tâches tournent dans le service `zunqoo-mail run`, avec les relances.
 
+## Signature en ligne des devis
+
+Intégrée au CRM, sans service tiers ni abonnement supplémentaire.
+
+- Chaque devis envoyé contient un **lien personnel** (dans l'e-mail, à la
+  place de `[lien de signature]`, et dans les relances). Pour un devis remis
+  en main propre, le lien se copie depuis le devis, ou s'envoie par WhatsApp
+  ou SMS en un clic.
+- Le client ouvre une page aux couleurs du commerce, sans créer de compte,
+  sur téléphone ou ordinateur : il relit le devis (lignes, totaux, PDF),
+  **confirme son e-mail avec un code à 6 chiffres** (envoyé depuis la boîte
+  du commerce), signe au doigt ou en écrivant son nom, et coche
+  « Bon pour accord ». Il peut aussi refuser, avec un mot facultatif.
+- À la signature :
+  - le devis passe « accepté » et les relances s'arrêtent ;
+  - si le module Factures est actif, la facture est préparée à valider ;
+  - le gérant est prévenu sur WhatsApp ;
+  - le client reçoit son exemplaire signé.
+- **Dossier de preuve, conservé sans limite de durée** (jamais supprimé) :
+  - le PDF exact présenté au client (figé à l'envoi, identique à la pièce
+    jointe) et son empreinte SHA-256 ;
+  - le nom, la fonction et l'e-mail vérifié du signataire ;
+  - l'image de la signature, la date et l'heure, l'adresse IP et le
+    navigateur ;
+  - le journal horodaté (envoi, consultations, code, signature) ;
+  - un PDF signé (devis + certificat de signature), lui aussi empreinté.
+- Valeur juridique : signature électronique simple (règlement eIDAS,
+  art. 1366-1367 du Code civil), suffisante pour un devis entre un commerce
+  et son client. Pour des montants importants ou un risque de litige
+  particulier, une signature « avancée » (prestataire qualifié) reste
+  possible plus tard.
+- Sécurité :
+  - lien impossible à deviner (identifiant aléatoire + empreinte HMAC) ;
+  - lien valable jusqu'à la date de validité du devis ;
+  - code de vérification valable 10 min, 5 essais au maximum ;
+  - un devis déjà signé, refusé ou expiré ne peut plus être signé.
+  - En production, mettre l'API derrière le reverse proxy, qui transmet
+    `X-Forwarded-For` pour l'adresse IP réelle du client.
+
 ## Coûts d'exploitation (estimation, à vérifier sur les grilles tarifaires)
 
 Configuration par défaut (Cartesia + Sonnet 5.5 pour la conversation + Haiku 5.5 pour le compte-rendu) :

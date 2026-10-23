@@ -454,6 +454,46 @@ class ReviewRequest(Base):
     contact: Mapped[Contact | None] = relationship()
 
 
+class QuoteSignature(Base):
+    """Signature en ligne d'un devis et son dossier de preuve.
+
+    Conservé sans limite de durée (jamais supprimé) : le document exact
+    présenté au client, son empreinte SHA-256, l'identité déclarée, la
+    vérification par code e-mail, l'image de la signature, l'adresse IP,
+    le navigateur et le journal horodaté de chaque étape.
+    """
+
+    __tablename__ = "quote_signatures"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    quote_id: Mapped[str] = mapped_column(ForeignKey("quotes.id"), index=True)
+    # ouvert | signe | refuse | annule
+    status: Mapped[str] = mapped_column(String(10), default="ouvert", index=True)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+    expires_at: Mapped[datetime | None] = mapped_column()
+    document_pdf: Mapped[bytes] = mapped_column(LargeBinary)
+    document_sha256: Mapped[str] = mapped_column(String(64))
+    signer_email: Mapped[str | None] = mapped_column(String(255))  # e-mail vérifié par code
+    otp_required: Mapped[bool] = mapped_column(Boolean, default=True)
+    otp_hash: Mapped[str | None] = mapped_column(String(64))
+    otp_expires_at: Mapped[datetime | None] = mapped_column()
+    otp_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    otp_sent_count: Mapped[int] = mapped_column(Integer, default=0)
+    otp_verified_at: Mapped[datetime | None] = mapped_column()
+    signer_name: Mapped[str | None] = mapped_column(String(200))
+    signer_role: Mapped[str | None] = mapped_column(String(200))   # qualité (société)
+    signature_png: Mapped[bytes | None] = mapped_column(LargeBinary)
+    signed_at: Mapped[datetime | None] = mapped_column()
+    signer_ip: Mapped[str | None] = mapped_column(String(64))
+    signer_user_agent: Mapped[str | None] = mapped_column(String(400))
+    refusal_reason: Mapped[str | None] = mapped_column(Text)
+    signed_pdf: Mapped[bytes | None] = mapped_column(LargeBinary)
+    signed_pdf_sha256: Mapped[str | None] = mapped_column(String(64))
+    events: Mapped[list[dict]] = mapped_column(JSON, default=list)
+
+    quote: Mapped[Quote] = relationship()
+
+
 @lru_cache(maxsize=4)
 def get_engine(url: str) -> Engine:
     if url.startswith("sqlite:///") and not url.startswith("sqlite:///:memory:"):

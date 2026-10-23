@@ -90,6 +90,7 @@ export function QuotesPage() {
                   <strong>{formatEuro(q.total_ttc)}</strong>
                   <span className={`pill pill-${q.status}`}>{QUOTE_STATUS[q.status]}</span>
                   {q.incomplete && <span className="pill pill-warn">prix à compléter</span>}
+                  {q.signed_online && <span className="pill pill-signed">signé en ligne</span>}
                 </span>
               </Link>
             </li>

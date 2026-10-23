@@ -14,6 +14,7 @@ import { InvoiceEditorPage } from "./pages/InvoiceEditor";
 import { InvoicesPage } from "./pages/Invoices";
 import { QuoteEditorPage } from "./pages/QuoteEditor";
 import { QuotesPage } from "./pages/Quotes";
+import { SignPage } from "./pages/Sign";
 import { Icon, Spinner, type IconName } from "./ui";
 
 const NAV: { to: string; label: string; icon: IconName; module?: string; desktopOnly?: boolean }[] = [
@@ -108,6 +109,8 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/connexion" element={<PublicOnly />} />
+          {/* Page publique : le client signe sans compte, le lien suffit. */}
+          <Route path="/signer/:token" element={<SignPage />} />
           <Route element={<Protected />}>
             <Route index element={<DashboardPage />} />
             <Route path="a-valider" element={<ApprovalsPage />} />

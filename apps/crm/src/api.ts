@@ -26,6 +26,8 @@ export function setToken(token: string | null) {
   }
 }
 
+export const apiUrl = (path: string) => `${BASE}${path}`;
+
 let onUnauthorized: () => void = () => {};
 export function setUnauthorizedHandler(fn: () => void) {
   onUnauthorized = fn;
@@ -331,6 +333,7 @@ export interface QuoteSummary {
   sent_at: string | null;
   created_at: string;
   incomplete: boolean;
+  signed_online?: boolean;
 }
 
 export interface QuoteFull extends QuoteSummary {
@@ -413,4 +416,39 @@ export interface ExtrasSettings {
 export interface ReviewsOverview {
   last_30_days: Record<"envoye" | "a_valider" | "refuse" | "sans_email" | "deja_demande" | "echec", number>;
   preview: string;
+}
+
+export interface QuoteSignatureInfo {
+  id: string;
+  status: "ouvert" | "signe" | "refuse" | "annule";
+  url: string | null;
+  created_at: string;
+  expires_at: string | null;
+  otp_required: boolean;
+  signer_name: string | null;
+  signer_role: string | null;
+  signer_email: string | null;
+  signed_at: string | null;
+  signer_ip: string | null;
+  refusal_reason: string | null;
+  document_sha256: string;
+  signed_pdf_sha256: string | null;
+  viewed: boolean;
+  events: { at: string; label: string; ip?: string | null }[];
+}
+
+export interface PublicQuote {
+  business: { name: string; legal_name: string | null; city: string | null; phone: string | null; email: string | null };
+  quote: {
+    number: string; title: string; client: string | null; issue_date: string; valid_until: string | null;
+    prices_include_vat: boolean; vat_franchise: boolean;
+    lines: { description: string; detail: string | null; quantity: number; unit: string | null;
+             unit_price: number; vat_rate: number; total: number }[];
+    total_ht: number; total_vat: number; total_ttc: number; notes: string | null; mentions: string[];
+  };
+  signature: {
+    mention: string; status: "ouvert" | "signe" | "refuse" | "annule"; closed: string | null;
+    otp_required: boolean; otp_verified: boolean; email: string | null;
+    signer_name: string | null; signed_at: string | null;
+  };
 }

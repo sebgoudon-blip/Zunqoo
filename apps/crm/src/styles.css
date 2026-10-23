@@ -446,3 +446,62 @@ a.list-row:hover { background: var(--bg); }
 .whatsapp-preview { background: #e7f6dc; border-color: #cfe9bb; white-space: pre-wrap; }
 .review-stats { margin: 0; }
 .check { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+
+/* Signature en ligne (page publique du client) */
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { filter: brightness(0.92); }
+.btn-large { min-height: 52px; font-size: 1.05rem; width: 100%; justify-content: center; }
+.sign-page { min-height: 100vh; display: flex; flex-direction: column; }
+.sign-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface);
+  border-bottom: 1px solid var(--border); }
+.sign-header strong { display: block; font-size: 1.05rem; }
+.sign-header span:not(.brand-mark) { color: var(--muted); font-size: 0.9rem; }
+.sign-main { width: 100%; max-width: 720px; margin: 0 auto; padding: 20px 16px 8px; display: grid; gap: 16px; }
+.sign-main .card { margin: 0; }
+.sign-kicker { margin: 0 0 4px; color: var(--primary); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.sign-quote h1, .sign-state h1 { font-size: 1.45rem; margin: 0 0 6px; line-height: 1.25; }
+.sign-lines { list-style: none; margin: 16px 0 0; padding: 0; }
+.sign-lines li { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.sign-line-qty { display: block; font-size: 0.9rem; }
+.sign-totals { margin: 12px 0 16px; display: grid; gap: 4px; }
+.sign-totals div { display: flex; justify-content: space-between; }
+.sign-totals dt { color: var(--muted); }
+.sign-totals dd { margin: 0; font-variant-numeric: tabular-nums; }
+.sign-total { padding-top: 8px; margin-top: 4px; border-top: 2px solid var(--text); font-size: 1.25rem; font-weight: 700; }
+.sign-total dt { color: var(--text); }
+.sign-notes { background: var(--bg); border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; }
+.sign-form h2 { margin-top: 0; }
+.sign-step { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
+.sign-step:disabled { opacity: 0.45; }
+.sign-step h3 { display: flex; align-items: center; gap: 10px; font-size: 1.05rem; margin: 0 0 8px; }
+.step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; flex: none; }
+.code-row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.code-row .field { margin: 0; }
+.code-input { font-size: 1.4rem; letter-spacing: 0.3em; width: 10ch; text-align: center; font-variant-numeric: tabular-nums; }
+.sig-mode { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 3px; margin: 4px 0 10px; }
+.sig-mode button { border: 0; background: none; border-radius: 999px; min-height: 40px; padding: 0 16px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
+.sig-mode button.on { background: var(--primary-soft); color: var(--primary); }
+.sigpad { position: relative; height: 190px; border: 1.5px dashed var(--border); border-radius: 12px; background: #fffdf9; touch-action: none; }
+.sigpad canvas { width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; border-radius: 12px; }
+.sigpad-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); pointer-events: none; padding: 0 16px; text-align: center; }
+.sigpad-line { position: absolute; left: 24px; right: 24px; bottom: 44px; border-bottom: 1px solid var(--border); pointer-events: none; }
+.typed-signature { height: 190px; display: flex; align-items: center; padding: 0 24px; border: 1.5px dashed var(--border); border-radius: 12px; background: #fffdf9;
+  font: italic 2.6rem "Segoe Script", "Brush Script MT", "Snell Roundhand", cursive; color: #1f1a17; overflow: hidden; white-space: nowrap; }
+.sign-accept { align-items: flex-start; margin: 16px 0; padding: 12px; border-radius: 10px; background: var(--bg); }
+.sign-accept input { width: 22px; height: 22px; margin-top: 2px; flex: none; accent-color: var(--primary); }
+.sign-refuse { border-top: 1px solid var(--border); padding-top: 14px; }
+.sign-state { text-align: center; display: grid; justify-items: center; gap: 8px; }
+.sign-done { border-color: var(--green); background: var(--green-soft); }
+.sign-check { width: 56px; height: 56px; border-radius: 50%; background: var(--green); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.sign-legal { color: var(--muted); font-size: 0.8rem; line-height: 1.5; margin: 0; }
+.sign-footer { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-size: 0.8rem; padding: 16px; }
+
+/* Signature en ligne (CRM) */
+.sig-link { display: flex; gap: 8px; align-items: center; }
+.sig-link input { flex: 1; min-width: 0; font-size: 0.9rem; }
+.timeline { list-style: none; padding: 0; margin: 8px 0 0; }
+.timeline li { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+.timeline time { color: var(--muted); min-width: 9.5em; font-variant-numeric: tabular-nums; }
+.hash { font-family: ui-monospace, monospace; font-size: 0.78rem; word-break: break-all; color: var(--muted); }
+.pill-signed { background: var(--green-soft); color: var(--green); }

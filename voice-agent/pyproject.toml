@@ -22,6 +22,7 @@ dependencies = [
   "python-multipart>=0.0.9",
   "email-validator>=2.1",
   "reportlab>=4.2",
+  "pypdf>=5",
   "factur-x>=3.0",
 ]
 

@@ -6,11 +6,13 @@ import { formatEuro } from "../format";
 import { ErrorBanner, Icon, Spinner } from "../ui";
 import { LinesEditor, linesPayload, previewTotal, toEdit, validateLines, type EditLine } from "./LinesEditor";
 import { QUOTE_STATUS } from "./Quotes";
+import { QuoteSignatureCard } from "./QuoteSignature";
 
 function defaultEmail(q: QuoteFull, signature: string): string {
   const first = q.contact?.name.split(" ")[0];
   return `Bonjour${first ? " " + first : ""},\n\nVeuillez trouver ci-joint notre devis « ${q.title} ».\n` +
-    "Pour l'accepter, il vous suffit de répondre à cet e-mail ou de nous le renvoyer signé.\n\n" +
+    "Vous pouvez l'accepter et le signer en ligne, en une minute, depuis votre téléphone ou votre ordinateur :\n" +
+    "[lien de signature]\n\n" +
     `Nous restons à votre disposition pour toute question.\n\nBien cordialement,\n${signature}`;
 }
 
@@ -219,12 +221,14 @@ export function QuoteEditorPage() {
         </section>
       )}
 
+      {quote.number && quote.status !== "brouillon" && <QuoteSignatureCard quote={quote} />}
+
       {(quote.status === "envoye" || quote.status === "expire") && (
         <section className="card">
           <h2>Réponse du client</h2>
           <p className="muted">
             {quote.reminders_sent > 0 ? `${quote.reminders_sent} relance(s) proposée(s). ` : ""}
-            Notez la réponse pour arrêter les relances.
+            Si le client répond autrement qu'en signant en ligne, notez sa réponse pour arrêter les relances.
           </p>
           <div className="presets">
             <button className="btn btn-primary" disabled={busy}
