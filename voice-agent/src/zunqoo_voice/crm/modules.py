@@ -61,7 +61,6 @@ MODULES: dict[ModuleKey, ModuleDef] = {
         ModuleDef(
             ModuleKey.EMAIL, "E-mails",
             "Lit votre boîte Gmail, trie les messages et prépare ou envoie les réponses.",
-            available=False,
         ),
         ModuleDef(
             ModuleKey.QUOTES, "Devis",

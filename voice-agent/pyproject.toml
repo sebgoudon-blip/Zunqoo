@@ -31,6 +31,7 @@ zunqoo-onboard = "zunqoo_voice.scraper.cli:main"
 zunqoo-license = "zunqoo_voice.billing.cli:main"
 zunqoo-sip = "zunqoo_voice.telephony.provision:main"
 zunqoo-crm = "zunqoo_voice.crm.cli:main"
+zunqoo-mail = "zunqoo_voice.mail.worker:main"
 
 [build-system]
 requires = ["hatchling"]

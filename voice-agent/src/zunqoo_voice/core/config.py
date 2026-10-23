@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     whatsapp_verify_token: SecretStr = SecretStr("")  # vérification initiale par Meta
     whatsapp_approval_template: str = "zunqoo_validation"
 
+    # --- E-mails (Gmail) ----------------------------------------------------
+    google_client_id: str = ""
+    google_client_secret: SecretStr = SecretStr("")
+    # Adresse publique de l'API (pour l'URL de retour Google OAuth)
+    api_public_url: str = "http://localhost:8000"
+    # Clé de chiffrement des accès Gmail (Fernet) : zunqoo-mail genkey
+    mail_token_key: SecretStr = SecretStr("")
+    mail_poll_seconds: int = Field(default=120, ge=30)
+    mail_max_per_sync: int = Field(default=25, ge=1, le=100)
+
     # --- LiveKit (orchestration temps réel + SIP) --------------------------
     livekit_url: str = "ws://localhost:7880"
     livekit_api_key: str = ""

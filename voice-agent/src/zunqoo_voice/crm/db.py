@@ -187,6 +187,45 @@ class Approval(Base):
     contact: Mapped[Contact | None] = relationship()
 
 
+class MailAccount(Base):
+    """Boîte e-mail connectée d'un commerce (une par commerce pour l'instant)."""
+
+    __tablename__ = "mail_accounts"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[str] = mapped_column(String(64), unique=True)
+    provider: Mapped[str] = mapped_column(String(20), default="gmail")
+    email: Mapped[str] = mapped_column(String(255))
+    refresh_token_enc: Mapped[str] = mapped_column(Text)  # chiffré (Fernet), jamais en clair
+    scopes: Mapped[str] = mapped_column(Text, default="")
+    label_id: Mapped[str | None] = mapped_column(String(120))  # libellé « Zunqoo » dans Gmail
+    connected_at: Mapped[datetime] = mapped_column(default=_now)
+    connected_by: Mapped[str | None] = mapped_column(String(255))
+    last_sync_at: Mapped[datetime | None] = mapped_column()
+    last_error: Mapped[str | None] = mapped_column(Text)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class MailMessage(Base):
+    """Un e-mail reçu déjà vu par l'assistant (évite tout double traitement)."""
+
+    __tablename__ = "mail_messages"
+    __table_args__ = (UniqueConstraint("tenant_id", "provider_id"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    provider_id: Mapped[str] = mapped_column(String(120))  # id Gmail du message
+    thread_id: Mapped[str | None] = mapped_column(String(120))
+    from_email: Mapped[str | None] = mapped_column(String(255))
+    subject: Mapped[str | None] = mapped_column(Text)
+    received_at: Mapped[datetime] = mapped_column(default=_now)
+    category: Mapped[str | None] = mapped_column(String(40))
+    importance: Mapped[str | None] = mapped_column(String(20))
+    # ignore | lu | a_valider | envoye_auto | envoye | refuse | erreur
+    status: Mapped[str] = mapped_column(String(20), default="lu")
+    interaction_id: Mapped[str | None] = mapped_column(String(32))
+    approval_id: Mapped[str | None] = mapped_column(String(32))
+    error: Mapped[str | None] = mapped_column(Text)
+
+
 @lru_cache(maxsize=4)
 def get_engine(url: str) -> Engine:
     if url.startswith("sqlite:///") and not url.startswith("sqlite:///:memory:"):

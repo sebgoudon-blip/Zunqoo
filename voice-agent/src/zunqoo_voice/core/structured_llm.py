@@ -19,7 +19,7 @@ from .config import Settings
 T = TypeVar("T", bound=BaseModel)
 
 Effort = Literal["low", "medium", "high"]
-Purpose = Literal["onboarding", "report"]
+Purpose = Literal["onboarding", "report", "draft"]
 
 
 class StructuredLLMError(RuntimeError):
@@ -50,11 +50,13 @@ class StructuredLLM:
     ) -> T:
         s = self.settings
         if self.provider == "anthropic":
-            model = s.anthropic_report_model if purpose == "report" else s.anthropic_extract_model
+            model = {"report": s.anthropic_report_model, "draft": s.anthropic_chat_model}.get(
+                purpose, s.anthropic_extract_model)
             return await self._extract_anthropic(
                 schema, model=model, system=system, user=user, effort=effort
             )
-        model = s.openai_report_model if purpose == "report" else s.openai_extract_model
+        model = {"report": s.openai_report_model, "draft": s.openai_chat_model}.get(
+            purpose, s.openai_extract_model)
         return await self._extract_openai(schema, model=model, system=system, user=user)
 
     async def _extract_anthropic(
