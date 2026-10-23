@@ -69,6 +69,20 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
   patch: <T>(path: string, body: unknown) => request<T>("PATCH", path, body),
   del: (path: string) => request<void>("DELETE", path),
+  /** Ouvre un PDF protégé dans un nouvel onglet. */
+  async openPdf(path: string) {
+    const tab = window.open("", "_blank"); // ouvert tout de suite (bloqueur de fenêtres)
+    const res = await fetch(`${BASE}${path}`, {
+      headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+    });
+    if (!res.ok) {
+      tab?.close();
+      throw new ApiError(res.status, "PDF indisponible.");
+    }
+    const url = URL.createObjectURL(await res.blob());
+    if (tab) tab.location.href = url;
+    else window.location.assign(url);
+  },
   async download(path: string, filename: string) {
     const res = await fetch(`${BASE}${path}`, {
       headers: { Authorization: `Bearer ${getToken() ?? ""}` },
@@ -202,6 +216,12 @@ export interface UpcomingOrder {
 
 export interface Today {
   date_label: string;
+  quotes: {
+    awaiting_count: number;
+    awaiting_total_ttc: number;
+    awaiting: { id: string; number: string | null; title: string; total_ttc: number;
+                sent_at: string | null; contact: { id: string; name: string } | null }[];
+  } | null;
   todo: {
     approvals_count: number;
     approvals: { id: string; title: string; summary: string; created_at: string }[];
@@ -242,4 +262,63 @@ export interface SyncResult {
   auto_sent: number;
   to_validate: number;
   errors: string[];
+}
+
+export interface BusinessInfo {
+  legal_name: string | null;
+  legal_form: string | null;
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  siret: string | null;
+  vat_number: string | null;
+  rcs: string | null;
+  capital: string | null;
+  email: string | null;
+  phone: string | null;
+  iban: string | null;
+  bic: string | null;
+  vat_franchise: boolean;
+  quote_validity_days: number;
+  payment_terms_days: number;
+  quote_terms: string | null;
+  invoice_terms: string | null;
+  missing: string[];
+}
+
+export interface QuoteLine {
+  description: string;
+  detail: string | null;
+  catalog_item_id: string | null;
+  quantity: string;
+  unit: string | null;
+  unit_price: string | null;
+  vat_rate: string;
+}
+
+export type QuoteStatus = "brouillon" | "a_valider" | "envoye" | "accepte" | "refuse" | "expire" | "facture";
+
+export interface QuoteSummary {
+  id: string;
+  number: string | null;
+  status: QuoteStatus;
+  title: string;
+  total_ht: number;
+  total_ttc: number;
+  prices_include_vat: boolean;
+  source: string;
+  contact: { id: string; name: string; email: string | null } | null;
+  issue_date: string | null;
+  valid_until: string | null;
+  sent_at: string | null;
+  created_at: string;
+  incomplete: boolean;
+}
+
+export interface QuoteFull extends QuoteSummary {
+  lines: QuoteLine[];
+  notes: string | null;
+  internal_notes: string | null;
+  email_body: string | null;
+  reminders_sent: number;
 }

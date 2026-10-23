@@ -96,6 +96,11 @@ def client_party(contact: Contact | None) -> Party:
 # ---------------------------------------------------------------------------
 
 
+def _plain(value: Decimal) -> str:
+    """10 -> « 10 » (et non « 1E+1 »), 5.50 -> « 5.5 »."""
+    return f"{value.normalize():f}"
+
+
 def clean_lines(lines: list[dict]) -> list[dict]:
     out = []
     for raw in lines:
@@ -116,10 +121,10 @@ def clean_lines(lines: list[dict]) -> list[dict]:
             "description": desc[:300],
             "detail": (str(raw.get("detail")).strip()[:500] or None) if raw.get("detail") else None,
             "catalog_item_id": raw.get("catalog_item_id"),
-            "quantity": str(qty.normalize()),
+            "quantity": _plain(qty),
             "unit": (raw.get("unit") or None),
             "unit_price": None if price is None else str(price),
-            "vat_rate": str(rate.normalize()),
+            "vat_rate": _plain(rate),
         })
     return out
 

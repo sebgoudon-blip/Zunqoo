@@ -3,6 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { api, type Autonomy, type EmailStatus, type ModuleInfo, type ModulesResponse,
          type SyncResult } from "../api";
 import { formatWhen } from "../format";
+import { Link } from "react-router-dom";
+import { BusinessForm } from "./BusinessForm";
 import { useAuth } from "../auth";
 import { ErrorBanner, PageHeader, Spinner } from "../ui";
 
@@ -73,6 +75,10 @@ export function ModulesPage() {
             </div>
           </section>
 
+          <Link to="/catalogue" className="card catalog-shortcut">
+            <strong>Catalogue</strong>
+            <span className="muted">Vos produits et tarifs, utilisés au téléphone et dans les devis.</span>
+          </Link>
           <ul className="module-list">
             {data.modules.map((m) => (
               <li key={m.key} className={`card module ${m.enabled ? "on" : ""} ${m.available ? "" : "soon"}`}>
@@ -111,6 +117,7 @@ export function ModulesPage() {
               </li>
             ))}
           </ul>
+          <BusinessForm isAdmin={isAdmin} />
         </>
       )}
     </>

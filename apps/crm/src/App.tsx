@@ -9,13 +9,17 @@ import { ContactsPage } from "./pages/Contacts";
 import { DashboardPage } from "./pages/Dashboard";
 import { LoginPage } from "./pages/Login";
 import { ModulesPage } from "./pages/Modules";
+import { QuoteEditorPage } from "./pages/QuoteEditor";
+import { QuotesPage } from "./pages/Quotes";
 import { Icon, Spinner, type IconName } from "./ui";
 
-const NAV: { to: string; label: string; icon: IconName }[] = [
+const NAV: { to: string; label: string; icon: IconName; module?: string; desktopOnly?: boolean }[] = [
   { to: "/", label: "Accueil", icon: "home" },
   { to: "/a-valider", label: "À valider", icon: "checkCircle" },
   { to: "/clients", label: "Clients", icon: "users" },
-  { to: "/catalogue", label: "Catalogue", icon: "box" },
+  { to: "/devis", label: "Devis", icon: "note", module: "devis" },
+  // Sur téléphone, le catalogue est accessible depuis Réglages (5 onglets maximum).
+  { to: "/catalogue", label: "Catalogue", icon: "box", desktopOnly: true },
   { to: "/reglages", label: "Réglages", icon: "settings" },
 ];
 
@@ -39,7 +43,7 @@ function usePendingCount(): number {
 }
 
 function Layout() {
-  const { me, logout } = useAuth();
+  const { me, logout, hasModule } = useAuth();
   const pending = usePendingCount();
   return (
     <div className="shell">
@@ -55,8 +59,9 @@ function Layout() {
           </div>
         </div>
         <nav aria-label="Navigation principale">
-          {NAV.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.to === "/"} className="nav-link">
+          {NAV.filter((item) => !item.module || hasModule(item.module)).map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.to === "/"}
+                     className={`nav-link ${item.desktopOnly ? "desktop-only" : ""}`}>
               <Icon name={item.icon} />
               <span>{item.label}</span>
               {item.to === "/a-valider" && pending > 0 && (
@@ -104,6 +109,8 @@ export function App() {
             <Route path="clients" element={<ContactsPage />} />
             <Route path="clients/:id" element={<ContactDetailPage />} />
             <Route path="catalogue" element={<CatalogPage />} />
+            <Route path="devis" element={<QuotesPage />} />
+            <Route path="devis/:id" element={<QuoteEditorPage />} />
             <Route path="reglages" element={<ModulesPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

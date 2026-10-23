@@ -335,3 +335,50 @@ a.list-row:hover { background: var(--bg); }
 .reply-editor textarea { font-size: 0.95rem; line-height: 1.5; }
 .email-connection { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
 .email-connection p { margin-bottom: 8px; }
+
+/* --- Devis ---------------------------------------------------------------------- */
+.tab-count {
+  margin-left: 6px; font-size: 0.78rem; background: var(--bg); color: var(--muted);
+  border-radius: 999px; padding: 1px 7px;
+}
+.pill { display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+        background: var(--bg); color: var(--muted); white-space: nowrap; }
+.pill-a_valider, .pill-warn { background: var(--primary-soft); color: var(--primary); }
+.pill-envoye { background: #e6edfb; color: #1e3f8a; }
+.pill-accepte, .pill-facture { background: var(--green-soft); color: #173f29; }
+.pill-refuse, .pill-expire { background: #eef0f4; color: #3d4656; }
+.price .pill { margin-top: 4px; }
+
+.quote-lines { display: grid; gap: 8px; margin-bottom: 12px; }
+.quote-line {
+  display: grid; grid-template-columns: minmax(0, 3fr) 1.4fr 1fr 0.9fr 1fr 44px;
+  gap: 8px; align-items: start; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.quote-line.head { font-weight: 600; font-size: 0.88rem; color: var(--muted); border-bottom: 0; padding-bottom: 0; }
+.quote-line.missing-price input[aria-label="Prix unitaire"] { border-color: var(--primary); background: var(--primary-soft); }
+.ql-desc, .ql-qty { display: flex; flex-direction: column; gap: 4px; }
+.ql-detail { font-size: 0.88rem; min-height: 36px !important; }
+.ql-qty input:last-child { font-size: 0.88rem; min-height: 36px !important; }
+.ql-total { text-align: right; font-weight: 600; padding-top: 10px; font-variant-numeric: tabular-nums; }
+.quote-totals { margin: 12px 0; text-align: right; }
+.big-total { font-size: 1.3rem; color: var(--primary); }
+.sticky-actions {
+  position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px;
+  background: var(--bg); padding: 12px 0; margin-bottom: 16px; border-top: 1px solid var(--border);
+}
+.field.checkbox { flex-direction: row; align-items: center; gap: 10px; }
+.field.checkbox input { width: 20px; height: 20px; accent-color: var(--primary); }
+.catalog-shortcut { display: none; text-decoration: none; color: var(--text); }
+.catalog-shortcut strong { display: block; }
+.presets select { width: auto; min-width: 260px; }
+
+@media (max-width: 760px) {
+  .desktop-only { display: none !important; }
+  .catalog-shortcut { display: block; }
+  .quote-line { grid-template-columns: 1fr 1fr; }
+  .quote-line.head { display: none; }
+  .ql-desc { grid-column: 1 / -1; }
+  .ql-total { text-align: left; }
+  .sticky-actions { bottom: 64px; }
+  .presets select { min-width: 0; width: 100%; }
+}

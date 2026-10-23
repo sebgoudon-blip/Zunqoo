@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .db import Approval, Contact, Interaction, MailMessage
+from .db import Approval, Contact, Interaction, MailMessage, Quote
 from .modules import ModuleKey
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -154,7 +154,23 @@ def today_overview(session: Session, tenant_id: str, tz: str, modules: set[Modul
     new_contacts = session.query(Contact).filter(
         Contact.tenant_id == tenant_id, Contact.created_at >= start_of_day).count()
 
+    quotes = None
+    if ModuleKey.QUOTES in modules:
+        awaiting = list(session.scalars(
+            select(Quote).where(Quote.tenant_id == tenant_id, Quote.status == "envoye")
+            .order_by(Quote.sent_at)))
+        quotes = {
+            "awaiting_count": len(awaiting),
+            "awaiting_total_ttc": float(sum((q.total_ttc for q in awaiting), 0)),
+            "awaiting": [{"id": q.id, "number": q.number, "title": q.title,
+                          "total_ttc": float(q.total_ttc),
+                          "sent_at": q.sent_at.isoformat() if q.sent_at else None,
+                          "contact": {"id": q.contact.id, "name": q.contact.display_name}
+                          if q.contact else None} for q in awaiting[:5]],
+        }
+
     return {
+        "quotes": quotes,
         "date_label": f"{JOURS[today.weekday()].capitalize()} {today.day} {MOIS[today.month - 1]}",
         "todo": {
             "approvals_count": pending_count,

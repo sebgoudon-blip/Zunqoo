@@ -31,6 +31,8 @@ export function ApprovalsPage() {
   useEffect(load, [load]);
 
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  // Champ de texte modifiable selon le type de validation.
+  const EDIT_KEY: Record<string, string> = { email_reponse: "body", devis_envoi: "email_body", devis_relance: "body" };
 
   async function decide(a: Approval, approve: boolean) {
     setBusy(a.id);
@@ -43,7 +45,7 @@ export function ApprovalsPage() {
     try {
       const done = await api.post<Approval>(`/api/approvals/${a.id}/decision`, {
         approve,
-        ...(approve && edited !== undefined ? { edits: { body: edited } } : {}),
+        ...(approve && edited !== undefined ? { edits: { [EDIT_KEY[a.kind] ?? "body"]: edited } } : {}),
       });
       setItems((list) => (tab === "en_attente" ? list?.filter((x) => x.id !== a.id) ?? null
                                                : list?.map((x) => (x.id === a.id ? done : x)) ?? null));
@@ -86,7 +88,16 @@ export function ApprovalsPage() {
             </div>
             {a.contact && <Link to={`/clients/${a.contact.id}`}>{a.contact.name}</Link>}
             <p className="approval-summary">{a.summary}</p>
-            {a.kind === "email_reponse" && (
+            {(a.kind === "devis_envoi" || a.kind === "devis_relance") && typeof a.payload.quote_id === "string" && (
+              <div className="presets">
+                <Link className="btn btn-small btn-ghost" to={`/devis/${a.payload.quote_id}`}>Ouvrir le devis</Link>
+                <button className="btn btn-small btn-ghost"
+                        onClick={() => api.openPdf(`/api/quotes/${a.payload.quote_id}/pdf`).catch((e) => setError(e.message))}>
+                  Voir le PDF
+                </button>
+              </div>
+            )}
+            {EDIT_KEY[a.kind] && (
               <>
                 {typeof a.payload.incoming === "string" && (
                   <details>
@@ -96,14 +107,14 @@ export function ApprovalsPage() {
                 )}
                 {a.status === "en_attente" ? (
                   <label className="field reply-editor">
-                    <span>Réponse proposée (vous pouvez la modifier)</span>
-                    <textarea rows={8} value={drafts[a.id] ?? String(a.payload.body ?? "")}
+                    <span>{a.kind === "email_reponse" ? "Réponse proposée" : "Message d'accompagnement"} (vous pouvez le modifier)</span>
+                    <textarea rows={8} value={drafts[a.id] ?? String(a.payload[EDIT_KEY[a.kind]] ?? "")}
                               onChange={(e) => setDrafts({ ...drafts, [a.id]: e.target.value })} />
                   </label>
                 ) : (
                   <details>
                     <summary>Voir la réponse</summary>
-                    <pre className="transcript">{String(a.payload.body ?? "")}</pre>
+                    <pre className="transcript">{String(a.payload[EDIT_KEY[a.kind]] ?? "")}</pre>
                   </details>
                 )}
               </>

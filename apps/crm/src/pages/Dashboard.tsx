@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, type Dashboard, type OrderLineOut, type Today, type UpcomingOrder } from "../api";
 import { useAuth } from "../auth";
-import { formatPhone, formatWhen } from "../format";
+import { formatEuro, formatPhone, formatWhen } from "../format";
 import { CHANNEL_ICON, ErrorBanner, Icon, Spinner } from "../ui";
 
 function qty(l: OrderLineOut): string {
@@ -166,6 +166,30 @@ export function DashboardPage() {
           </section>
         )}
       </div>
+
+      {today.quotes && today.quotes.awaiting_count > 0 && (
+        <section className="card" aria-labelledby="quotes-title">
+          <div className="order-day-head">
+            <h2 id="quotes-title">Devis en attente de réponse</h2>
+            <Link to="/devis?vue=envoyes">
+              {today.quotes.awaiting_count} devis · {formatEuro(today.quotes.awaiting_total_ttc)} TTC
+            </Link>
+          </div>
+          <ul className="order-list">
+            {today.quotes.awaiting.map((q) => (
+              <li key={q.id}>
+                <div className="todo-main">
+                  <strong><Link to={`/devis/${q.id}`}>{q.title || q.number}</Link></strong>
+                  <span className="muted">
+                    {[q.number, q.contact?.name, q.sent_at && `envoyé ${formatWhen(q.sent_at)}`].filter(Boolean).join(" · ")}
+                  </span>
+                </div>
+                <strong className="nowrap">{formatEuro(q.total_ttc)}</strong>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="card">
         <h2>Activité récente</h2>

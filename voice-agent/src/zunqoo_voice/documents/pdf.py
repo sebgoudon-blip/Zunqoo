@@ -108,8 +108,8 @@ def render_pdf(doc: DocumentView) -> bytes:
     base = ParagraphStyle("base", fontName="DejaVu", fontSize=9, leading=12)
     small = ParagraphStyle("small", parent=base, fontSize=7.5, leading=10, textColor=MUTED)
     bold = ParagraphStyle("bold", parent=base, fontName="DejaVu-Bold")
-    big = ParagraphStyle("big", parent=base, fontName="DejaVu-Bold", fontSize=18, leading=22,
-                         textColor=ACCENT)
+    big = ParagraphStyle("big", parent=base, fontName="DejaVu-Bold", fontSize=15, leading=19,
+                         textColor=ACCENT, alignment=TA_RIGHT)
     right = ParagraphStyle("right", parent=base, alignment=TA_RIGHT)
     right_bold = ParagraphStyle("rightb", parent=bold, alignment=TA_RIGHT)
 
@@ -121,7 +121,7 @@ def render_pdf(doc: DocumentView) -> bytes:
     title_block = [_p(f"{TITLES[doc.kind]} n° {doc.number}", big),
                    _p(f"Date : {doc.issue_date:%d/%m/%Y}", right)]
     title_block += [_p(f"{label} : {value}", right) for label, value in doc.dates]
-    header = Table([[seller, title_block]], colWidths=[100 * mm, 78 * mm])
+    header = Table([[seller, title_block]], colWidths=[92 * mm, 86 * mm])
     header.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"),
                                 ("ALIGN", (1, 0), (1, 0), "RIGHT")]))
     story += [header, Spacer(1, 10 * mm)]

@@ -68,6 +68,11 @@ def test_totals_ht_mode_and_franchise():
                               prices_include_vat=True).complete
 
 
+def test_clean_lines_never_uses_scientific_notation():
+    out = clean_lines([{"description": "x", "quantity": 10, "unit_price": 1, "vat_rate": 20}])
+    assert (out[0]["quantity"], out[0]["vat_rate"]) == ("10", "20")
+
+
 def test_clean_lines_validation():
     with pytest.raises(QuoteError):
         clean_lines([{"description": "x", "quantity": 0, "unit_price": 1}])
