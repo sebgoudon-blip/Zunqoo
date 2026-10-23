@@ -9,6 +9,13 @@ services:
     deploy:
       replicas: 1   # augmenter : chaque worker prend plusieurs appels en parallèle
 
+  mail:
+    build: ..
+    env_file: ../.env
+    command: ["zunqoo-mail", "run"]
+    volumes: ["zunqoo-data:/app/data"]
+    restart: unless-stopped
+
   admin-api:
     build: ..
     env_file: ../.env

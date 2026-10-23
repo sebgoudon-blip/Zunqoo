@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .db import Approval, Contact, Interaction
+from .db import Approval, Contact, Interaction, MailMessage
 from .modules import ModuleKey
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -169,6 +169,12 @@ def today_overview(session: Session, tenant_id: str, tz: str, modules: set[Modul
             "orders": sum(1 for i in calls_today if i.intent == "commande")
             if ModuleKey.ORDERS in modules else None,
             "new_contacts": new_contacts,
+            "emails": session.query(MailMessage).filter(
+                MailMessage.tenant_id == tenant_id, MailMessage.received_at >= start_of_day,
+                MailMessage.status != "ignore").count() if ModuleKey.EMAIL in modules else None,
+            "emails_auto": session.query(MailMessage).filter(
+                MailMessage.tenant_id == tenant_id, MailMessage.received_at >= start_of_day,
+                MailMessage.status == "envoye_auto").count() if ModuleKey.EMAIL in modules else None,
         },
     }
 

@@ -102,9 +102,12 @@ export function ContactDetailPage() {
                 </div>
                 {i.summary && <p>{i.summary}</p>}
                 <OrderDetails i={i} />
-                {i.body && i.channel === "appel" && (
+                {i.body && (i.channel === "appel" || i.channel === "email") && (
                   <details>
-                    <summary>Voir la conversation</summary>
+                    <summary>
+                      {i.channel === "appel" ? "Voir la conversation"
+                        : i.direction === "sortant" ? "Voir la réponse" : "Voir l'e-mail"}
+                    </summary>
                     <pre className="transcript">{i.body}</pre>
                   </details>
                 )}

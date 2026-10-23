@@ -70,6 +70,14 @@ export function DashboardPage() {
             <span className="stat-label">commandes prises aujourd'hui</span>
           </div>
         )}
+        {today.today.emails !== null && (
+          <div className="stat">
+            <span className="stat-value">{today.today.emails}</span>
+            <span className="stat-label">
+              e-mails traités{today.today.emails_auto ? ` · dont ${today.today.emails_auto} répondu(s) seul(s)` : ""}
+            </span>
+          </div>
+        )}
         <div className="stat">
           <span className="stat-value">{today.today.new_contacts}</span>
           <span className="stat-label">nouveaux clients</span>

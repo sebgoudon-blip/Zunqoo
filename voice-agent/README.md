@@ -192,7 +192,8 @@ n'active que ce dont il a besoin, depuis **Réglages** :
 |---|---|---|
 | Standard téléphonique | disponible | — |
 | Prise de commandes | disponible | Standard |
-| Rendez-vous, E-mails, Devis, Factures, Résumé du soir, Avis Google | « bientôt disponible » | Factures → Devis |
+| E-mails (Gmail) | disponible | — |
+| Rendez-vous, Devis, Factures, Résumé du soir, Avis Google | « bientôt disponible » | Factures → Devis |
 
 - Activer un module active ses prérequis ; en désactiver un coupe ceux qui en
   dépendent (avec confirmation). Trois formules de départ en un clic.
@@ -248,6 +249,62 @@ port 8000) ou avec `VITE_API_URL` pointant vers l'API.
    (Paramètres de l'app → Général) : toute requête non signée est refusée.
 3. Seuls les numéros `whatsapp.manager_numbers` du commerce concerné peuvent
    valider ; le gérant reçoit un accusé « ✅ Fait » ou « ❌ Refusé ».
+
+## E-mails Gmail (étape 2)
+
+Quand le module « E-mails » est activé et la boîte connectée, l'assistant
+relève la boîte de réception toutes les 2 minutes (`MAIL_POLL_SECONDS`) :
+
+1. newsletters, expéditeurs « no-reply » et e-mails de la boutique elle-même
+   sont écartés **sans appel à l'IA** (coût nul) ;
+2. les autres sont triés par le modèle rapide : devis, rendez-vous, commande,
+   renseignement, réclamation, facture fournisseur, partenaire, publicité… ;
+3. l'e-mail est rangé sur la fiche du client (créée si besoin) ;
+4. si une réponse est attendue, elle est rédigée à partir de la fiche du
+   commerce et du catalogue du CRM, puis **envoyée seule ou mise à valider**
+   selon l'autonomie choisie ;
+5. le libellé **Zunqoo** est posé dans Gmail sur chaque e-mail traité.
+
+| Autonomie | Part tout seul | Toujours à valider |
+|---|---|---|
+| Je valide tout | rien | tout |
+| Je valide l'important | renseignements simples sans prix ni date, réponse sûre | le reste |
+| Automatique | tout ce qui est sûr | réclamations, sujets sensibles (remboursement, litige, paiement), e-mails suspects, urgences, réponses incertaines |
+
+Le contenu des e-mails est traité comme une donnée : une consigne glissée
+dans un e-mail (« ignore tes règles… ») n'est jamais suivie et rend l'e-mail
+« suspect ». Les réponses n'inventent ni prix ni horaire, ne contiennent ni
+lien ni demande de paiement. La réponse proposée est modifiable avant envoi et
+part dans le même fil de discussion Gmail.
+
+### Configurer Google (une fois pour toute la plateforme, ~15 min)
+
+1. https://console.cloud.google.com → créer un projet « Zunqoo ».
+2. *API et services → Bibliothèque* : activer **Gmail API**.
+3. *Écran de consentement OAuth* : type **Externe**, nom « Zunqoo »,
+   e-mail d'assistance, logo facultatif. Ajouter le champ d'application
+   `https://www.googleapis.com/auth/gmail.modify`. Tant que l'application est
+   « En test », ajouter chaque adresse Gmail de test dans **Utilisateurs test**.
+4. *Identifiants → Créer → ID client OAuth* : type **Application Web**,
+   URI de redirection autorisée : `https://<votre-api>/oauth/google/callback`
+   (en local : `http://localhost:8000/oauth/google/callback`).
+5. Reporter dans `.env` : `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+   `API_PUBLIC_URL`, et `MAIL_TOKEN_KEY` généré par `zunqoo-mail genkey`.
+6. Dans le CRM : *Réglages → E-mails → Activer → Connecter Gmail*.
+
+À savoir :
+- **En mode « En test », Google coupe l'accès au bout de 7 jours** : il faut
+  reconnecter la boîte. Pour la production, passer l'application « En
+  production » : jusqu'à 100 utilisateurs, Google affiche un avertissement
+  « application non validée » à la connexion ; au-delà, la validation Google
+  (avec audit de sécurité annuel pour l'accès Gmail) est obligatoire.
+- `MAIL_TOKEN_KEY` chiffre les accès en base : la perdre oblige chaque
+  commerce à reconnecter sa boîte. La sauvegarder avec les autres secrets.
+
+```bash
+zunqoo-mail run                     # relève en continu (service « mail » du compose)
+zunqoo-mail sync rotisserie-dupont  # une relève immédiate, pour tester
+```
 
 ## Coûts d'exploitation (estimation, à vérifier sur les grilles tarifaires)
 

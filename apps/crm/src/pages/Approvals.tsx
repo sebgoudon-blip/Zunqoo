@@ -30,11 +30,21 @@ export function ApprovalsPage() {
   }, [tab]);
   useEffect(load, [load]);
 
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+
   async function decide(a: Approval, approve: boolean) {
     setBusy(a.id);
     setError(null);
+    const edited = drafts[a.id];
+    if (approve && edited !== undefined && !edited.trim()) {
+      setBusy(null);
+      return setError("La réponse est vide.");
+    }
     try {
-      const done = await api.post<Approval>(`/api/approvals/${a.id}/decision`, { approve });
+      const done = await api.post<Approval>(`/api/approvals/${a.id}/decision`, {
+        approve,
+        ...(approve && edited !== undefined ? { edits: { body: edited } } : {}),
+      });
       setItems((list) => (tab === "en_attente" ? list?.filter((x) => x.id !== a.id) ?? null
                                                : list?.map((x) => (x.id === a.id ? done : x)) ?? null));
     } catch (e) {
@@ -76,6 +86,28 @@ export function ApprovalsPage() {
             </div>
             {a.contact && <Link to={`/clients/${a.contact.id}`}>{a.contact.name}</Link>}
             <p className="approval-summary">{a.summary}</p>
+            {a.kind === "email_reponse" && (
+              <>
+                {typeof a.payload.incoming === "string" && (
+                  <details>
+                    <summary>Voir l'e-mail reçu</summary>
+                    <pre className="transcript">{a.payload.incoming}</pre>
+                  </details>
+                )}
+                {a.status === "en_attente" ? (
+                  <label className="field reply-editor">
+                    <span>Réponse proposée (vous pouvez la modifier)</span>
+                    <textarea rows={8} value={drafts[a.id] ?? String(a.payload.body ?? "")}
+                              onChange={(e) => setDrafts({ ...drafts, [a.id]: e.target.value })} />
+                  </label>
+                ) : (
+                  <details>
+                    <summary>Voir la réponse</summary>
+                    <pre className="transcript">{String(a.payload.body ?? "")}</pre>
+                  </details>
+                )}
+              </>
+            )}
             {a.status === "en_attente" ? (
               <div className="approval-actions">
                 <button className="btn btn-primary" disabled={busy === a.id} onClick={() => decide(a, true)}>

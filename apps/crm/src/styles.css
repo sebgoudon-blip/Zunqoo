@@ -331,3 +331,7 @@ a.list-row:hover { background: var(--bg); }
   .day-grid { grid-template-columns: 1fr; }
 }
 .nowrap { white-space: nowrap; }
+.reply-editor { margin-top: 12px; }
+.reply-editor textarea { font-size: 0.95rem; line-height: 1.5; }
+.email-connection { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.email-connection p { margin-bottom: 8px; }

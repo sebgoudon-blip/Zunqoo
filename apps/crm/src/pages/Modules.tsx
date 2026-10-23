@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { api, type Autonomy, type ModuleInfo, type ModulesResponse } from "../api";
+import { useSearchParams } from "react-router-dom";
+import { api, type Autonomy, type EmailStatus, type ModuleInfo, type ModulesResponse,
+         type SyncResult } from "../api";
+import { formatWhen } from "../format";
 import { useAuth } from "../auth";
 import { ErrorBanner, PageHeader, Spinner } from "../ui";
 
@@ -91,6 +94,7 @@ export function ModulesPage() {
                     <span className="soon-tag">Bientôt disponible</span>
                   )}
                 </div>
+                {m.enabled && m.key === "emails" && <EmailConnection isAdmin={isAdmin} />}
                 {m.enabled && m.has_autonomy && (
                   <fieldset className="autonomy">
                     <legend>Niveau d'autonomie</legend>
@@ -110,5 +114,92 @@ export function ModulesPage() {
         </>
       )}
     </>
+  );
+}
+
+function EmailConnection({ isAdmin }: { isAdmin: boolean }) {
+  const [params, setParams] = useSearchParams();
+  const [status, setStatus] = useState<EmailStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = () => api.get<EmailStatus>("/api/email/status").then(setStatus).catch((e) => setError(e.message));
+  useEffect(() => {
+    load();
+    const result = params.get("gmail");
+    if (result === "ok") setNotice("Boîte Gmail connectée. L'assistant relève les e-mails toutes les 2 minutes.");
+    else if (result) setError(params.get("message") ?? "Connexion Gmail impossible.");
+    if (result) setParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function connect() {
+    setBusy(true);
+    setError(null);
+    try {
+      const { url } = await api.post<{ url: string }>("/api/email/connect");
+      window.location.assign(url); // page Google, puis retour ici
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Connexion impossible.");
+      setBusy(false);
+    }
+  }
+
+  async function syncNow() {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api.post<SyncResult>("/api/email/sync");
+      setNotice(r.seen === 0 ? "Aucun nouvel e-mail."
+        : `${r.seen} e-mail(s) relevé(s) : ${r.auto_sent} répondu(s) seul(s), ${r.to_validate} à valider, ${r.ignored} ignoré(s).`);
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Relève impossible.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function disconnect() {
+    if (!window.confirm("Déconnecter la boîte Gmail ? L'assistant ne lira plus vos e-mails.")) return;
+    setBusy(true);
+    try {
+      await api.post("/api/email/disconnect");
+      setNotice("Boîte Gmail déconnectée.");
+      load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!status) return error ? <ErrorBanner message={error} /> : null;
+  return (
+    <div className="email-connection">
+      <ErrorBanner message={error} />
+      {notice && <div className="banner banner-ok" role="status">{notice}</div>}
+      {!status.configured ? (
+        <p className="muted">La connexion Gmail n'est pas encore configurée sur le serveur (voir le guide d'installation).</p>
+      ) : status.connected ? (
+        <>
+          <p>
+            Boîte connectée : <strong>{status.email}</strong>
+            {status.last_sync_at && <span className="muted"> · dernière relève {formatWhen(status.last_sync_at)}</span>}
+          </p>
+          {status.last_error && <p className="status-echec">Dernière erreur : {status.last_error}</p>}
+          <div className="presets">
+            <button className="btn btn-ghost" disabled={busy} onClick={syncNow}>Relever maintenant</button>
+            {isAdmin && <button className="btn btn-ghost" disabled={busy} onClick={disconnect}>Déconnecter</button>}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="muted">Connectez la boîte Gmail de votre commerce. Google vous demandera votre accord.</p>
+          <button className="btn btn-primary" disabled={!isAdmin || busy} onClick={connect}>
+            Connecter Gmail
+          </button>
+        </>
+      )}
+    </div>
   );
 }

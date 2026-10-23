@@ -217,5 +217,29 @@ export interface Today {
     upcoming: { date: string; label: string; orders: UpcomingOrder[]; totals: OrderLineOut[] }[];
     undated: UpcomingOrder[];
   } | null;
-  today: { calls: number | null; orders: number | null; new_contacts: number };
+  today: {
+    calls: number | null;
+    orders: number | null;
+    new_contacts: number;
+    emails: number | null;
+    emails_auto: number | null;
+  };
+}
+
+export interface EmailStatus {
+  configured: boolean;
+  connected: boolean;
+  email: string | null;
+  last_sync_at: string | null;
+  last_error: string | null;
+  today: Record<string, number>;
+}
+
+export interface SyncResult {
+  seen: number;
+  ignored: number;
+  filed: number;
+  auto_sent: number;
+  to_validate: number;
+  errors: string[];
 }
