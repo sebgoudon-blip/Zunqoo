@@ -25,6 +25,18 @@ class Settings(BaseSettings):
     default_tenant_id: str | None = None  # utile en one-shot mono-commerce
     admin_api_token: SecretStr = SecretStr("")  # protège l'API d'administration
 
+    # --- CRM ---------------------------------------------------------------
+    database_url: str = "sqlite:///data/crm.sqlite3"
+    # Clé de signature des sessions du CRM : openssl rand -hex 32
+    session_secret: SecretStr = SecretStr("")
+    session_hours: int = 12
+    # Adresse publique du CRM (liens dans les messages WhatsApp)
+    crm_public_url: str = "http://localhost:5174"
+    # Webhook WhatsApp (boutons Valider / Refuser)
+    whatsapp_app_secret: SecretStr = SecretStr("")    # signature X-Hub-Signature-256
+    whatsapp_verify_token: SecretStr = SecretStr("")  # vérification initiale par Meta
+    whatsapp_approval_template: str = "zunqoo_validation"
+
     # --- LiveKit (orchestration temps réel + SIP) --------------------------
     livekit_url: str = "ws://localhost:7880"
     livekit_api_key: str = ""

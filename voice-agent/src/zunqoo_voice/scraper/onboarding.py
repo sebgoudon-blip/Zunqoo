@@ -10,6 +10,8 @@ from ..core.config import Settings
 from ..core.models import BusinessProfile, Plan, TenantConfig, WhatsAppConfig
 from ..core.structured_llm import StructuredLLM
 from ..core.tenant_store import TenantStore, normalize_number
+from ..crm.db import session_scope
+from ..crm.services import seed_catalog_from_profile
 from .crawler import SiteCrawler
 from .extractor import extract_profile
 
@@ -59,4 +61,7 @@ async def onboard_from_url(
             ),
         )
     store.save(tenant)
+    # Catalogue du CRM : rempli depuis le site s'il est vide, jamais écrasé.
+    with session_scope(settings.database_url) as session:
+        seed_catalog_from_profile(session, tenant.id, profile, vat_rate=tenant.default_vat_rate)
     return tenant

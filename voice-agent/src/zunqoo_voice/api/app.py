@@ -1,8 +1,11 @@
-"""API d'administration (onboarding, tenants, relevés de consommation).
+"""API HTTP de la plateforme.
 
     uvicorn zunqoo_voice.api.app:app --port 8000
 
-Toutes les routes exigent ``Authorization: Bearer $ADMIN_API_TOKEN``.
+- ``/api/...`` : CRM des commerçants (session utilisateur, voir ``crm/api.py``)
+- ``/webhooks/whatsapp`` : clics « Valider / Refuser » envoyés par Meta
+- ``/tenants``, ``/billing``, ``/calls`` : administration plateforme
+  (``Authorization: Bearer $ADMIN_API_TOKEN``)
 """
 
 from __future__ import annotations
@@ -11,6 +14,7 @@ import hmac
 from datetime import datetime
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 
 from ..billing.usage import UsageMeter
@@ -18,9 +22,19 @@ from ..core.call_archive import CallArchive
 from ..core.config import Settings, get_settings
 from ..core.models import Plan, TenantConfig
 from ..core.tenant_store import FileTenantStore
+from ..crm.api import router as crm_router
+from ..crm.webhook import router as webhook_router
 from ..scraper.onboarding import onboard_from_url
 
-app = FastAPI(title="Zunqoo Voice — administration")
+app = FastAPI(title="Zunqoo — API")
+app.include_router(crm_router)
+app.include_router(webhook_router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[get_settings().crm_public_url.rstrip("/")],
+    allow_methods=["*"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 
 def require_admin(

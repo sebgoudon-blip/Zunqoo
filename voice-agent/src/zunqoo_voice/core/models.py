@@ -194,6 +194,9 @@ class TenantConfig(BaseModel):
     phone_numbers: list[str] = Field(default_factory=list)
     voice: VoiceConfig = Field(default_factory=VoiceConfig)
     whatsapp: WhatsAppConfig = Field(default_factory=WhatsAppConfig)
+    # Facturation : taux de TVA par défaut des produits et nature des prix saisis.
+    default_vat_rate: float = 20.0
+    prices_include_vat: bool = True  # commerce de détail : prix affichés TTC
     # Numéro (E.164) vers lequel transférer l'appel si le client veut un humain.
     transfer_number: str | None = None
     greeting: str | None = None

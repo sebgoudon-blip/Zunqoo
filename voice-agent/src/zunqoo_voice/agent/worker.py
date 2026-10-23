@@ -55,10 +55,13 @@ from ..core.config import Settings, get_settings
 from ..core.models import CallRecord, TenantConfig
 from ..core.structured_llm import StructuredLLM
 from ..core.tenant_store import FileTenantStore
+from ..crm.db import session_scope
+from ..crm.modules import ModuleKey
+from ..crm.services import catalog_as_products, enabled_modules, list_catalog, record_call
 from ..llm.call_analysis import analyze_call
 from ..llm.factory import build_chat_llm
 from ..llm.prompts import build_greeting, build_system_prompt
-from ..llm.tools import ALL_TOOLS, CallState, transferer_appel
+from ..llm.tools import ALL_TOOLS, CallState, enregistrer_commande, transferer_appel
 from ..stt.factory import build_stt
 from ..telephony.routing import caller_info, resolve_tenant
 from ..tts.factory import build_tts
@@ -70,10 +73,14 @@ log = logging.getLogger("zunqoo.agent")
 class ShopAgent(Agent):
     """L'agent d'accueil téléphonique d'un commerce."""
 
-    def __init__(self, tenant: TenantConfig, *, instructions: str) -> None:
+    def __init__(
+        self, tenant: TenantConfig, *, instructions: str, orders_enabled: bool = True
+    ) -> None:
         tools = list(ALL_TOOLS)
         if not (tenant.transfer_number and entitlements_for(tenant.plan).call_transfer):
             tools.remove(transferer_appel)
+        if not orders_enabled:  # module « Prise de commandes » non coché
+            tools.remove(enregistrer_commande)
         super().__init__(instructions=instructions, tools=tools)
         self.tenant = tenant
 
@@ -138,6 +145,11 @@ async def finalize_call(
     # Archivé AVANT l'envoi WhatsApp : si Meta est en panne, la commande
     # n'est jamais perdue (relevable dans data/calls/ ou via l'API admin).
     archive.save(record)
+    try:
+        with session_scope(settings.database_url) as db:
+            record_call(db, record)  # fiche client + historique dans le CRM
+    except Exception:
+        log.exception("enregistrement CRM de l'appel %s échoué", state.call_id)
     if entitlements_for(state.tenant.plan).whatsapp_reports:
         sent = await send_call_report(state.tenant, record, settings)
         archive.mark_notified(record, sent)
@@ -168,6 +180,25 @@ async def entrypoint(ctx: JobContext) -> None:
         log.error("tenant %s: appel refusé (%s)", tenant.id, why)
         await ctx.delete_room()
         return
+
+    # Réglages du CRM : modules cochés par le client et catalogue à jour.
+    with session_scope(settings.database_url) as db:
+        modules = enabled_modules(db, tenant.id)
+        catalog = list_catalog(db, tenant.id, only_active=True)
+    if ModuleKey.PHONE not in modules:
+        # Standard désactivé : l'appel ne doit pas rester sans réponse.
+        if tenant.transfer_number:
+            log.info("tenant %s: standard désactivé, renvoi vers %s", tenant.id,
+                     tenant.transfer_number)
+            await ctx.transfer_sip_participant(info.identity, f"tel:{tenant.transfer_number}")
+        else:
+            log.warning("tenant %s: standard désactivé et aucun renvoi configuré", tenant.id)
+            await ctx.delete_room()
+        return
+    if catalog:
+        tenant = tenant.model_copy(deep=True)
+        tenant.profile.products = catalog_as_products(catalog)
+    orders_enabled = ModuleKey.ORDERS in modules
 
     state = CallState(
         tenant=tenant, call_id=info.sip_call_id or ctx.room.name,
@@ -214,7 +245,9 @@ async def entrypoint(ctx: JobContext) -> None:
 
     agent = ShopAgent(
         tenant,
-        instructions=build_system_prompt(tenant, now=now_local, caller_number=info.caller_number),
+        instructions=build_system_prompt(tenant, now=now_local, caller_number=info.caller_number,
+                                         orders_enabled=orders_enabled),
+        orders_enabled=orders_enabled,
     )
     await session.start(
         agent=agent,

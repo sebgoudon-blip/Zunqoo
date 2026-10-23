@@ -84,6 +84,48 @@ class WhatsAppClient:
             }
         )
 
+    async def send_template_with_buttons(
+        self, to: str, name: str, lang: str, params: list[str], button_payloads: list[str]
+    ) -> str:
+        """Template avec boutons « réponse rapide » : le payload revient au webhook."""
+        components: list[dict] = [
+            {"type": "body", "parameters": [{"type": "text", "text": p} for p in params]}
+        ]
+        components += [
+            {"type": "button", "sub_type": "quick_reply", "index": str(i),
+             "parameters": [{"type": "payload", "payload": payload}]}
+            for i, payload in enumerate(button_payloads)
+        ]
+        return await self._post(
+            {
+                "messaging_product": "whatsapp",
+                "to": to,
+                "type": "template",
+                "template": {"name": name, "language": {"code": lang}, "components": components},
+            }
+        )
+
+    async def send_buttons(self, to: str, body: str, buttons: list[tuple[str, str]]) -> str:
+        """Message interactif (fenêtre de 24 h) : jusqu'à 3 boutons (id, libellé ≤ 20 car.)."""
+        return await self._post(
+            {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": to,
+                "type": "interactive",
+                "interactive": {
+                    "type": "button",
+                    "body": {"text": body[:1024]},
+                    "action": {
+                        "buttons": [
+                            {"type": "reply", "reply": {"id": bid, "title": title[:20]}}
+                            for bid, title in buttons[:3]
+                        ]
+                    },
+                },
+            }
+        )
+
     async def _post(self, payload: dict) -> str:
         headers = {"Authorization": f"Bearer {self.creds.access_token}"}
         for attempt in range(self.max_retries + 1):

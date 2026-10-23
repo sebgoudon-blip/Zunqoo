@@ -78,7 +78,11 @@ def spoken_datetime(now: datetime) -> str:
 
 
 def build_system_prompt(
-    tenant: TenantConfig, *, now: datetime, caller_number: str | None
+    tenant: TenantConfig,
+    *,
+    now: datetime,
+    caller_number: str | None,
+    orders_enabled: bool = True,
 ) -> str:
     profile = tenant.profile
     persona = (
@@ -96,6 +100,12 @@ def build_system_prompt(
         parts.append("# Consignes particulières du gérant\n" + tenant.custom_instructions)
     if not tenant.transfer_number:
         parts.append("Le transfert d'appel n'est pas disponible : propose un rappel à la place.")
+    if not orders_enabled:
+        parts.append(
+            "Tu ne prends pas de commande par téléphone. Si un client veut commander, note son "
+            "prénom, son numéro et ce qu'il souhaite, et dis-lui que le gérant le rappelle pour "
+            "confirmer. N'utilise pas l'outil enregistrer_commande."
+        )
 
     # --- partie variable : à garder en dernier pour le cache de prompt ---
     context = [f"# Contexte de l'appel\nNous sommes le {spoken_datetime(now)}."]

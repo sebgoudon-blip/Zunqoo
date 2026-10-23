@@ -5,6 +5,8 @@
   "timezone": "Europe/Paris",
   "source_url": "https://www.exemple-rotisserie.fr",
   "phone_numbers": ["+33187000000"],
+  "default_vat_rate": 5.5,
+  "prices_include_vat": true,
   "transfer_number": "+33612345678",
   "voice": {"tts_provider": null, "voice_id": null, "agent_name": "Camille", "language": "fr"},
   "whatsapp": {"manager_numbers": ["33612345678"]},
