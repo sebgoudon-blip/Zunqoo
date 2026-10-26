@@ -1558,6 +1558,199 @@ small.block {
   font-size: 0.82rem;
 }
 
+/* Ressources & carnet */
+
+.resources {
+  margin-bottom: var(--space-4);
+}
+
+.resources h2 {
+  margin-top: 0;
+}
+
+.resource {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.resource summary {
+  gap: var(--space-3);
+}
+
+.resource-kind {
+  flex: none;
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.resource-body {
+  padding-bottom: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.resource-body pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--surface-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  margin: 0;
+  width: 100%;
+}
+
+.resource-body .check {
+  width: 100%;
+}
+
+.resource-body p {
+  margin: 0;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table-wrap th,
+.table-wrap td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.table-wrap thead th {
+  background: var(--surface-2);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.table-wrap tbody th {
+  font-weight: 600;
+  min-width: 160px;
+}
+
+.table-wrap tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.notebook-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  margin-bottom: var(--space-2);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.notebook-link .icon {
+  color: var(--accent);
+}
+
+.count {
+  margin-left: auto;
+  min-width: 24px;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.8rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.notebook-tools {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.notebook-tools .field {
+  margin: 0;
+}
+
+.grow {
+  flex: 1;
+}
+
+.notebook-module {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+}
+
+.note-card {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.note-card h3 {
+  margin: 2px 0 0;
+}
+
+.note-card .field {
+  margin: 0;
+}
+
+.note-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.status-pill {
+  flex: none;
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.status-pill.done {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.card.empty {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-5);
+}
+
+.card.empty .icon {
+  color: var(--accent);
+}
+
+.card.empty p {
+  margin: 0;
+}
+
 /* Mobile */
 
 @media (max-width: 860px) {

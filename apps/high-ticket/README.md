@@ -40,6 +40,18 @@ de l'export dans `firebase/functions/src/index.ts`, puis passer
     majuscules) et mots-clés négatifs Google Ads.
 - **FAQ sur chaque tâche**, et **sauvegarde/restauration** de toute la
   progression dans un fichier JSON (page Profil).
+- **Ressources** (`src/content/resources.ts`), pré-remplies avec le profil
+  et copiables en un clic :
+  - exemples de niches high-ticket ;
+  - requêtes à tester ;
+  - grille d'analyse de la concurrence ;
+  - modèles de messages aux fournisseurs (FR/EN) et relance ;
+  - tableau comparatif des fournisseurs ;
+  - checklist de l'échantillon ;
+  - bloc livraison et retours.
+- **Carnet de notes** (`/carnet`) : toutes les notes du parcours, avec
+  recherche, modification, export Markdown et lien vers chaque tâche
+  (`/parcours?tache=2.3`).
 - **Comptes et synchronisation** : connexion par Google ou par
   email/mot de passe. La progression, les notes et les outils sont
   synchronisés en temps réel entre appareils (`src/lib/cloudSync.ts`). Ce

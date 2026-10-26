@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AssistantChat } from "../components/AssistantChat";
 import { Icon, type IconName } from "../components/Icon";
+import { TaskResources } from "../components/TaskResources";
 import { MODULES, allVisibleTasks, visibleTasks } from "../content/modules";
 import { TOOL_LABELS } from "../tools/registry";
 import { useAppState } from "../state";
@@ -18,14 +19,25 @@ export function CoachPage() {
   const { profile, progress, setTaskStatus, notes, setNote } = useAppState();
   const flat = allVisibleTasks(profile!);
   const currentIndex = flat.findIndex(({ task }) => !progress[task.id]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  // Une tâche peut être ouverte par lien (?tache=2.3), depuis le carnet par exemple.
+  const [selectedId, setSelectedIdState] = useState<string | null>(() => params.get("tache"));
+  const setSelectedId = (id: string | null) => {
+    setSelectedIdState(id);
+    if (params.has("tache")) setParams({}, { replace: true });
+  };
   const [showQuestions, setShowQuestions] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
 
+  const notesCount = Object.values(notes).filter((n) => n.trim()).length;
   const doneCount = flat.filter(({ task }) => progress[task.id]).length;
   const percent = Math.round((doneCount / flat.length) * 100);
 
-  const selected = flat.find(({ task }) => task.id === selectedId) ?? (currentIndex >= 0 ? flat[currentIndex] : null);
+  const requested = flat.findIndex(({ task }) => task.id === selectedId);
+  // Une tâche verrouillée (après la tâche en cours) ne peut pas être ouverte par lien.
+  const selected =
+    (requested >= 0 && (currentIndex < 0 || requested <= currentIndex) ? flat[requested] : null) ??
+    (currentIndex >= 0 ? flat[currentIndex] : null);
   const selectedPosition = selected ? flat.findIndex(({ task }) => task.id === selected.task.id) + 1 : 0;
 
   function answer(status: TaskStatus) {
@@ -68,6 +80,11 @@ export function CoachPage() {
             <Icon name="chevron" />
           </span>
         </button>
+        <Link className="notebook-link" to="/carnet">
+          <Icon name="list" size={16} />
+          Mon carnet de notes
+          {notesCount > 0 && <span className="count">{notesCount}</span>}
+        </Link>
         <div id="plan-list" className={`plan-list ${planOpen ? "open" : ""}`}>
           {MODULES.map((m) => (
             <ModuleNav
@@ -259,6 +276,8 @@ function TaskCard({
           <Icon name="arrow" />
         </Link>
       )}
+
+      <TaskResources taskId={task.id} />
 
       {showQuestions && (
         <div className="questions" id="task-questions">

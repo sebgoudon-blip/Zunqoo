@@ -8,6 +8,7 @@ import { AppStateProvider, useAppState } from "./state";
 import { AuthProvider } from "./auth";
 import { AccountPage } from "./pages/AccountPage";
 import { ShopPage } from "./pages/ShopPage";
+import { NotebookPage } from "./pages/NotebookPage";
 
 function RequireProfile({ children }: { children: JSX.Element }) {
   const { profile } = useAppState();
@@ -32,6 +33,7 @@ export function App() {
                 }
               />
               <Route path="/outils" element={<ToolsPage />} />
+              <Route path="/carnet" element={<NotebookPage />} />
               <Route path="/boutique" element={<ShopPage />} />
               <Route path="/compte" element={<AccountPage />} />
               <Route path="/outils/:toolId" element={<ToolsPage />} />
