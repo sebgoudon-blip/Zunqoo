@@ -1,5 +1,4 @@
-import { doc, onSnapshot, setDoc, type Unsubscribe } from "firebase/firestore";
-import { db } from "./firebase";
+import { doc, onSnapshot, setDoc, type Firestore, type Unsubscribe } from "firebase/firestore";
 import { applyRemote, localEntries, setChangeHook } from "./store";
 
 interface RemoteEntry {
@@ -21,11 +20,11 @@ export interface ShopifyLink {
  * ce qui permet de passer d'un appareil à l'autre sans perte.
  */
 export function startSync(
+  db: Firestore,
   uid: string,
   onStatus: (s: SyncStatus) => void,
   onShopify: (link: ShopifyLink | null) => void
 ): () => void {
-  if (!db) return () => undefined;
   const ref = doc(db, "htpUsers", uid);
   const pending = new Map<string, RemoteEntry>();
   let timer: ReturnType<typeof setTimeout> | undefined;

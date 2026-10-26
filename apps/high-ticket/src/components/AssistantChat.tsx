@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../auth";
 import { useStoredState } from "../hooks/useStoredState";
 import { askCoach, profileSummary, type ChatMessage } from "../lib/api";
-import { errorMessage } from "../lib/firebase";
+import { errorMessage } from "../lib/cloudConfig";
 import { useAppState } from "../state";
 import type { Task } from "../types";
 import { Icon } from "./Icon";

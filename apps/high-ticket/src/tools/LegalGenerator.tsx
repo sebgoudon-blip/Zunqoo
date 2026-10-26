@@ -4,8 +4,9 @@ import { useAuth } from "../auth";
 import { Icon, Verdict } from "../components/Icon";
 import { useStoredState } from "../hooks/useStoredState";
 import { profileSummary, publishLegal, reviewLegal, type LegalReview, type PolicyType } from "../lib/api";
-import { errorMessage } from "../lib/firebase";
-import { generateLegalDocs, type StorePolicies } from "../lib/legal";
+import { downloadFile } from "../lib/download";
+import { errorMessage } from "../lib/cloudConfig";
+import { generateLegalDocs, legalDocsToHtml, type StorePolicies } from "../lib/legal";
 import { validateLegalInfo } from "../lib/validation";
 import { EMPTY_PROFILE, useAppState } from "../state";
 import { NumberField } from "./NumberField";
@@ -84,6 +85,8 @@ export function LegalGenerator() {
       setBusy(null);
     }
   }
+
+  const downloadAll = () => downloadFile("pages-legales.html", legalDocsToHtml(docs, p.storeName), "text/html");
 
   const fieldError = (key: keyof StorePolicies) =>
     errors[key] ? (
@@ -263,6 +266,13 @@ export function LegalGenerator() {
         Ces textes sont des modèles de départ, pas un conseil juridique. Fais-les relire par un professionnel avant de
         lancer la publicité.
       </p>
+
+      <div className="answer-buttons">
+        <button className="btn btn-ghost" type="button" onClick={downloadAll}>
+          <Icon name="download" />
+          Télécharger toutes les pages (fichier à envoyer à un juriste)
+        </button>
+      </div>
 
       {docs.map((d) => (
         <div key={d.id} className="card doc">

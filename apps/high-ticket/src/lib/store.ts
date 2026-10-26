@@ -109,3 +109,42 @@ export function clearAll() {
   meta = {};
   new Set(keys).forEach(notify);
 }
+
+const BACKUP_APP = "highticket-pilot";
+
+interface Backup {
+  app: typeof BACKUP_APP;
+  version: 1;
+  exportedAt: string;
+  data: Record<string, unknown>;
+}
+
+/** Instantané de toutes les données de l'app, pour une sauvegarde dans un fichier. */
+export function exportBackup(): Backup {
+  const data: Record<string, unknown> = {};
+  // Lecture directe du stockage : couvre aussi les données créées avant l'horodatage par clé.
+  const keys = new Set(cache.keys());
+  try {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith(PREFIX) && k !== META_KEY)
+      .forEach((k) => keys.add(k.slice(PREFIX.length)));
+  } catch {
+    // Stockage indisponible : on exporte ce qui est en mémoire.
+  }
+  for (const key of keys) {
+    const value = getValue<unknown>(key, undefined);
+    if (value !== undefined) data[key] = value;
+  }
+  return { app: BACKUP_APP, version: 1, exportedAt: new Date().toISOString(), data };
+}
+
+/** Restaure une sauvegarde ; renvoie le nombre d'éléments restaurés. */
+export function importBackup(raw: unknown): number {
+  const backup = raw as Partial<Backup> | null;
+  if (!backup || backup.app !== BACKUP_APP || typeof backup.data !== "object" || backup.data === null) {
+    throw new Error("Ce fichier n'est pas une sauvegarde HighTicket Pilot.");
+  }
+  const entries = Object.entries(backup.data).filter(([key]) => /^[a-z_]+$/.test(key));
+  for (const [key, value] of entries) setValue(key, value);
+  return entries.length;
+}

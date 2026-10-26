@@ -169,3 +169,39 @@ Immatriculation : ${reg}${p.vatNumber.trim() ? `\nN° de TVA : ${p.vatNumber.tri
     { id: "contact", title: "Coordonnées", shopifyLocation: "Paramètres > Politiques > Coordonnées", policyType: "CONTACT_INFORMATION", body: contact },
   ];
 }
+
+const escapeHtml = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Toutes les pages dans un seul fichier HTML, prêt à être relu, imprimé ou envoyé à un juriste. */
+export function legalDocsToHtml(docs: LegalDoc[], storeName: string): string {
+  const sections = docs
+    .map((d) => {
+      const paragraphs = d.body
+        .split(/\n{2,}/)
+        .slice(1)
+        .map((block) => `<p>${escapeHtml(block).replace(/\n/g, "<br>")}</p>`)
+        .join("\n");
+      return `<section>\n<h2>${escapeHtml(d.title)}</h2>\n${paragraphs}\n</section>`;
+    })
+    .join("\n");
+  const title = `Pages légales – ${escapeHtml(storeName.trim() || "Ma boutique")}`;
+  return `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1c1917; }
+h1 { font-size: 1.6rem; } h2 { margin-top: 2.5rem; border-top: 1px solid #e7e5e4; padding-top: 1.5rem; }
+.note { background: #fef6e0; padding: 0.75rem 1rem; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+<p class="note">Modèles générés par HighTicket Pilot le ${new Date().toLocaleDateString("fr-FR")}. À faire relire par un professionnel avant publication.</p>
+${sections}
+</body>
+</html>
+`;
+}

@@ -1,16 +1,7 @@
-import {
-  GoogleAuthProvider,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut as fbSignOut,
-  type User,
-} from "firebase/auth";
+import type { User } from "firebase/auth";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { startSync, type ShopifyLink, type SyncStatus } from "./lib/cloudSync";
-import { auth, cloudEnabled } from "./lib/firebase";
+import type { ShopifyLink, SyncStatus } from "./lib/cloudSync";
+import { cloudEnabled } from "./lib/cloudConfig";
 import { clearAll } from "./lib/store";
 
 interface AuthState {
@@ -28,9 +19,11 @@ interface AuthState {
 
 const Ctx = createContext<AuthState | null>(null);
 
-function requireAuth() {
-  if (!auth) throw new Error("Le mode cloud n'est pas configuré.");
-  return auth;
+/** Charge le SDK Firebase uniquement quand le mode cloud est actif. */
+async function sdk() {
+  if (!cloudEnabled) throw new Error("Le mode cloud n'est pas activé.");
+  const [firebase, fbAuth] = await Promise.all([import("./lib/firebase"), import("firebase/auth")]);
+  return { auth: firebase.auth, db: firebase.db, fbAuth };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -39,8 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [shopify, setShopify] = useState<ShopifyLink | null>(null);
 
   useEffect(() => {
-    if (!auth) return;
-    return onAuthStateChanged(auth, setUser);
+    if (!cloudEnabled) return;
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+    void sdk().then(({ auth, fbAuth }) => {
+      if (!cancelled) unsubscribe = fbAuth.onAuthStateChanged(auth, setUser);
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -49,7 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setShopify(null);
       return;
     }
-    return startSync(user.uid, setSyncStatus, setShopify);
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void Promise.all([sdk(), import("./lib/cloudSync")]).then(([{ db }, sync]) => {
+      if (!cancelled) stop = sync.startSync(db, user.uid, setSyncStatus, setShopify);
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
   }, [user]);
 
   const value: AuthState = {
@@ -58,19 +67,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     syncStatus,
     shopify,
     async signInWithGoogle() {
-      await signInWithPopup(requireAuth(), new GoogleAuthProvider());
+      const { auth, fbAuth } = await sdk();
+      await fbAuth.signInWithPopup(auth, new fbAuth.GoogleAuthProvider());
     },
     async signInWithEmail(email, password) {
-      await signInWithEmailAndPassword(requireAuth(), email, password);
+      const { auth, fbAuth } = await sdk();
+      await fbAuth.signInWithEmailAndPassword(auth, email, password);
     },
     async signUpWithEmail(email, password) {
-      await createUserWithEmailAndPassword(requireAuth(), email, password);
+      const { auth, fbAuth } = await sdk();
+      await fbAuth.createUserWithEmailAndPassword(auth, email, password);
     },
     async resetPassword(email) {
-      await sendPasswordResetEmail(requireAuth(), email);
+      const { auth, fbAuth } = await sdk();
+      await fbAuth.sendPasswordResetEmail(auth, email);
     },
     async signOut() {
-      await fbSignOut(requireAuth());
+      const { auth, fbAuth } = await sdk();
+      await fbAuth.signOut(auth);
       // Les données restent dans le compte : on vide l'appareil, qui peut être partagé.
       clearAll();
     },

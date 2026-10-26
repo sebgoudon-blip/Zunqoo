@@ -5,6 +5,7 @@ import { GmcChecklist } from "../tools/GmcChecklist";
 import { LegalGenerator } from "../tools/LegalGenerator";
 import { ProductScore } from "../tools/ProductScore";
 import { ProfitCalculator } from "../tools/ProfitCalculator";
+import { ShoppingTitles } from "../tools/ShoppingTitles";
 import { TOOL_DESCRIPTIONS, TOOL_LABELS, TOOL_ORDER } from "../tools/registry";
 import type { ToolId } from "../types";
 
@@ -14,6 +15,7 @@ const COMPONENTS: Record<ToolId, () => JSX.Element> = {
   ads: AdsPlanner,
   legal: LegalGenerator,
   gmc: GmcChecklist,
+  titles: ShoppingTitles,
 };
 
 export function ToolsPage() {

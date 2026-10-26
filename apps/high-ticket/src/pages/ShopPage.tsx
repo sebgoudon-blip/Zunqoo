@@ -4,7 +4,7 @@ import { useAuth } from "../auth";
 import { Icon, Verdict } from "../components/Icon";
 import { useStoredState } from "../hooks/useStoredState";
 import { auditShop, disconnectShopify, startShopifyConnect, type ShopAudit } from "../lib/api";
-import { errorMessage } from "../lib/firebase";
+import { errorMessage } from "../lib/cloudConfig";
 import { useAppState } from "../state";
 
 const RETURN_MESSAGES: Record<string, { tone: "good" | "warn" | "bad"; text: string }> = {

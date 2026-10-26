@@ -22,6 +22,12 @@ export const MODULES: Module[] = [
         deliverable: "Ton numéro d'immatriculation (SIREN, BCE, RCS ou IDE).",
         cost: "0 € en micro-entreprise (France). Compter quelques centaines d'euros pour une société.",
         showIf: (p) => !p.hasCompany,
+        faq: [
+          {
+            q: "Micro-entreprise ou société pour du high-ticket ?",
+            a: "La micro-entreprise est la plus simple et la moins chère à créer, mais tu es imposé sur ton chiffre d'affaires sans pouvoir déduire tes achats ni ta publicité, et ses plafonds sont vite atteints en high-ticket. Beaucoup démarrent en micro pour tester, puis passent en société. Fais une simulation sur 12 mois avec un expert-comptable avant de choisir.",
+          },
+        ],
       },
       {
         id: "1.1",
@@ -58,6 +64,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Un IBAN professionnel et une carte au nom de ta structure.",
         cost: "0 à 10 €/mois",
+        faq: [
+          {
+            q: "Puis-je utiliser mon compte bancaire personnel au début ?",
+            a: "En micro-entreprise, un compte dédié devient obligatoire quand le chiffre d'affaires dépasse 10 000 € deux années de suite. En société, un compte au nom de la société est obligatoire dès le départ. Dans tous les cas, séparer tout de suite évite les mélanges et facilite les vérifications de Shopify et Google.",
+          },
+        ],
       },
       {
         id: "1.3",
@@ -102,6 +114,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Un médiateur choisi (France) et la liste des pages légales à produire.",
         cost: "Médiateur : de quelques dizaines à ~100 € par an selon le prestataire.",
+        faq: [
+          {
+            q: "Comment choisir un médiateur de la consommation ?",
+            a: "La liste officielle des médiateurs référencés est publiée sur economie.gouv.fr (Commission d'évaluation et de contrôle de la médiation de la consommation). Compare les tarifs : certains facturent une adhésion annuelle, d'autres au dossier. Choisis-en un qui couvre la vente en ligne de ton secteur.",
+          },
+        ],
       },
       {
         id: "1.5",
@@ -114,6 +132,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Profil légal complet à 100 %.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Dois-je afficher mon numéro de téléphone personnel ?",
+            a: "Tu dois proposer un numéro joignable, pas forcément personnel. Une seconde ligne ou un numéro virtuel à petit prix protège ta vie privée, à condition que tu répondes réellement.",
+          },
+        ],
       },
     ],
   },
@@ -135,6 +159,12 @@ export const MODULES: Module[] = [
         deliverable: "Les critères en tête et les catégories exclues notées.",
         tool: "score",
         cost: "0 €",
+        faq: [
+          {
+            q: "Pourquoi éviter les produits de grandes marques ?",
+            a: "Revendre une marque sans être distributeur agréé expose à des litiges pour contrefaçon ou usage de marque, et Merchant Center refuse les produits qui posent ce problème. Pour démarrer, un produit en marque blanche vendu sous le nom de ta boutique est bien plus sûr.",
+          },
+        ],
       },
       {
         id: "2.2",
@@ -148,6 +178,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Une liste de 10 niches avec leur tendance (stable, hausse, saisonnière).",
         cost: "0 €",
+        faq: [
+          {
+            q: "Une niche saisonnière est-elle à éviter ?",
+            a: "Pas forcément, mais lance-la 4 à 8 semaines avant le pic pour avoir le temps de tester, et prévois un autre produit pour le reste de l'année. Avec un petit budget, une demande stable est plus sûre pour apprendre.",
+          },
+        ],
       },
       {
         id: "2.3",
@@ -182,6 +218,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Un tableau concurrence pour tes 5 niches.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Beaucoup de concurrents, c'est mauvais signe ?",
+            a: "Non : cela prouve qu'il y a des acheteurs. Le vrai signal d'alerte, c'est quand les premières places sont toutes prises par de grandes enseignes avec des prix que tu ne peux pas suivre. Cherche les requêtes où de petites boutiques apparaissent.",
+          },
+        ],
       },
       {
         id: "2.5",
@@ -195,6 +237,12 @@ export const MODULES: Module[] = [
         deliverable: "3 produits scorés, et un favori.",
         tool: "score",
         cost: "0 €",
+        faq: [
+          {
+            q: "Et si aucun produit ne dépasse 60/100 ?",
+            a: "Reviens à la tâche 2.2 avec d'autres niches plutôt que de forcer. Une semaine de recherche en plus coûte bien moins cher qu'un budget publicitaire dépensé sur un mauvais produit.",
+          },
+        ],
       },
       {
         id: "2.6",
@@ -209,6 +257,12 @@ export const MODULES: Module[] = [
         deliverable: "Ton CPA maximum et ton ROAS de rentabilité.",
         tool: "profit",
         cost: "0 €",
+        faq: [
+          {
+            q: "Pourquoi le ROAS de rentabilité est-il calculé sur le prix TTC ?",
+            a: "Google Ads compare tes dépenses à la valeur de conversion envoyée par ta boutique, souvent TTC selon la configuration. Vérifie ce qui est transmis dans Google Ads > Objectifs > Conversions, et compare toujours ton ROAS réel à un seuil calculé sur la même base.",
+          },
+        ],
       },
     ],
   },
@@ -230,6 +284,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Ton modèle choisi et ton délai de livraison annoncé.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Puis-je annoncer une « livraison rapide » avec un fournisseur en Chine ?",
+            a: "Seulement si le délai réel le justifie. Annonce le délai mesuré sur ton échantillon, avec une marge de sécurité. Un délai sous-estimé entraîne des litiges, de mauvais avis et des problèmes avec Merchant Center.",
+          },
+        ],
       },
       {
         id: "3.2",
@@ -243,6 +303,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Un tableau comparatif de 3 fournisseurs.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Comment repérer un fournisseur peu fiable ?",
+            a: "Méfie-toi des prix très en dessous du marché, des refus d'envoyer un échantillon, de l'absence de certificats et des réponses vagues sur les délais. Demande des photos réelles du produit et une facture pro forma avant tout paiement.",
+          },
+        ],
       },
       {
         id: "3.3",
@@ -256,6 +322,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Échantillon validé (ou rejeté), photos et vidéos maison.",
         cost: "Le prix d'achat du produit. Prévois-le dans ton budget.",
+        faq: [
+          {
+            q: "Que vérifier en priorité sur l'échantillon ?",
+            a: "L'impression au déballage, la conformité à la description, le marquage CE, la notice en français et la solidité de l'emballage. Sur un produit à plusieurs centaines d'euros, un colis abîmé, c'est un retour presque assuré.",
+          },
+        ],
       },
       {
         id: "3.4",
@@ -268,6 +340,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Frais et délais de livraison, conditions de retour, garantie.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Qui paie le retour en cas de rétractation ?",
+            a: "Dans l'UE, les frais de retour peuvent rester à la charge du client s'il en a été clairement informé avant l'achat. Les prendre en charge est un argument fort en high-ticket : prévois-le dans la provision retours du calculateur.",
+          },
+        ],
       },
       {
         id: "3.5",
@@ -302,6 +380,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Une boutique Shopify ouverte, informations légales renseignées.",
         cost: "Offre de lancement Shopify (quelques € les premiers mois)",
+        faq: [
+          {
+            q: "Le plan de base de Shopify suffit-il ?",
+            a: "Oui pour démarrer : il inclut la boutique, les paiements et les applications. Les plans supérieurs réduisent surtout certains frais et ajoutent des rapports, utiles seulement quand tu as du volume.",
+          },
+        ],
       },
       {
         id: "4.2",
@@ -315,6 +399,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Domaine principal actif et email pro.",
         cost: "≈ 10–15 €/an (domaine)",
+        faq: [
+          {
+            q: ".fr ou .com ?",
+            a: "Le .fr rassure les acheteurs français ; le .com est plus neutre si tu vises aussi la Belgique, la Suisse ou le Luxembourg. Si le budget le permet, prends les deux et redirige l'un vers l'autre.",
+          },
+        ],
       },
       {
         id: "4.3",
@@ -328,6 +418,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Thème configuré avec ton logo et tes couleurs.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Faut-il acheter un thème payant ?",
+            a: "Pas au départ. Un thème payant ne compense pas une fiche produit faible. Investis plutôt dans de bonnes photos et vidéos de ton échantillon.",
+          },
+        ],
       },
       {
         id: "4.4",
@@ -362,6 +458,12 @@ export const MODULES: Module[] = [
         deliverable: "Toutes les pages légales en ligne et dans le footer.",
         tool: "legal",
         cost: "0 €",
+        faq: [
+          {
+            q: "Les modèles de pages légales suffisent-ils ?",
+            a: "Ils couvrent les mentions habituelles, mais chaque activité a ses particularités (garanties, produits réglementés, ventes hors UE). Fais-les relire par un professionnel avant de lancer la publicité.",
+          },
+        ],
       },
       {
         id: "4.6",
@@ -375,6 +477,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Pages Contact et À propos, bandeau de réassurance.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Comment obtenir des avis au démarrage sans en inventer ?",
+            a: "Demande un avis à chaque client après la livraison, et propose le produit à quelques testeurs en indiquant clairement qu'ils l'ont reçu gratuitement. N'importe jamais d'avis venant d'un autre site ou d'un fournisseur.",
+          },
+        ],
       },
       {
         id: "4.7",
@@ -389,6 +497,12 @@ export const MODULES: Module[] = [
         deliverable: "Les moyens de paiement actifs.",
         tool: "profit",
         cost: "0 € fixe, commission par transaction",
+        faq: [
+          {
+            q: "Le paiement en plusieurs fois coûte-t-il cher ?",
+            a: "La commission est plus élevée que pour un paiement par carte classique. Sur du high-ticket, elle est souvent compensée par un meilleur taux de conversion : vérifie l'impact sur ta marge dans le calculateur.",
+          },
+        ],
       },
       {
         id: "4.8",
@@ -402,6 +516,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Une commande test réussie.",
         cost: "0 € (remboursée)",
+        faq: [
+          {
+            q: "Comment tester une commande sans payer ?",
+            a: "Active le mode test de ton moyen de paiement dans Shopify (ou la passerelle de test proposée par Shopify) et utilise les numéros de carte de test indiqués dans l'aide Shopify. Pense à le désactiver avant le lancement.",
+          },
+        ],
       },
     ],
   },
@@ -423,6 +543,12 @@ export const MODULES: Module[] = [
         deliverable: "Checklist à 100 %.",
         tool: "gmc",
         cost: "0 €",
+        faq: [
+          {
+            q: "Que faire si un point ne peut pas être coché ?",
+            a: "Corrige-le avant de créer le compte Merchant Center, même si cela retarde le lancement de quelques jours. Une suspension dès la première revue est bien plus longue à lever.",
+          },
+        ],
       },
       {
         id: "5.2",
@@ -436,6 +562,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Merchant Center créé, domaine validé et revendiqué.",
         cost: "0 €",
+        faq: [
+          {
+            q: "L'app Google & YouTube est-elle payante ?",
+            a: "Non, elle est gratuite. Tu ne paies que les clics de tes campagnes Google Ads.",
+          },
+        ],
       },
       {
         id: "5.3",
@@ -448,6 +580,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Livraison et retours configurés pour chaque pays ciblé.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Dois-je livrer dans tous les pays ?",
+            a: "Non. Déclare uniquement les pays où tu livres vraiment, avec les vrais frais et délais. Mieux vaut commencer par ton pays seul, puis élargir.",
+          },
+        ],
       },
       {
         id: "5.4",
@@ -461,7 +599,14 @@ export const MODULES: Module[] = [
           "Catégorie Google, état « neuf » et disponibilité exacte.",
         ],
         deliverable: "Le produit est « Approuvé » dans Merchant Center > Produits.",
+        tool: "titles",
         cost: "0 €",
+        faq: [
+          {
+            q: "Mon produit en marque blanche n'a pas de GTIN, est-ce un problème ?",
+            a: "Non, si c'est la réalité : indique qu'il n'a pas d'identifiant produit. N'invente jamais de GTIN et n'utilise pas celui d'un autre produit.",
+          },
+        ],
       },
       {
         id: "5.5",
@@ -475,6 +620,12 @@ export const MODULES: Module[] = [
         deliverable: "Le compte approuvé, sans avertissement bloquant.",
         tool: "gmc",
         cost: "0 €",
+        faq: [
+          {
+            q: "Mes produits sont « en attente » depuis plusieurs jours, est-ce normal ?",
+            a: "Oui, la première revue peut prendre plusieurs jours, parfois plus d'une semaine. Évite de supprimer ou de recréer tes produits pendant ce temps : cela relance l'examen.",
+          },
+        ],
       },
     ],
   },
@@ -495,6 +646,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Un compte Google Ads vierge, facturation active.",
         cost: "0 € (tu paies au clic)",
+        faq: [
+          {
+            q: "Pourquoi éviter les campagnes automatiques au début ?",
+            a: "Elles ont besoin de données de conversion pour bien enchérir. Avec un petit budget et aucun historique, elles dépensent souvent sur des emplacements peu rentables sans que tu puisses voir les requêtes qui coûtent.",
+          },
+        ],
       },
       {
         id: "6.2",
@@ -507,6 +664,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Une action « Achat » active, avec valeur.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Ma commande test n'apparaît pas dans les conversions, pourquoi ?",
+            a: "Il faut souvent quelques heures. Vérifie aussi que tu n'avais pas de bloqueur de publicités et que tu avais accepté la bannière cookies lors de la commande test.",
+          },
+        ],
       },
       {
         id: "6.3",
@@ -520,6 +683,12 @@ export const MODULES: Module[] = [
         deliverable: "Budget quotidien, CPC max de départ, règle de coupe.",
         tool: "ads",
         cost: "0 €",
+        faq: [
+          {
+            q: "Quel budget quotidien minimum ?",
+            a: "Assez pour obtenir plusieurs dizaines de clics par semaine, sinon les données arrivent trop lentement pour décider. Le planificateur calcule ce chiffre à partir de ton CPC.",
+          },
+        ],
       },
       {
         id: "6.4",
@@ -534,6 +703,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Campagne active.",
         cost: "Budget quotidien défini au 6.3",
+        faq: [
+          {
+            q: "Pourquoi décocher les partenaires du Réseau de Recherche ?",
+            a: "Ce sont des sites tiers dont le trafic convertit souvent moins bien. Une fois rentable sur Google, tu pourras les tester à part.",
+          },
+        ],
       },
       {
         id: "6.5",
@@ -545,7 +720,14 @@ export const MODULES: Module[] = [
           "Ajoute les noms des marques concurrentes que tu ne vends pas.",
         ],
         deliverable: "Liste de mots-clés négatifs appliquée.",
+        tool: "titles",
         cost: "0 €",
+        faq: [
+          {
+            q: "Comment trouver d'autres mots-clés négatifs ?",
+            a: "Le rapport des termes de recherche (tâche 7.1) montre les requêtes réelles qui ont déclenché tes annonces. Exclus chaque terme sans intention d'achat. L'outil « Titres Shopping » propose une liste de départ à copier.",
+          },
+        ],
       },
       {
         id: "6.6",
@@ -560,6 +742,12 @@ export const MODULES: Module[] = [
         deliverable: "7 jours de données et une décision : continuer, ajuster ou changer de produit.",
         tool: "ads",
         cost: "Budget publicitaire",
+        faq: [
+          {
+            q: "J'ai des ventes, mais un ROAS juste sous le seuil : je coupe ?",
+            a: "Pas tout de suite. Exclus les termes de recherche non pertinents, baisse l'enchère des produits les moins rentables et améliore la fiche produit, puis réévalue après 7 jours de plus.",
+          },
+        ],
       },
     ],
   },
@@ -580,6 +768,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Une liste de négatifs à jour et les termes gagnants notés.",
         cost: "0 €",
+        faq: [
+          {
+            q: "À quelle fréquence regarder les termes de recherche ?",
+            a: "Tous les 2 à 3 jours au début, puis une fois par semaine quand la liste de négatifs est stable.",
+          },
+        ],
       },
       {
         id: "7.2",
@@ -593,6 +787,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Des enchères ajustées et un budget augmenté prudemment.",
         cost: "Budget publicitaire",
+        faq: [
+          {
+            q: "Pourquoi augmenter le budget par petits paliers ?",
+            a: "Une hausse brutale perturbe l'équilibre des enchères et peut faire grimper le coût par vente. Des paliers de 20 % maximum permettent de vérifier que la rentabilité tient.",
+          },
+        ],
       },
       {
         id: "7.3",
@@ -605,6 +805,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Une décision documentée : enchères manuelles ou automatiques.",
         cost: "Budget publicitaire",
+        faq: [
+          {
+            q: "Performance Max peut-il concurrencer ma campagne Shopping ?",
+            a: "Oui, les deux campagnes peuvent se disputer les mêmes produits. Teste Performance Max sur un groupe de produits distinct ou sur une période limitée, et compare le résultat global, pas campagne par campagne.",
+          },
+        ],
       },
       {
         id: "7.4",
@@ -617,6 +823,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Un flux d'avis automatisé.",
         cost: "0 € au départ",
+        faq: [
+          {
+            q: "Combien d'avis faut-il pour afficher les étoiles sur Shopping ?",
+            a: "Google exige un nombre minimum d'avis sur l'ensemble de ton catalogue avant d'afficher les étoiles. Ce seuil évolue : vérifie-le dans l'aide Merchant Center, rubrique « avis sur les produits ».",
+          },
+        ],
       },
       {
         id: "7.5",
@@ -631,6 +843,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Un guide d'achat publié et un suivi mensuel de ta visibilité IA.",
         cost: "0 €",
+        faq: [
+          {
+            q: "Peut-on payer pour être recommandé par les assistants IA ?",
+            a: "Aucune méthode ne garantit une recommandation spontanée. Méfie-toi des offres qui le promettent. Ce qui aide vraiment : un contenu utile et factuel, et des mentions sur des sites indépendants.",
+          },
+        ],
       },
       {
         id: "7.6",
@@ -643,6 +861,12 @@ export const MODULES: Module[] = [
         ],
         deliverable: "Un upsell actif et un 2ᵉ produit en préparation.",
         cost: "Selon le produit",
+        faq: [
+          {
+            q: "Quand élargir à d'autres pays ?",
+            a: "Une fois ton premier marché rentable, et un pays à la fois : chaque pays implique livraison, retours, langue et parfois TVA différents.",
+          },
+        ],
       },
     ],
   },

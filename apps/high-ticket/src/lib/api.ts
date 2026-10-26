@@ -1,5 +1,13 @@
 import type { Profile } from "../types";
-import { callable } from "./firebase";
+import { cloudEnabled } from "./cloudConfig";
+
+function callable<Req, Res>(name: string) {
+  return async (data: Req): Promise<Res> => {
+    if (!cloudEnabled) throw new Error("Le mode cloud n'est pas activé.");
+    const { callFunction } = await import("./firebase");
+    return callFunction<Req, Res>(name, data);
+  };
+}
 
 export interface ChatMessage {
   role: "user" | "assistant";

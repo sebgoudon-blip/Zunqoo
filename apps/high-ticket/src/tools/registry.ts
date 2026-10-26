@@ -6,6 +6,7 @@ export const TOOL_LABELS: Record<ToolId, string> = {
   ads: "Planificateur Google Ads",
   legal: "Générateur de pages légales",
   gmc: "Checklist Merchant Center",
+  titles: "Titres Shopping & mots-clés négatifs",
 };
 
 export const TOOL_DESCRIPTIONS: Record<ToolId, string> = {
@@ -14,8 +15,9 @@ export const TOOL_DESCRIPTIONS: Record<ToolId, string> = {
   ads: "Budget quotidien, clics, ventes attendues et règle de coupe pour ta campagne Shopping.",
   legal: "Mentions légales, CGV, retours, livraison et confidentialité pré-remplies avec ton profil.",
   gmc: "Les points vérifiés par Google avant d'approuver ton compte Merchant Center.",
+  titles: "Construis des titres de flux conformes et ta liste de mots-clés négatifs Google Ads.",
 };
 
-export const TOOL_ORDER: ToolId[] = ["score", "profit", "legal", "gmc", "ads"];
+export const TOOL_ORDER: ToolId[] = ["score", "profit", "legal", "gmc", "titles", "ads"];
 
 export const STANDARD_VAT: Record<Country, number> = { FR: 20, BE: 21, LU: 17, CH: 8.1 };

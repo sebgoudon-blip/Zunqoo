@@ -34,8 +34,12 @@ de l'export dans `firebase/functions/src/index.ts`, puis passer
   - score produit ;
   - calculateur de rentabilité ;
   - planificateur Google Ads ;
-  - générateur de pages légales ;
-  - checklist Merchant Center.
+  - générateur de pages légales, téléchargeable en un seul fichier HTML ;
+  - checklist Merchant Center ;
+  - titres Shopping (contrôle de longueur, mentions promotionnelles,
+    majuscules) et mots-clés négatifs Google Ads.
+- **FAQ sur chaque tâche**, et **sauvegarde/restauration** de toute la
+  progression dans un fichier JSON (page Profil).
 - **Comptes et synchronisation** : connexion par Google ou par
   email/mot de passe. La progression, les notes et les outils sont
   synchronisés en temps réel entre appareils (`src/lib/cloudSync.ts`). Ce
@@ -140,7 +144,11 @@ domaine que l'app.
 
 ```bash
 npm run dev:high-ticket      # mode local, sans Firebase
+npm run test:high-ticket     # tests unitaires (calculs, contrôles, pages légales, sauvegarde)
 ```
+
+Le SDK Firebase n'est chargé qu'à la demande : en mode local, il n'est
+jamais téléchargé.
 
 Pour tester le mode cloud avec les émulateurs (auth, Firestore,
 functions) :
