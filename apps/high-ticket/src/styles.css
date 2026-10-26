@@ -1577,6 +1577,11 @@ small.block {
 
 .resource summary {
   gap: var(--space-3);
+  min-width: 0;
+}
+
+.resource summary > span:last-child {
+  min-width: 0;
 }
 
 .resource-kind {
@@ -1592,6 +1597,7 @@ small.block {
 .resource-body {
   padding-bottom: var(--space-4);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   justify-items: start;
 }
@@ -1616,6 +1622,7 @@ small.block {
 }
 
 .table-wrap {
+  position: relative;
   width: 100%;
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -1749,6 +1756,64 @@ small.block {
 
 .card.empty p {
   margin: 0;
+}
+
+/* Suivi quotidien */
+
+.tracker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.tracker > p {
+  margin: 0;
+}
+
+.tracker-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0 var(--space-3);
+  align-items: end;
+}
+
+.tracker-form input {
+  min-width: 0;
+}
+
+.tracker-form .btn {
+  margin-bottom: var(--space-4);
+}
+
+.tracker td,
+.tracker tfoot th {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tracker tfoot th,
+.tracker tfoot td {
+  font-weight: 700;
+  border-top: 2px solid var(--border-strong);
+  border-bottom: none;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  margin: -10px 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+}
+
+.icon-btn:hover {
+  background: var(--bad-soft);
+  color: var(--bad);
 }
 
 /* Mobile */

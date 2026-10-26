@@ -21,7 +21,7 @@ export interface Profile {
   storeUrl: string;
 }
 
-export type ToolId = "profit" | "score" | "ads" | "legal" | "gmc" | "titles";
+export type ToolId = "profit" | "score" | "ads" | "legal" | "gmc" | "titles" | "tracker";
 
 export interface Faq {
   q: string;

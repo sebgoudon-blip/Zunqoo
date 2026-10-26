@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom";
+import { AdsTracker } from "../components/AdsTracker";
 import { Icon } from "../components/Icon";
 import { AdsPlanner } from "../tools/AdsPlanner";
 import { GmcChecklist } from "../tools/GmcChecklist";
@@ -16,6 +17,11 @@ const COMPONENTS: Record<ToolId, () => JSX.Element> = {
   legal: LegalGenerator,
   gmc: GmcChecklist,
   titles: ShoppingTitles,
+  tracker: () => (
+    <div className="card">
+      <AdsTracker />
+    </div>
+  ),
 };
 
 export function ToolsPage() {

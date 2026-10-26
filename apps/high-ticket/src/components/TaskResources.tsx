@@ -2,6 +2,7 @@ import { useState } from "react";
 import { RESOURCES, fillPlaceholders, resourceText, type Resource } from "../content/resources";
 import { useStoredState } from "../hooks/useStoredState";
 import { useAppState } from "../state";
+import { AdsTracker } from "./AdsTracker";
 import { Icon } from "./Icon";
 
 export function TaskResources({ taskId }: { taskId: string }) {
@@ -18,6 +19,23 @@ export function TaskResources({ taskId }: { taskId: string }) {
 }
 
 function ResourceBlock({ resource, taskId }: { resource: Resource; taskId: string }) {
+  if (resource.kind === "tracker") {
+    return (
+      <details className="resource" open>
+        <summary>
+          <span className="resource-kind kind-tracker">Outil</span>
+          <span>{resource.title}</span>
+        </summary>
+        <div className="resource-body">
+          <AdsTracker />
+        </div>
+      </details>
+    );
+  }
+  return <CopyableResource resource={resource} taskId={taskId} />;
+}
+
+function CopyableResource({ resource, taskId }: { resource: Exclude<Resource, { kind: "tracker" }>; taskId: string }) {
   const { profile } = useAppState();
   const [copied, setCopied] = useState(false);
   const [checks, setChecks] = useStoredState<Record<string, boolean>>("resource_checks", {});
@@ -38,10 +56,10 @@ function ResourceBlock({ resource, taskId }: { resource: Resource; taskId: strin
   return (
     <details className="resource">
       <summary>
-        <span className={`resource-kind ${resource.kind}`}>
+        <span className={`resource-kind kind-${resource.kind}`}>
           {resource.kind === "template" ? "Modèle" : resource.kind === "table" ? "Exemples" : "Checklist"}
         </span>
-        {resource.title}
+        <span>{resource.title}</span>
       </summary>
       <div className="resource-body">
         {resource.kind === "template" && <pre>{text}</pre>}

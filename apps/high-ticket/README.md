@@ -48,7 +48,18 @@ de l'export dans `firebase/functions/src/index.ts`, puis passer
   - modèles de messages aux fournisseurs (FR/EN) et relance ;
   - tableau comparatif des fournisseurs ;
   - checklist de l'échantillon ;
-  - bloc livraison et retours.
+  - bloc livraison et retours ;
+  - réglages Shopify et choix du nom de marque ;
+  - structure de fiche produit et galerie photos ;
+  - page « À propos » et commande test ;
+  - configuration livraison/retours Merchant Center ;
+  - exemples de titres et problèmes fréquents des Diagnostics ;
+  - structure de campagne Shopping ;
+  - routine hebdomadaire, email de demande d'avis, plan de guide d'achat
+    et idées d'upsell.
+- **Suivi quotidien Google Ads** (tâche 6.6 et page Outils) : saisie des
+  chiffres du jour, avec CPC, ROAS et règle de coupe calculés à partir du
+  CPA max du calculateur.
 - **Carnet de notes** (`/carnet`) : toutes les notes du parcours, avec
   recherche, modification, export Markdown et lien vers chaque tâche
   (`/parcours?tache=2.3`).

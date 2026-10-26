@@ -7,7 +7,8 @@
 export type Resource =
   | { kind: "template"; title: string; body: string }
   | { kind: "table"; title: string; note?: string; columns: string[]; rows: string[][] }
-  | { kind: "checklist"; id: string; title: string; items: string[] };
+  | { kind: "checklist"; id: string; title: string; items: string[] }
+  | { kind: "tracker"; title: string };
 
 export const RESOURCES: Record<string, Resource[]> = {
   "2.2": [
@@ -155,6 +156,260 @@ Paiement sécurisé, en une fois ou en plusieurs fois.
 Une question ? Notre équipe te répond sous 24 h : [Ton email]`,
     },
   ],
+  "4.1": [
+    {
+      kind: "checklist",
+      id: "shopify-setup",
+      title: "Réglages Shopify à faire avant d'ouvrir",
+      items: [
+        "Paramètres > Général : nom de la boutique, email de contact, adresse identique à ton immatriculation",
+        "Paramètres > Marchés : pays de vente limités à ceux où tu livres réellement",
+        "Paramètres > Taxes : régime de TVA configuré, prix affichés TTC",
+        "Paramètres > Expédition : zones et tarifs identiques à ta politique de livraison",
+        "Paramètres > Paiements : Shopify Payments activé, coordonnées bancaires pro",
+        "Paramètres > Notifications : emails de commande relus et traduits",
+        "Paramètres > Politiques : pages légales publiées (tâche 4.5)",
+        "Boutique en ligne > Préférences : titre et méta-description de la page d'accueil",
+      ],
+    },
+  ],
+  "4.2": [
+    {
+      kind: "checklist",
+      id: "brand-name",
+      title: "Choisir un nom de marque solide",
+      items: [
+        "Court (2 à 3 syllabes) et facile à épeler à l'oral",
+        "Aucune marque connue dans le nom (ni dans le domaine)",
+        "Recherche faite dans les bases de marques (data.inpi.fr en France, euipo.europa.eu pour l'UE) : pas de marque identique dans ta catégorie",
+        "Domaine .fr ou .com disponible",
+        "Pseudo disponible sur Instagram, TikTok et Facebook",
+        "Fonctionne si tu ajoutes un second produit de la même niche",
+      ],
+    },
+  ],
+  "4.4": [
+    {
+      kind: "template",
+      title: "Structure d'une fiche produit high-ticket",
+      body: `TITRE
+[Marque] [Type de produit] [Caractéristique clé] – [Modèle / couleur]
+
+SOUS LE PRIX (zone d'achat)
+✓ Livraison offerte en [délai] jours ouvrés, avec suivi
+✓ Retours gratuits pendant [nombre] jours
+✓ Garantie [durée] ans
+✓ Paiement en une fois ou en plusieurs fois
+
+ACCROCHE (2 phrases)
+[Le problème que résout le produit] + [le résultat concret pour le client].
+
+3 À 5 BÉNÉFICES
+• [Bénéfice 1] : [preuve chiffrée ou caractéristique qui le justifie]
+• [Bénéfice 2] : [preuve]
+• [Bénéfice 3] : [preuve]
+
+FICHE TECHNIQUE
+Dimensions : […] – Poids : […] – Matériaux : […] – Puissance / capacité : […]
+Contenu du colis : […]
+Montage : [durée, outils fournis ou non]
+
+VIDÉO
+[Vidéo de ton échantillon : déballage, montage, utilisation]
+
+FAQ
+Quels sont les délais de livraison ? – [réponse]
+Comment fonctionne la garantie ? – [réponse]
+Puis-je retourner le produit ? – [réponse]
+Le montage est-il difficile ? – [réponse]
+Comment vous contacter ? – [Ton email]`,
+    },
+    {
+      kind: "checklist",
+      id: "gallery",
+      title: "Galerie photos (6 à 8 visuels)",
+      items: [
+        "Photo 1 : produit seul sur fond blanc, sans texte (obligatoire pour Shopping)",
+        "Photo 2 : produit en situation, dans un décor réaliste",
+        "Photo 3 : détail des finitions ou de la matière",
+        "Photo 4 : schéma des dimensions",
+        "Photo 5 : produit utilisé par une personne (échelle)",
+        "Photo 6 : contenu du colis",
+        "Toutes les images en haute définition, au moins 1 000 px de large",
+      ],
+    },
+  ],
+  "4.6": [
+    {
+      kind: "template",
+      title: "Page « À propos »",
+      body: `Qui sommes-nous ?
+
+[Ta boutique] est née d'un constat simple : [le problème que tu as vécu ou observé avec ce type de produit].
+
+Plutôt que de proposer des centaines de références, nous avons choisi de sélectionner [le produit], après avoir comparé [nombre] modèles et testé nous-mêmes l'échantillon retenu.
+
+Nos engagements :
+• Un produit testé avant d'être mis en vente
+• Une livraison suivie en [délai] jours ouvrés
+• [nombre] jours pour changer d'avis
+• Un service client qui répond sous 24 h
+
+Une question ? Écris-nous à [Ton email].
+
+[Ton prénom et nom], fondateur de [Ta boutique]`,
+    },
+  ],
+  "4.8": [
+    {
+      kind: "checklist",
+      id: "test-order",
+      title: "Commande test de bout en bout",
+      items: [
+        "Commande passée depuis un téléphone, en navigation privée",
+        "Prix, TVA et frais de livraison corrects au paiement",
+        "Paiement en plusieurs fois proposé et fonctionnel",
+        "Email de confirmation reçu, sans faute ni texte en anglais",
+        "Commande visible dans Shopify avec la bonne adresse",
+        "Remboursement effectué et email de remboursement reçu",
+        "Liens du pied de page (CGV, retours, mentions légales) fonctionnels",
+      ],
+    },
+  ],
+  "5.3": [
+    {
+      kind: "table",
+      title: "Exemple de configuration livraison et retours",
+      note: "À adapter à tes vrais délais : ils doivent être identiques sur ton site et dans Merchant Center.",
+      columns: ["Réglage", "Exemple", "Où le régler"],
+      rows: [
+        ["Pays de livraison", "France", "Merchant Center > Livraison et retours"],
+        ["Frais de livraison", "0 € (offerte)", "Service de livraison"],
+        ["Délai de traitement", "1 à 2 jours ouvrés", "Service de livraison"],
+        ["Délai de transport", "2 à 4 jours ouvrés", "Service de livraison"],
+        ["Heure limite de commande", "14 h", "Service de livraison"],
+        ["Délai de retour", "30 jours", "Politique de retour"],
+        ["Frais de retour", "Gratuits (étiquette fournie)", "Politique de retour"],
+        ["Page de la politique", "https://www.tamarque.fr/policies/refund-policy", "Politique de retour"],
+      ],
+    },
+  ],
+  "5.4": [
+    {
+      kind: "table",
+      title: "Titres de flux : à éviter et à suivre",
+      columns: ["À éviter", "Pourquoi", "Mieux"],
+      rows: [
+        ["PROMO Bureau électrique -30 % !!!", "Mention promo, majuscules, ponctuation", "Ma Marque Bureau assis-debout électrique double moteur 160 x 80 cm"],
+        ["Le meilleur rameur du marché", "Superlatif, pas de caractéristiques", "Ma Marque Rameur d'appartement magnétique pliable 16 niveaux"],
+        ["Spa", "Trop vague, Google ne sait pas quand l'afficher", "Ma Marque Spa gonflable rond 4 places 800 L – Gris anthracite"],
+        ["Fauteuil ergonomique compatible Herman Miller", "Marque tierce citée sans autorisation", "Ma Marque Fauteuil de bureau ergonomique résille soutien lombaire"],
+      ],
+    },
+  ],
+  "5.5": [
+    {
+      kind: "table",
+      title: "Problèmes fréquents dans les Diagnostics",
+      note: "Les libellés exacts peuvent varier : lis toujours le détail affiché par Merchant Center.",
+      columns: ["Problème", "Cause habituelle", "Correction"],
+      rows: [
+        ["Prix différent sur la page de destination", "Prix modifié sur le site, flux pas encore mis à jour", "Attendre la synchronisation de l'app ou relancer l'import"],
+        ["Disponibilité incorrecte", "Stock à 0 ou produit en brouillon sur Shopify", "Mettre à jour le stock et le statut du produit"],
+        ["Image trop petite ou avec texte", "Visuel retouché ou basse définition", "Remplacer la première image par un fond blanc sans texte"],
+        ["Identifiant produit manquant", "GTIN non renseigné", "Renseigner le GTIN, ou indiquer qu'il n'existe pas (marque blanche)"],
+        ["Déclaration trompeuse", "Informations incomplètes ou incohérentes sur le site", "Repasser la checklist Merchant Center avant de demander un réexamen"],
+      ],
+    },
+  ],
+  "6.4": [
+    {
+      kind: "table",
+      title: "Structure de campagne Shopping de départ",
+      columns: ["Niveau", "Réglage conseillé", "Pourquoi"],
+      rows: [
+        ["Campagne", "Shopping standard – [produit] – FR", "Un nom clair pour s'y retrouver"],
+        ["Stratégie d'enchères", "CPC manuel", "Contrôle total au démarrage"],
+        ["Budget quotidien", "Celui du planificateur (tâche 6.3)", "Budget dépensé de façon régulière sur le mois"],
+        ["Réseaux", "Google uniquement (pas de partenaires ni Display)", "Trafic à plus forte intention d'achat"],
+        ["Ciblage géographique", "Personnes présentes dans le pays", "Évite les clics de l'étranger"],
+        ["Groupe de produits", "Un groupe par produit", "Une enchère par produit"],
+        ["Enchère de départ", "Le CPC estimé de la tâche 2.3", "Ajustée ensuite selon les résultats"],
+        ["Mots-clés négatifs", "Liste de l'outil Titres Shopping", "Évite les clics sans intention d'achat"],
+      ],
+    },
+  ],
+  "6.6": [{ kind: "tracker", title: "Suivi quotidien de la campagne" }],
+  "7.1": [
+    {
+      kind: "checklist",
+      id: "weekly-routine",
+      title: "Routine hebdomadaire (30 minutes)",
+      items: [
+        "Termes de recherche : exclure les requêtes non pertinentes",
+        "Produits : comparer ROAS réel et ROAS de rentabilité",
+        "Merchant Center : aucun produit refusé ni avertissement",
+        "Boutique : stock, prix et délais toujours exacts",
+        "Avis clients : répondre à chaque nouvel avis",
+        "Carnet : noter les chiffres et décisions de la semaine",
+      ],
+    },
+  ],
+  "7.4": [
+    {
+      kind: "template",
+      title: "Email de demande d'avis (à envoyer 5 à 7 jours après la livraison)",
+      body: `Objet : Ton avis sur ton [produit] ?
+
+Bonjour [prénom du client],
+
+Ton [produit] est arrivé il y a quelques jours : nous espérons qu'il te donne entière satisfaction.
+
+Ton avis aide d'autres clients à faire le bon choix. Il te faudra moins d'une minute : [lien vers le formulaire d'avis]
+
+Un souci ou une question ? Réponds simplement à cet email : nous te répondons sous 24 h.
+
+Merci pour ta confiance,
+[Ton prénom et nom]
+[Ta boutique]`,
+    },
+  ],
+  "7.5": [
+    {
+      kind: "template",
+      title: "Plan d'un guide d'achat",
+      body: `Comment choisir son [produit] en [année] : le guide complet
+
+1. En bref : les 3 critères qui comptent vraiment
+2. À quoi sert un [produit] et pour qui
+3. Les critères de choix, un par un
+   – [Critère 1] : ce qu'il faut regarder, les valeurs conseillées
+   – [Critère 2] : …
+   – [Critère 3] : …
+4. Tableau comparatif des types de [produit] (avantages, limites, budget)
+5. Les erreurs fréquentes à éviter
+6. Entretien et durée de vie
+7. FAQ (5 à 8 questions réelles de clients)
+8. Notre sélection : pourquoi nous avons choisi [ton produit], et pour qui il n'est pas fait
+
+Conseils : chiffres vérifiables, sources citées, aucune promesse exagérée.`,
+    },
+  ],
+  "7.6": [
+    {
+      kind: "table",
+      title: "Idées d'upsell et de packs",
+      columns: ["Produit principal", "Accessoire / pack", "Argument"],
+      rows: [
+        ["Bureau assis-debout", "Tapis anti-fatigue, passe-câbles, bras d'écran", "Poste de travail complet"],
+        ["Rameur / home-gym", "Tapis de protection du sol, housse", "Protège le sol et l'appareil"],
+        ["Spa gonflable", "Bâche isotherme, kit d'entretien, marchepied", "Économies de chauffage et confort"],
+        ["Four à pizza", "Pelle, pierre de rechange, housse", "Prêt à l'emploi dès réception"],
+        ["Mobilier de jardin", "Housses de protection, coussins", "Durée de vie prolongée"],
+        ["Tout produit", "Extension de garantie, installation", "Tranquillité d'esprit"],
+      ],
+    },
+  ],
 };
 
 export function fillPlaceholders(text: string, p: { firstName?: string; companyName?: string; storeName?: string; email?: string } | null) {
@@ -172,5 +427,6 @@ export function fillPlaceholders(text: string, p: { firstName?: string; companyN
 export function resourceText(r: Resource): string {
   if (r.kind === "template") return r.body;
   if (r.kind === "table") return [r.columns, ...r.rows].map((row) => row.join("\t")).join("\n");
-  return r.items.map((i) => `☐ ${i}`).join("\n");
+  if (r.kind === "checklist") return r.items.map((i) => `☐ ${i}`).join("\n");
+  return "";
 }
