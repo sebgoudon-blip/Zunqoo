@@ -18,6 +18,11 @@
     "emulators": "firebase emulators:start",
     "deploy:functions": "firebase deploy --only functions",
     "deploy:hosting": "firebase deploy --only hosting",
-    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes"
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
+    "test:functions": "npm run test --workspace firebase/functions",
+    "test:e2e": "node firebase/e2e/run.mjs"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.35.1"
   }
 }

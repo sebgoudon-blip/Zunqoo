@@ -3,7 +3,9 @@ import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, onRequest, type CallableRequest } from "firebase-functions/v2/https";
 import { defineSecret, defineString } from "firebase-functions/params";
-import { REGION, requireUid } from "./common";
+import { runAudit } from "./audit";
+import { collectSnapshot } from "./collect";
+import { REGION, consumeQuota, refundQuota, requireUid } from "./common";
 
 const shopifyClientId = defineSecret("SHOPIFY_CLIENT_ID");
 const shopifyClientSecret = defineSecret("SHOPIFY_CLIENT_SECRET");
@@ -11,12 +13,28 @@ const shopifyClientSecret = defineSecret("SHOPIFY_CLIENT_SECRET");
 const appUrl = defineString("HTP_APP_URL");
 
 const API_VERSION = "2026-10";
-const SCOPES = "read_products,read_content,write_legal_policies";
+// Accès minimaux : l'audit ne fait que lire. Le droit d'écrire les politiques
+// n'est demandé que si le marchand veut publier ses pages légales depuis l'app.
+const READ_SCOPES = "read_products,read_content,read_legal_policies";
+const PUBLISH_SCOPES = `${READ_SCOPES},write_legal_policies`;
+const canPublish = (scope: string) => scope.split(",").includes("write_legal_policies");
+
+const DAILY_AUDITS_PER_USER = 10;
+const DAILY_AUDITS_PER_SHOP = 20;
 const SHOP_DOMAIN = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
 const STATE_TTL_MS = 10 * 60 * 1000;
 
 const db = () => getFirestore();
 const callbackUrl = () => `${appUrl.value()}/api/shopify/callback`;
+
+/**
+ * Adresse des API Shopify. Dans l'émulateur uniquement, les tests de bout en
+ * bout la remplacent par un faux serveur Shopify local.
+ */
+function shopifyOrigin(shop: string): string {
+  const mock = process.env.FUNCTIONS_EMULATOR === "true" ? process.env.HTP_SHOPIFY_MOCK_ORIGIN : undefined;
+  return mock || `https://${shop}`;
+}
 
 // Les jetons d'accès vivent dans une collection que les règles Firestore interdisent
 // au client : ils ne quittent jamais le serveur.
@@ -66,7 +84,7 @@ function validHmac(query: Record<string, unknown>, secret: string): boolean {
 }
 
 async function tokenRequest(shop: string, body: Record<string, string>): Promise<TokenResponse> {
-  const res = await fetch(`https://${shop}/admin/oauth/access_token`, {
+  const res = await fetch(`${shopifyOrigin(shop)}/admin/oauth/access_token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
     body: new URLSearchParams({
@@ -117,11 +135,11 @@ async function accessTokenFor(uid: string): Promise<{ shop: string; token: strin
 
 interface GraphqlResult<T> {
   data?: T;
-  errors?: { message: string }[];
+  errors?: { message: string; extensions?: { code?: string } }[];
 }
 
 async function adminGraphql<T>(shop: string, token: string, query: string, variables?: Record<string, unknown>) {
-  const res = await fetch(`https://${shop}/admin/api/${API_VERSION}/graphql.json`, {
+  const res = await fetch(`${shopifyOrigin(shop)}/admin/api/${API_VERSION}/graphql.json`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
     body: JSON.stringify({ query, variables }),
@@ -138,14 +156,15 @@ async function adminGraphql<T>(shop: string, token: string, query: string, varia
 /** Étape 1 : génère l'URL d'autorisation Shopify pour l'utilisateur connecté. */
 export const htpShopifyStart = onCall(
   { region: REGION, secrets: [shopifyClientId] },
-  async (request: CallableRequest<{ shop: string }>) => {
+  async (request: CallableRequest<{ shop: string; publish?: boolean }>) => {
     const uid = requireUid(request);
     const shop = normalizeShop(request.data?.shop);
+    const scope = request.data?.publish === true ? PUBLISH_SCOPES : READ_SCOPES;
     const state = randomBytes(24).toString("hex");
     await db().collection("htpOAuthStates").doc(state).set({ uid, shop, createdAt: FieldValue.serverTimestamp() });
     const params = new URLSearchParams({
       client_id: shopifyClientId.value(),
-      scope: SCOPES,
+      scope,
       redirect_uri: callbackUrl(),
       state,
     });
@@ -181,7 +200,10 @@ export const htpShopifyCallback = onRequest(
 
       const token = await tokenRequest(shop, { code, expiring: "1" });
       await shopRef(saved.uid).set({ shop, ...tokenFields(token), connectedAt: FieldValue.serverTimestamp() });
-      await publicRef(saved.uid).set({ shopify: { shop, connectedAt: FieldValue.serverTimestamp() } }, { merge: true });
+      await publicRef(saved.uid).set(
+        { shopify: { shop, canPublish: canPublish(token.scope), connectedAt: FieldValue.serverTimestamp() } },
+        { merge: true }
+      );
       back("connected");
     } catch (err) {
       logger.error("Échec de la connexion Shopify", err);
@@ -207,103 +229,36 @@ const POLICY_TYPES = [
 ] as const;
 type PolicyType = (typeof POLICY_TYPES)[number];
 
-const POLICY_LABELS: Record<PolicyType, string> = {
-  LEGAL_NOTICE: "Mentions légales",
-  TERMS_OF_SERVICE: "Conditions générales de vente",
-  REFUND_POLICY: "Politique de retour et de remboursement",
-  SHIPPING_POLICY: "Politique d'expédition",
-  PRIVACY_POLICY: "Politique de confidentialité",
-  CONTACT_INFORMATION: "Coordonnées",
-};
-
-interface AuditData {
-  shop: {
-    name: string;
-    contactEmail: string;
-    myshopifyDomain: string;
-    primaryDomain: { host: string; url: string; sslEnabled: boolean };
-    shopAddress: { formatted: string[] };
-    shopPolicies: { type: PolicyType; body: string; url: string }[];
-  };
-  productsCount: { count: number } | null;
-}
-
-type CheckStatus = "ok" | "ko" | "unknown";
-
-/** Vérifie automatiquement ce qui peut l'être dans la checklist Merchant Center. */
+/**
+ * Audit de conformité Merchant Center : lit la boutique en lecture seule, puis
+ * applique les règles de ./audit. Limité par utilisateur et par boutique.
+ */
 export const htpShopifyAudit = onCall(
-  { region: REGION, secrets: [shopifyClientId, shopifyClientSecret] },
+  { region: REGION, secrets: [shopifyClientId, shopifyClientSecret], timeoutSeconds: 120 },
   async (request: CallableRequest<{ address?: string }>) => {
     const uid = requireUid(request);
     const { shop, token } = await accessTokenFor(uid);
-
-    const main = await adminGraphql<AuditData>(
-      shop,
-      token,
-      `query HtpAudit {
-        shop {
-          name
-          contactEmail
-          myshopifyDomain
-          primaryDomain { host url sslEnabled }
-          shopAddress { formatted }
-          shopPolicies { type body url }
-        }
-        productsCount { count }
-      }`
-    );
-    if (!main.data) {
-      logger.error("Audit Shopify : réponse sans données", main.errors);
-      throw new HttpsError("internal", "Impossible de lire les informations de la boutique.");
-    }
-    // Requête séparée : si ce champ n'est pas accessible, le reste de l'audit reste valable.
-    const password = await adminGraphql<{ onlineStore: { passwordProtection: { enabled: boolean } } }>(
-      shop,
-      token,
-      `query HtpPassword { onlineStore { passwordProtection { enabled } } }`
-    ).catch(() => null);
-
-    const s = main.data.shop;
-    const policies = new Map(s.shopPolicies.filter((p) => p.body?.trim()).map((p) => [p.type, p]));
-    const checks: { id: string; label: string; status: CheckStatus; detail: string }[] = [];
-    const add = (id: string, label: string, status: CheckStatus, detail: string) => checks.push({ id, label, status, detail });
-
-    const ownDomain = s.primaryDomain.host !== s.myshopifyDomain && !s.primaryDomain.host.endsWith(".myshopify.com");
-    add("domain", "Nom de domaine propre", ownDomain ? "ok" : "ko", ownDomain ? s.primaryDomain.host : "Le domaine principal est encore en .myshopify.com.");
-    add("ssl", "HTTPS actif", s.primaryDomain.sslEnabled ? "ok" : "ko", s.primaryDomain.url);
-
-    const pwd = password?.data?.onlineStore?.passwordProtection;
-    add(
-      "password",
-      "Boutique ouverte au public",
-      pwd ? (pwd.enabled ? "ko" : "ok") : "unknown",
-      pwd ? (pwd.enabled ? "La boutique est encore protégée par mot de passe." : "Pas de mot de passe.") : "Vérifie dans Boutique en ligne > Préférences."
-    );
-    add("email", "Email de contact renseigné", s.contactEmail ? "ok" : "ko", s.contactEmail || "Paramètres > Général.");
-
-    const count = main.data.productsCount?.count ?? 0;
-    add("products", "Au moins un produit", count > 0 ? "ok" : "ko", `${count} produit(s).`);
-
-    for (const type of POLICY_TYPES) {
-      const p = policies.get(type);
-      add(`policy_${type}`, POLICY_LABELS[type], p ? "ok" : "ko", p ? p.url : "Non publiée.");
+    await consumeQuota(uid, "audit", DAILY_AUDITS_PER_USER);
+    try {
+      await consumeQuota(`shop_${shop}`, "audit", DAILY_AUDITS_PER_SHOP);
+    } catch (err) {
+      await refundQuota(uid, "audit");
+      throw err;
     }
 
-    const profileAddress = String(request.data?.address ?? "").toLowerCase();
-    const zip = s.shopAddress.formatted.join(" ").match(/\b\d{4,5}\b/)?.[0];
-    if (profileAddress && zip) {
-      const same = profileAddress.includes(zip);
-      add(
-        "address",
-        "Adresse identique au profil",
-        same ? "ok" : "ko",
-        same ? s.shopAddress.formatted.join(", ") : `Shopify : ${s.shopAddress.formatted.join(", ")}`
-      );
-    } else {
-      add("address", "Adresse identique au profil", "unknown", "Renseigne l'adresse dans ton profil et dans Shopify.");
+    try {
+      const snapshot = await collectSnapshot((query, variables) => adminGraphql(shop, token, query, variables), {
+        profileAddress: String(request.data?.address ?? "").slice(0, 300),
+      });
+      return runAudit(snapshot);
+    } catch (err) {
+      await refundQuota(uid, "audit");
+      await refundQuota(`shop_${shop}`, "audit");
+      if (err instanceof HttpsError) throw err;
+      // Pas de données de la boutique dans les journaux : seulement le message d'erreur.
+      logger.error("Audit Shopify impossible", { message: err instanceof Error ? err.message : String(err) });
+      throw new HttpsError("internal", "Impossible de lire les informations de la boutique. Réessaie plus tard.");
     }
-
-    return { shop: s.name, domain: s.primaryDomain.host, checks, checkedAt: Date.now() };
   }
 );
 
@@ -338,6 +293,13 @@ export const htpShopifyPublishLegal = onCall(
     );
     if (!entries.length) throw new HttpsError("invalid-argument", "Aucune page à publier.");
 
+    const stored = (await shopRef(uid).get()).data() as StoredShop | undefined;
+    if (stored && !canPublish(stored.scope)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Ta boutique est connectée en lecture seule. Autorise la publication des politiques pour continuer."
+      );
+    }
     const { shop, token } = await accessTokenFor(uid);
     const results: { type: PolicyType; ok: boolean; url?: string; error?: string }[] = [];
     for (const [type, body] of entries) {

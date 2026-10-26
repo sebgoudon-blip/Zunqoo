@@ -1,9 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
-import { REGION, requireUid } from "./common";
+import { REGION, consumeQuota, refundQuota, requireUid } from "./common";
 
 const anthropicKey = defineSecret("ANTHROPIC_API_KEY");
 
@@ -65,30 +64,6 @@ let client: Anthropic | null = null;
 function anthropic(): Anthropic {
   client ??= new Anthropic({ apiKey: anthropicKey.value() });
   return client;
-}
-
-/** Décrémente le quota journalier de l'utilisateur ; lève une erreur s'il est épuisé. */
-async function consumeQuota(uid: string, kind: "ask" | "legal", limit: number): Promise<number> {
-  const day = new Date().toISOString().slice(0, 10);
-  const ref = getFirestore().collection("htpUsage").doc(`${uid}_${day}`);
-  return getFirestore().runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const used = (snap.exists ? (snap.data()?.[kind] as number) : 0) ?? 0;
-    if (used >= limit) {
-      throw new HttpsError("resource-exhausted", "Limite quotidienne atteinte. Elle se réinitialise demain.");
-    }
-    tx.set(ref, { [kind]: FieldValue.increment(1), uid, day }, { merge: true });
-    return limit - used - 1;
-  });
-}
-
-async function refundQuota(uid: string, kind: "ask" | "legal") {
-  const day = new Date().toISOString().slice(0, 10);
-  await getFirestore()
-    .collection("htpUsage")
-    .doc(`${uid}_${day}`)
-    .set({ [kind]: FieldValue.increment(-1) }, { merge: true })
-    .catch(() => undefined);
 }
 
 function str(value: unknown, max: number, field: string): string {

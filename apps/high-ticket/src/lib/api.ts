@@ -1,4 +1,5 @@
 import type { Profile } from "../types";
+import type { AuditReport } from "./audit";
 import { cloudEnabled } from "./cloudConfig";
 
 function callable<Req, Res>(name: string) {
@@ -50,24 +51,17 @@ export type PolicyType =
   | "PRIVACY_POLICY"
   | "CONTACT_INFORMATION";
 
-export const startShopifyConnect = callable<{ shop: string }, { url: string }>("htpShopifyStart");
+/** publish : demande aussi le droit d'écrire les politiques légales (sinon lecture seule). */
+export const startShopifyConnect = callable<{ shop: string; publish?: boolean }, { url: string }>("htpShopifyStart");
 export const disconnectShopify = callable<Record<string, never>, { ok: boolean }>("htpShopifyDisconnect");
 
-export interface AuditCheck {
-  id: string;
-  label: string;
-  status: "ok" | "ko" | "unknown";
-  detail: string;
-}
+export type { AuditReport };
 
-export interface ShopAudit {
-  shop: string;
-  domain: string;
-  checks: AuditCheck[];
-  checkedAt: number;
-}
+/** Un rapport enregistré par une version précédente de l'app est ignoré. */
+export const isCurrentReport = (value: unknown): value is AuditReport =>
+  !!value && typeof value === "object" && (value as { version?: unknown }).version === 2;
 
-export const auditShop = callable<{ address?: string }, ShopAudit>("htpShopifyAudit");
+export const auditShop = callable<{ address?: string }, AuditReport>("htpShopifyAudit");
 
 export const publishLegal = callable<
   { policies: Partial<Record<PolicyType, string>> },

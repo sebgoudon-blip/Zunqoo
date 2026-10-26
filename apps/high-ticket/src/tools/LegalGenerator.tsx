@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../auth";
 import { Icon, Verdict } from "../components/Icon";
 import { useStoredState } from "../hooks/useStoredState";
-import { profileSummary, publishLegal, reviewLegal, type LegalReview, type PolicyType } from "../lib/api";
+import { profileSummary, publishLegal, reviewLegal, startShopifyConnect, type LegalReview, type PolicyType } from "../lib/api";
 import { downloadFile } from "../lib/download";
 import { errorMessage } from "../lib/cloudConfig";
 import { generateLegalDocs, legalDocsToHtml, type StorePolicies } from "../lib/legal";
@@ -82,6 +82,20 @@ export function LegalGenerator() {
     } catch (err) {
       setError(errorMessage(err));
     } finally {
+      setBusy(null);
+    }
+  }
+
+  /** La boutique a été connectée en lecture seule : on redemande l'accès avec le droit d'écrire les politiques. */
+  async function allowPublishing() {
+    if (!shopify) return;
+    setError(null);
+    setBusy("publish");
+    try {
+      const { url } = await startShopifyConnect({ shop: shopify.shop, publish: true });
+      window.location.assign(url);
+    } catch (err) {
+      setError(errorMessage(err));
       setBusy(null);
     }
   }
@@ -198,7 +212,11 @@ export function LegalGenerator() {
                   <Icon name="shield" />
                   {busy === "review" ? "Relecture en cours (≈ 1 min)…" : review ? "Relancer la relecture IA" : "Relecture IA"}
                 </button>
-                {shopify ? (
+                {shopify && shopify.canPublish === false ? (
+                  <button className="btn btn-ghost" type="button" onClick={allowPublishing} disabled={busy !== null}>
+                    Autoriser la publication dans {shopify.shop}
+                  </button>
+                ) : shopify ? (
                   <button className="btn btn-ghost" type="button" onClick={publish} disabled={busy !== null}>
                     {busy === "publish" ? "Publication…" : `Publier dans ${shopify.shop}`}
                   </button>

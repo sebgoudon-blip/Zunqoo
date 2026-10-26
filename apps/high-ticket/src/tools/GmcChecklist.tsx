@@ -2,30 +2,32 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../auth";
 import { Icon, Verdict } from "../components/Icon";
 import { useStoredState } from "../hooks/useStoredState";
-import type { ShopAudit } from "../lib/api";
+import { isCurrentReport, type AuditReport } from "../lib/api";
 
 interface Item {
   text: string;
   /** Contrôles de l'audit Shopify qui valident ce point automatiquement. */
   auto?: string[];
+  /** L'audit ne peut que signaler un problème : la conformité reste à vérifier à la main. */
+  koOnly?: boolean;
 }
 
 const SECTIONS: { title: string; items: Item[] }[] = [
   {
     title: "Identité & coordonnées",
     items: [
-      { text: "La raison sociale et l'adresse du site sont identiques à l'immatriculation et à Merchant Center.", auto: ["address"] },
-      { text: "Le site affiche une page Contact avec email, téléphone et adresse.", auto: ["policy_CONTACT_INFORMATION"] },
-      { text: "Une page Mentions légales est accessible depuis le pied de page.", auto: ["policy_LEGAL_NOTICE"] },
-      { text: "Le domaine est un nom de domaine propre (pas de .myshopify.com) et il est validé.", auto: ["domain"] },
+      { text: "La raison sociale et l'adresse du site sont identiques à l'immatriculation et à Merchant Center.", auto: ["identity_profile_address", "identity_address"] },
+      { text: "Le site affiche une page Contact avec email, téléphone et adresse.", auto: ["identity_contact_page"] },
+      { text: "Une page Mentions légales est accessible depuis le pied de page.", auto: ["policy_legal_notice"] },
+      { text: "Le domaine est un nom de domaine propre (pas de .myshopify.com) et il est validé.", auto: ["domain_custom"] },
     ],
   },
   {
     title: "Politiques",
     items: [
-      { text: "Une politique de retour et de remboursement claire (délai, frais, procédure) est en ligne.", auto: ["policy_REFUND_POLICY"] },
-      { text: "La politique de livraison (zones, frais, délais) est en ligne et cohérente avec Merchant Center.", auto: ["policy_SHIPPING_POLICY"] },
-      { text: "Les CGV et la politique de confidentialité sont en ligne.", auto: ["policy_TERMS_OF_SERVICE", "policy_PRIVACY_POLICY"] },
+      { text: "Une politique de retour et de remboursement claire (délai, frais, procédure) est en ligne.", auto: ["policy_refund_policy", "policy_refund_content"] },
+      { text: "La politique de livraison (zones, frais, délais) est en ligne et cohérente avec Merchant Center.", auto: ["policy_shipping_policy", "policy_shipping_content"] },
+      { text: "Les CGV et la politique de confidentialité sont en ligne.", auto: ["policy_terms_of_service", "policy_privacy_policy"] },
       { text: "Toutes ces pages sont liées dans le pied de page." },
     ],
   },
@@ -33,17 +35,17 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     title: "Produits & prix",
     items: [
       { text: "Le prix et la disponibilité du site correspondent exactement au flux produit." },
-      { text: "Aucun prix barré fictif ni promotion permanente." },
+      { text: "Aucun prix barré fictif ni promotion permanente.", auto: ["products_compare_at", "products_permanent_sale"] },
       { text: "Aucun faux avis, faux compteur de stock ni faux minuteur." },
       { text: "Aucune marque tierce utilisée sans autorisation (titres, images, nom de domaine)." },
-      { text: "L'image principale est sur fond blanc, sans texte ni filigrane." },
+      { text: "L'image principale est sur fond blanc, sans texte ni filigrane.", koOnly: true, auto: ["products_image"] },
       { text: "Les délais de livraison affichés sur la fiche produit sont réalistes." },
     ],
   },
   {
     title: "Tunnel d'achat",
     items: [
-      { text: "La boutique n'est plus protégée par mot de passe.", auto: ["password"] },
+      { text: "La boutique n'est plus protégée par mot de passe.", auto: ["domain_password"] },
       { text: "Le paiement est sécurisé (HTTPS) et une commande test a abouti." },
       { text: "Le montant total (TVA, livraison) est visible avant le paiement." },
       { text: "Le site fonctionne sans erreur sur mobile." },
@@ -56,18 +58,20 @@ const ALL_ITEMS = SECTIONS.flatMap((s) => s.items);
 
 type AutoState = "ok" | "ko" | null;
 
-function autoState(item: Item, audit: ShopAudit | null): AutoState {
+function autoState(item: Item, audit: AuditReport | null): AutoState {
   if (!item.auto || !audit) return null;
-  const statuses = item.auto.map((id) => audit.checks.find((c) => c.id === id)?.status);
-  if (statuses.some((s) => s === "ko")) return "ko";
-  if (statuses.every((s) => s === "ok")) return "ok";
+  // Un contrôle absent du rapport (sans objet pour cette boutique) ne compte pas.
+  const statuses = item.auto.map((id) => audit.results.find((r) => r.id === id)?.status).filter(Boolean);
+  if (statuses.some((s) => s === "fail")) return "ko";
+  if (!item.koOnly && statuses.length > 0 && statuses.every((s) => s === "pass")) return "ok";
   return null;
 }
 
 export function GmcChecklist() {
   const { shopify } = useAuth();
   const [checked, setChecked] = useStoredState<Record<string, boolean>>("gmc_checklist", {});
-  const [audit] = useStoredState<ShopAudit | null>("shop_audit", null);
+  const [stored] = useStoredState<AuditReport | null>("shop_audit", null);
+  const audit = isCurrentReport(stored) ? stored : null;
 
   const isChecked = (item: Item) => autoState(item, audit) === "ok" || (!!checked[item.text] && autoState(item, audit) !== "ko");
   const count = ALL_ITEMS.filter(isChecked).length;
@@ -89,7 +93,7 @@ export function GmcChecklist() {
         <p className="auto-banner">
           <Icon name="shield" />
           <span>
-            <Link to="/boutique">Connecte ta boutique Shopify</Link> pour vérifier automatiquement 8 de ces points.
+            <Link to="/boutique">Connecte ta boutique Shopify</Link> pour vérifier automatiquement une partie de ces points.
           </span>
         </p>
       )}

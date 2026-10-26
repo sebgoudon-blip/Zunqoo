@@ -1,0 +1,173 @@
+/**
+ * Tests de bout en bout : vraies Cloud Functions et vraies règles Firestore
+ * dans les émulateurs, avec un faux Shopify local. Aucun service en ligne.
+ * Lancement : npm run test:e2e
+ */
+import { createServer, type Server } from "node:http";
+import { deleteApp, initializeApp, type App } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { fakeResponse } from "../functions/test/fakeShopify";
+
+const PROJECT = "demo-htp";
+const FUNCTIONS = `http://127.0.0.1:5101/${PROJECT}/europe-west1`;
+const AUTH = "http://127.0.0.1:9199";
+const FIRESTORE = "http://127.0.0.1:8180";
+const READ_SCOPES = "read_products,read_content,read_legal_policies";
+
+/** Requêtes reçues par le faux Shopify. */
+const received: { op: string; token: string | undefined; mutation: boolean }[] = [];
+let server: Server;
+let app: App;
+
+beforeAll(async () => {
+  server = createServer((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      const { query = "", variables } = JSON.parse(body || "{}");
+      received.push({
+        op: query.match(/(?:query|mutation) (\w+)/)?.[1] ?? "",
+        token: req.headers["x-shopify-access-token"] as string | undefined,
+        mutation: /^\s*mutation/.test(query),
+      });
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(fakeResponse(query, variables, { products: 30 })));
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(8799, "127.0.0.1", resolve));
+  app = initializeApp({ projectId: PROJECT }, "e2e");
+});
+
+afterAll(async () => {
+  server?.close();
+  if (app) await deleteApp(app);
+});
+
+/** Crée un utilisateur dans l'émulateur et renvoie son jeton d'identité. */
+async function signUp(): Promise<{ uid: string; idToken: string }> {
+  const email = `marchand-${Math.random().toString(36).slice(2)}@test.dev`;
+  const res = await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password: "motdepasse-test", returnSecureToken: true }),
+  });
+  const data = (await res.json()) as { localId: string; idToken: string };
+  return { uid: data.localId, idToken: data.idToken };
+}
+
+async function connectShop(uid: string, scope = READ_SCOPES) {
+  await getFirestore(app).collection("htpShops").doc(uid).set({
+    shop: "boutique-test.myshopify.com",
+    accessToken: `jeton-${uid}`,
+    refreshToken: null,
+    expiresAt: null,
+    scope,
+  });
+}
+
+/** Appelle une fonction « callable » comme le ferait le SDK client. */
+async function call(name: string, data: unknown, idToken?: string) {
+  const res = await fetch(`${FUNCTIONS}/${name}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}) },
+    body: JSON.stringify({ data }),
+  });
+  return (await res.json()) as { result?: any; error?: { status: string; message: string } };
+}
+
+describe("audit de conformité (émulateurs)", () => {
+  it("refuse un visiteur non connecté", async () => {
+    const res = await call("htpShopifyAudit", {});
+    expect(res.error?.status).toBe("UNAUTHENTICATED");
+  });
+
+  it("demande de connecter une boutique d'abord", async () => {
+    const { idToken } = await signUp();
+    const res = await call("htpShopifyAudit", {}, idToken);
+    expect(res.error?.status).toBe("FAILED_PRECONDITION");
+  });
+
+  it("audite la boutique en lecture seule et renvoie un rapport classé", async () => {
+    const { uid, idToken } = await signUp();
+    await connectShop(uid);
+    received.length = 0;
+
+    const res = await call("htpShopifyAudit", { address: "1 rue du Test 75001 Paris" }, idToken);
+    expect(res.error).toBeUndefined();
+    const report = res.result;
+    expect(report.version).toBe(2);
+    expect(report.shop).toBe("Boutique Test");
+    expect(report.productsAudited).toBe(30);
+    const status = (id: string) => report.results.find((r: { id: string }) => r.id === id)?.status;
+    expect(status("products_image")).toBe("fail");
+    expect(status("products_title_promo")).toBe("fail");
+    expect(status("domain_custom")).toBe("fail");
+    expect(status("identity_profile_address")).toBe("pass");
+    expect(report.counts.bloquant).toBeGreaterThan(0);
+    expect(report.score).toBeLessThanOrEqual(59);
+
+    // Le jeton stocké côté serveur est utilisé, et aucune écriture n'est envoyée à Shopify.
+    expect(received.length).toBeGreaterThan(0);
+    expect(received.every((r) => r.token === `jeton-${uid}`)).toBe(true);
+    expect(received.some((r) => r.mutation)).toBe(false);
+  });
+
+  it("limite le nombre d'audits par jour et par utilisateur", async () => {
+    const { uid, idToken } = await signUp();
+    await connectShop(uid);
+    for (let i = 0; i < 10; i++) {
+      const ok = await call("htpShopifyAudit", {}, idToken);
+      expect(ok.error, `audit ${i + 1}`).toBeUndefined();
+    }
+    const res = await call("htpShopifyAudit", {}, idToken);
+    expect(res.error?.status).toBe("RESOURCE_EXHAUSTED");
+  });
+
+  it("refuse de publier les politiques avec un accès en lecture seule", async () => {
+    const { uid, idToken } = await signUp();
+    await connectShop(uid);
+    received.length = 0;
+    const res = await call("htpShopifyPublishLegal", { policies: { REFUND_POLICY: "Retours sous 14 jours." } }, idToken);
+    expect(res.error?.status).toBe("FAILED_PRECONDITION");
+    expect(received).toHaveLength(0);
+  });
+
+  it("demande les accès en lecture seule par défaut", async () => {
+    const { idToken } = await signUp();
+    const read = await call("htpShopifyStart", { shop: "boutique-test" }, idToken);
+    const scope = new URL(read.result.url).searchParams.get("scope");
+    expect(scope).toBe(READ_SCOPES);
+    const write = await call("htpShopifyStart", { shop: "boutique-test", publish: true }, idToken);
+    expect(new URL(write.result.url).searchParams.get("scope")).toContain("write_legal_policies");
+  });
+});
+
+describe("règles Firestore (émulateur)", () => {
+  const read = (path: string, idToken: string) =>
+    fetch(`${FIRESTORE}/v1/projects/${PROJECT}/databases/(default)/documents/${path}`, {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+
+  it("le client ne peut lire ni les jetons Shopify ni les quotas", async () => {
+    const { uid, idToken } = await signUp();
+    await connectShop(uid);
+    expect((await read(`htpShops/${uid}`, idToken)).status).toBe(403);
+    expect((await read(`htpUsage/${uid}_${new Date().toISOString().slice(0, 10)}`, idToken)).status).toBe(403);
+  });
+
+  it("un utilisateur ne lit que son propre profil", async () => {
+    const alice = await signUp();
+    const bob = await signUp();
+    await getFirestore(app).collection("htpUsers").doc(alice.uid).set({ note: "privé" });
+    expect((await read(`htpUsers/${alice.uid}`, alice.idToken)).status).toBe(200);
+    expect((await read(`htpUsers/${alice.uid}`, bob.idToken)).status).toBe(403);
+  });
+});
+
+// Vérifie que l'utilisateur de test existe bien dans l'émulateur d'authentification.
+it("l'émulateur d'authentification est utilisé", async () => {
+  const { uid } = await signUp();
+  expect((await getAuth(app).getUser(uid)).uid).toBe(uid);
+});

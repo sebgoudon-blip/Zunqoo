@@ -1,0 +1,18 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": [
+    {
+      "source": "firebase/e2e/functions",
+      "codebase": "htp-e2e"
+    }
+  ],
+  "emulators": {
+    "auth": { "port": 9199 },
+    "firestore": { "port": 8180 },
+    "functions": { "port": 5101 },
+    "ui": { "enabled": false },
+    "logging": { "level": "WARN" }
+  }
+}

@@ -1,9 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth";
+import { AuditReport } from "../components/AuditReport";
 import { Icon, Verdict } from "../components/Icon";
 import { useStoredState } from "../hooks/useStoredState";
-import { auditShop, disconnectShopify, startShopifyConnect, type ShopAudit } from "../lib/api";
+import { auditShop, disconnectShopify, isCurrentReport, startShopifyConnect, type AuditReport as Report } from "../lib/api";
+import { SAMPLE_SNAPSHOT, runAudit as auditSnapshot } from "../lib/audit";
 import { errorMessage } from "../lib/cloudConfig";
 import { useAppState } from "../state";
 
@@ -21,16 +23,35 @@ export function ShopPage() {
   const [shopInput, setShopInput] = useState("");
   const [busy, setBusy] = useState<"connect" | "audit" | "disconnect" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [audit, setAudit] = useStoredState<ShopAudit | null>("shop_audit", null);
+  const [stored, setAudit] = useStoredState<Report | null>("shop_audit", null);
+  const audit = isCurrentReport(stored) ? stored : null;
+  const showSample = params.has("exemple");
+  const sample = useMemo(() => (showSample ? auditSnapshot(SAMPLE_SNAPSHOT) : null), [showSample]);
   const returned = RETURN_MESSAGES[params.get("shopify") ?? ""];
+
+  if (sample) {
+    return (
+      <div className="page narrow">
+        <h1>Exemple de rapport d'audit</h1>
+        <p className="sample-banner">
+          <Icon name="help" />
+          <span>
+            Boutique <strong>fictive</strong>, créée pour montrer le rapport : les problèmes sont volontaires.{" "}
+            <Link to="/boutique">Revenir à ma boutique</Link>
+          </span>
+        </p>
+        <AuditReport report={sample} sample />
+      </div>
+    );
+  }
 
   if (!cloudEnabled || !user) {
     return (
       <div className="page narrow">
         <h1>Ma boutique Shopify</h1>
         <p>
-          Connecte ta boutique pour publier tes pages légales en un clic et vérifier automatiquement les points
-          contrôlés par Google Merchant Center.
+          Connecte ta boutique pour lancer un audit de conformité Google Merchant Center : score sur 100, points classés
+          par gravité, et pour chacun la raison et la correction.
         </p>
         {cloudEnabled ? (
           <Link className="btn btn-primary btn-large" to="/compte">
@@ -39,6 +60,9 @@ export function ShopPage() {
         ) : (
           <div className="notice">Le mode cloud n'est pas configuré sur cette installation.</div>
         )}
+        <Link className="btn btn-ghost" to="/boutique?exemple">
+          Voir un exemple de rapport
+        </Link>
       </div>
     );
   }
@@ -81,8 +105,6 @@ export function ShopPage() {
     }
   }
 
-  const failing = audit?.checks.filter((c) => c.status !== "ok").length ?? 0;
-
   return (
     <div className="page narrow">
       <h1>Ma boutique Shopify</h1>
@@ -91,8 +113,8 @@ export function ShopPage() {
       {!shopify ? (
         <form className="card stack" onSubmit={connect}>
           <p>
-            HighTicket Pilot demande uniquement : la lecture des produits et des pages, et l'écriture des politiques
-            légales. Il ne touche ni à tes commandes, ni à tes clients, ni à tes paiements.
+            L'audit demande uniquement un accès <strong>en lecture</strong> : produits, pages et politiques. Il ne modifie
+            rien et ne voit ni tes commandes, ni tes clients, ni tes paiements.
           </p>
           <label className="field">
             <span>Adresse de ta boutique</span>
@@ -138,31 +160,17 @@ export function ShopPage() {
             </p>
           )}
 
-          {audit && (
-            <div className="card">
-              <h3>Audit de conformité</h3>
-              {failing === 0 ? (
-                <Verdict tone="good">Tous les points vérifiables automatiquement sont conformes.</Verdict>
-              ) : (
-                <Verdict tone="warn">{failing} point(s) à corriger ou à vérifier avant de soumettre Merchant Center.</Verdict>
-              )}
-              <ul className="audit-list">
-                {audit.checks.map((c) => (
-                  <li key={c.id} className={c.status}>
-                    <Icon name={c.status === "ok" ? "good" : c.status === "ko" ? "bad" : "help"} />
-                    <div>
-                      <strong>{c.label}</strong>
-                      <span className="sr-only">{c.status === "ok" ? " : conforme" : c.status === "ko" ? " : à corriger" : " : à vérifier"}</span>
-                      <small>{c.detail}</small>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+          {audit ? (
+            <>
+              <AuditReport report={audit} />
               <small className="muted">
-                Vérifié le {new Date(audit.checkedAt).toLocaleString("fr-FR")}. Les résultats cochent aussi la{" "}
-                <Link to="/outils/gmc">checklist Merchant Center</Link>.
+                Les résultats cochent aussi la <Link to="/outils/gmc">checklist Merchant Center</Link>.
               </small>
-            </div>
+            </>
+          ) : (
+            <p className="muted">
+              L'audit prend environ une minute. <Link to="/boutique?exemple">Voir un exemple de rapport</Link>
+            </p>
           )}
 
           <button className="link-btn" type="button" onClick={disconnect} disabled={busy === "disconnect"}>

@@ -12,6 +12,8 @@ const DEBOUNCE_MS = 800;
 
 export interface ShopifyLink {
   shop: string;
+  /** false : boutique connectée en lecture seule (publication des politiques non autorisée). */
+  canPublish?: boolean;
 }
 
 /**

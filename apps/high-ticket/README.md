@@ -9,7 +9,7 @@ Tant que le lancement n'est pas validé, **rien ne peut générer de coût** :
 
 - aucun projet Firebase n'est relié, aucune clé (Claude, Shopify) n'est
   configurée, et rien n'est déployé ;
-- `CLOUD_LAUNCHED = false` dans `src/lib/firebase.ts` : l'app reste en mode
+- `CLOUD_LAUNCHED = false` dans `src/lib/cloudConfig.ts` : l'app reste en mode
   local, même si un fichier `.env.local` est présent. Personne ne peut créer
   de compte, ni appeler l'IA ou Shopify ;
 - les fonctions HighTicket ne sont pas exportées par
@@ -79,13 +79,19 @@ de l'export dans `firebase/functions/src/index.ts`, puis passer
 
   Ce ne sont toujours pas des conseils juridiques : l'app recommande une
   relecture par un professionnel.
-- **Connexion Shopify** (OAuth) :
-  - audit automatique de la boutique (domaine, HTTPS, mot de passe,
-    politiques, produits, adresse) ;
-  - l'audit coche automatiquement 8 points de la checklist Merchant Center.
+- **Connexion Shopify** (OAuth) et **audit de conformité Merchant Center** :
+  - 37 contrôles (identité, domaine, politiques, produits, tunnel d'achat),
+    un score sur 100 et des points classés bloquant / important / conseil,
+    avec pour chacun le pourquoi, la correction et la règle Google ;
+  - rapport exportable en HTML, exemple sur une boutique fictive
+    (`/boutique?exemple`) ;
+  - l'audit coche aussi une partie de la checklist Merchant Center.
 
-  Droits demandés : `read_products`, `read_content`,
-  `write_legal_policies`. Les jetons restent côté serveur.
+  Droits demandés par défaut, en lecture seule : `read_products`,
+  `read_content`, `read_legal_policies`. Le droit `write_legal_policies`
+  n'est demandé que si le marchand autorise la publication de ses pages
+  légales. Les jetons restent côté serveur. Détails, sources et limites :
+  [`docs/phase1/README.md`](../../docs/phase1/README.md).
 
 Sans configuration Firebase (ou tant que le verrou est actif), l'app fonctionne en **mode local** : pas de
 compte, d'IA ni de Shopify, et la progression est enregistrée dans le
@@ -98,6 +104,8 @@ apps/high-ticket/          App React (Vite)
 firebase/functions/src/highTicket/
   ai.ts                    htpAskCoach, htpReviewLegal (Claude)
   shopify.ts               htpShopifyStart / Callback / Audit / PublishLegal / Disconnect
+  collect.ts               lecture de la boutique pour l'audit (lecture seule)
+  audit/                   règles et score, en TypeScript pur (partagé avec l'app)
 firestore.rules            htpUsers (propriétaire seul), htpShops, htpOAuthStates,
                            htpUsage (serveur seul)
 ```
@@ -136,8 +144,8 @@ le changer, modifiez `DAILY_QUESTIONS` et `DAILY_LEGAL_REVIEWS` dans
 1. Sur le [Dev Dashboard Shopify](https://dev.shopify.com), créez une app
    (distribution publique, ou personnalisée pour vos propres boutiques).
 2. URL de redirection : `https://<votre-site>.web.app/api/shopify/callback`.
-3. Accès demandés : `read_products`, `read_content`,
-   `write_legal_policies`.
+3. Accès demandés : `read_products`, `read_content`, `read_legal_policies`
+   et, en option, `write_legal_policies`.
 4. Enregistrez les identifiants et l'URL de l'app :
 
 ```bash
@@ -167,7 +175,9 @@ domaine que l'app.
 
 ```bash
 npm run dev:high-ticket      # mode local, sans Firebase
-npm run test:high-ticket     # tests unitaires (calculs, contrôles, pages légales, sauvegarde)
+npm run test:high-ticket     # tests unitaires (calculs, contrôles, pages légales, sauvegarde, rapport)
+npm run test:functions       # moteur d'audit et lecture Shopify
+npm run test:e2e             # émulateurs Firebase + faux Shopify (Java requis)
 ```
 
 Le SDK Firebase n'est chargé qu'à la demande : en mode local, il n'est
