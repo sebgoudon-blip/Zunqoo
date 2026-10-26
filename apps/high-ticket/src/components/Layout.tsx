@@ -6,11 +6,11 @@ export function Layout() {
   return (
     <div className="shell">
       <header className="topbar">
-        <NavLink to="/" className="brand">
-          <span className="brand-mark">HT</span>
-          HighTicket Pilot
+        <NavLink to="/" className="brand" aria-label="HighTicket Pilot, accueil">
+          <span className="brand-mark" aria-hidden="true">HT</span>
+          <span className="brand-name">HighTicket Pilot</span>
         </NavLink>
-        <nav className="topnav">
+        <nav className="topnav" aria-label="Navigation principale">
           <NavLink to="/parcours">Parcours</NavLink>
           <NavLink to="/outils">Outils</NavLink>
           <NavLink to="/profil">{profile ? "Mon profil" : "Commencer"}</NavLink>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Icon } from "../components/Icon";
 import { generateLegalDocs, type StorePolicies } from "../lib/legal";
 import { EMPTY_PROFILE, useAppState } from "../state";
 import { NumberField } from "./NumberField";
@@ -85,7 +86,7 @@ export function LegalGenerator() {
         </details>
       </div>
 
-      {missing && <p className="notice">⚠️ Certains champs restent à compléter : ils apparaissent entre [crochets].</p>}
+      {missing && <p className="notice">Certains champs restent à compléter : ils apparaissent entre [crochets].</p>}
       <p className="notice">
         Ces textes sont des modèles de départ, pas un conseil juridique. Fais-les relire par un professionnel avant de
         lancer la publicité.
@@ -99,7 +100,8 @@ export function LegalGenerator() {
               <small>Shopify : {d.shopifyLocation}</small>
             </div>
             <button className="btn btn-primary" type="button" onClick={() => copy(d.id, d.body)}>
-              {copied === d.id ? "Copié ✓" : "Copier"}
+              <Icon name={copied === d.id ? "check" : "copy"} />
+              {copied === d.id ? "Copié" : "Copier"}
             </button>
           </div>
           <pre>{d.body}</pre>

@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom";
+import { Icon } from "../components/Icon";
 import { AdsPlanner } from "../tools/AdsPlanner";
 import { GmcChecklist } from "../tools/GmcChecklist";
 import { LegalGenerator } from "../tools/LegalGenerator";
@@ -29,6 +30,9 @@ export function ToolsPage() {
             <Link key={t} to={`/outils/${t}`} className="card tool-card">
               <strong>{TOOL_LABELS[t]}</strong>
               <span>{TOOL_DESCRIPTIONS[t]}</span>
+              <span className="tool-card-cta">
+                Ouvrir <Icon name="arrow" size={16} />
+              </span>
             </Link>
           ))}
         </div>

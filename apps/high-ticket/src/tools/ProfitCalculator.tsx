@@ -1,4 +1,5 @@
 import { computeProfit, eur, num, type ProfitInput } from "../lib/calc";
+import { Verdict } from "../components/Icon";
 import { NumberField, Stat } from "./NumberField";
 import { useProfitInput } from "./useProfitInput";
 
@@ -50,15 +51,18 @@ export function ProfitCalculator() {
           <Stat label="Taux de marge (sur HT)" value={`${num(r.marginRate * 100, 0)} %`} tone={marginTone} />
           <Stat label="ROAS de rentabilité" value={num(r.breakEvenRoas, 2)} tone={roasTone} />
         </div>
-        <p className="verdict">
-          {r.marginBeforeAds <= 0
-            ? "❌ Tu perds de l'argent avant même la publicité. Augmente le prix ou baisse les coûts."
-            : roasTone === "good"
-              ? `✅ Viable : chaque vente peut absorber jusqu'à ${eur(r.marginBeforeAds)} de publicité. Chaque euro de pub doit rapporter au moins ${num(r.breakEvenRoas, 2)} € de chiffre d'affaires.`
-              : roasTone === "warn"
-                ? "⚠️ Jouable, mais serré pour un démarrage. Cherche +5 à 10 points de marge."
-                : "❌ ROAS de rentabilité trop élevé pour Google Shopping au démarrage. Revois le prix ou le produit."}
-        </p>
+        {r.marginBeforeAds <= 0 ? (
+          <Verdict tone="bad">Tu perds de l'argent avant même la publicité. Augmente le prix ou baisse les coûts.</Verdict>
+        ) : roasTone === "good" ? (
+          <Verdict tone="good">
+            Viable : chaque vente peut absorber jusqu'à {eur(r.marginBeforeAds)} de publicité. Chaque euro de pub doit
+            rapporter au moins {num(r.breakEvenRoas, 2)} € de chiffre d'affaires.
+          </Verdict>
+        ) : roasTone === "warn" ? (
+          <Verdict tone="warn">Jouable, mais serré pour un démarrage. Cherche +5 à 10 points de marge.</Verdict>
+        ) : (
+          <Verdict tone="bad">ROAS de rentabilité trop élevé pour Google Shopping au démarrage. Revois le prix ou le produit.</Verdict>
+        )}
       </div>
     </div>
   );

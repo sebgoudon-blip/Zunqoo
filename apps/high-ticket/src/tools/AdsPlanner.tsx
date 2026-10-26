@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useStoredState } from "../hooks/useStoredState";
 import { computeAds, computeProfit, eur, num } from "../lib/calc";
 import { useAppState } from "../state";
+import { Verdict } from "../components/Icon";
 import { NumberField, Stat } from "./NumberField";
 import { useProfitInput } from "./useProfitInput";
 
@@ -79,11 +80,14 @@ export function AdsPlanner() {
             dépensés, soit 2 × ton CPA max) sans aucune vente : baisse son enchère de 30 % ou mets-le en pause.
           </p>
         </div>
-        <p className="verdict">
-          {profitable
-            ? "✅ Avec ces hypothèses, la campagne est rentable. Vérifie-les avec tes vrais chiffres après 7 jours."
-            : `⚠️ Il faudrait un ROAS d'au moins ${num(profit.breakEvenRoas, 2)}. Joue sur le CPC (meilleur flux, négatifs), le taux de conversion (fiche produit) ou la marge.`}
-        </p>
+        {profitable ? (
+          <Verdict tone="good">Avec ces hypothèses, la campagne est rentable. Vérifie-les avec tes vrais chiffres après 7 jours.</Verdict>
+        ) : (
+          <Verdict tone="warn">
+            Il faudrait un ROAS d'au moins {num(profit.breakEvenRoas, 2)}. Joue sur le CPC (meilleur flux, négatifs), le
+            taux de conversion (fiche produit) ou la marge.
+          </Verdict>
+        )}
       </div>
     </div>
   );

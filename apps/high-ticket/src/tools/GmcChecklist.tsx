@@ -1,3 +1,4 @@
+import { Verdict } from "../components/Icon";
 import { useStoredState } from "../hooks/useStoredState";
 
 const SECTIONS: { title: string; items: string[] }[] = [
@@ -57,7 +58,7 @@ export function GmcChecklist() {
         </span>
         <strong>{percent} %</strong>
       </div>
-      <div className="bar">
+      <div className="bar" role="progressbar" aria-label="Conformité" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
         <div style={{ width: `${percent}%` }} />
       </div>
       {SECTIONS.map((section) => (
@@ -75,11 +76,13 @@ export function GmcChecklist() {
           ))}
         </fieldset>
       ))}
-      <p className="verdict">
-        {count === TOTAL
-          ? "✅ Tu es prêt pour la revue Merchant Center."
-          : "Tant que la checklist n'est pas à 100 %, ne soumets pas ton compte : la première revue compte beaucoup."}
-      </p>
+      {count === TOTAL ? (
+        <Verdict tone="good">Tu es prêt pour la revue Merchant Center.</Verdict>
+      ) : (
+        <Verdict tone="warn">
+          Tant que la checklist n'est pas à 100 %, ne soumets pas ton compte : la première revue compte beaucoup.
+        </Verdict>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Verdict } from "../components/Icon";
 import { useStoredState } from "../hooks/useStoredState";
 
 const CRITERIA: { id: string; label: string; hint: string }[] = [
@@ -41,9 +42,9 @@ export function ProductScore() {
   return (
     <div className="tool-grid">
       <div className="card">
-        <div className="tabs">
+        <div className="tabs" role="group" aria-label="Produits comparés">
           {candidates.map((c, i) => (
-            <button key={i} type="button" className={i === active ? "on" : ""} onClick={() => setActive(i)}>
+            <button key={i} type="button" className={i === active ? "on" : ""} aria-pressed={i === active} onClick={() => setActive(i)}>
               {c.name || `Produit ${i + 1}`} <em>{scoreOf(c)}</em>
             </button>
           ))}
@@ -75,15 +76,15 @@ export function ProductScore() {
           {score}
           <span>/100</span>
         </div>
-        <p className="verdict">
-          {blocking
-            ? "❌ Critère éliminatoire : marge ou conformité Merchant Center trop faible, quel que soit le score total."
-            : score >= 75
-              ? "✅ Excellent candidat. Passe-le dans le calculateur de rentabilité, puis commande un échantillon."
-              : score >= 60
-                ? "⚠️ Candidat possible. Identifie les critères faibles et vérifie s'ils sont corrigeables."
-                : "❌ À écarter. Ne dépense pas ton budget sur ce produit."}
-        </p>
+        {blocking ? (
+          <Verdict tone="bad">Critère éliminatoire : marge ou conformité Merchant Center trop faible, quel que soit le score total.</Verdict>
+        ) : score >= 75 ? (
+          <Verdict tone="good">Excellent candidat. Passe-le dans le calculateur de rentabilité, puis commande un échantillon.</Verdict>
+        ) : score >= 60 ? (
+          <Verdict tone="warn">Candidat possible. Identifie les critères faibles et vérifie s'ils sont corrigeables.</Verdict>
+        ) : (
+          <Verdict tone="bad">À écarter. Ne dépense pas ton budget sur ce produit.</Verdict>
+        )}
         <p className="muted">Les scores sont enregistrés sur cet appareil.</p>
       </div>
     </div>
