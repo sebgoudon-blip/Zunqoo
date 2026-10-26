@@ -6,3 +6,4 @@ export {
   htpShopifyPublishLegal,
   htpShopifyStart,
 } from "./shopify";
+export { htpFixApply, htpFixHistory, htpFixPreview, htpFixUndo } from "./corrections";

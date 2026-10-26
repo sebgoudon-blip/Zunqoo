@@ -18,21 +18,22 @@ const usageRef = (key: string) =>
  * Décrémente un quota journalier (par utilisateur, ou par boutique) ; lève une
  * erreur s'il est épuisé. Renvoie le nombre d'utilisations restantes.
  */
-export async function consumeQuota(key: string, kind: string, limit: number): Promise<number> {
+export async function consumeQuota(key: string, kind: string, limit: number, amount = 1): Promise<number> {
   const ref = usageRef(key);
   return getFirestore().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const used = (snap.exists ? (snap.data()?.[kind] as number) : 0) ?? 0;
-    if (used >= limit) {
+    if (used + amount > limit) {
       throw new HttpsError("resource-exhausted", "Limite quotidienne atteinte. Elle se réinitialise demain.");
     }
-    tx.set(ref, { [kind]: FieldValue.increment(1), key, day: ref.id.slice(-10) }, { merge: true });
-    return limit - used - 1;
+    tx.set(ref, { [kind]: FieldValue.increment(amount), key, day: ref.id.slice(-10) }, { merge: true });
+    return limit - used - amount;
   });
 }
 
-export async function refundQuota(key: string, kind: string) {
+export async function refundQuota(key: string, kind: string, amount = 1) {
+  if (amount <= 0) return;
   await usageRef(key)
-    .set({ [kind]: FieldValue.increment(-1) }, { merge: true })
+    .set({ [kind]: FieldValue.increment(-amount) }, { merge: true })
     .catch(() => undefined);
 }

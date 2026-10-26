@@ -42,7 +42,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Jetons Shopify, états OAuth et quotas IA : réservés aux Cloud Functions.
+    // Jetons Shopify, états OAuth, quotas et journal des corrections : réservés aux Cloud Functions.
     match /htpShops/{uid} {
       allow read, write: if false;
     }
@@ -50,6 +50,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
     match /htpUsage/{id} {
+      allow read, write: if false;
+    }
+    // Journal des corrections appliquées dans Shopify (avant/après, pour annuler).
+    match /htpChanges/{id} {
       allow read, write: if false;
     }
   }

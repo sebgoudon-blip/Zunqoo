@@ -15,9 +15,53 @@ const FUNCTIONS = `http://127.0.0.1:5101/${PROJECT}/europe-west1`;
 const AUTH = "http://127.0.0.1:9199";
 const FIRESTORE = "http://127.0.0.1:8180";
 const READ_SCOPES = "read_products,read_content,read_legal_policies";
+const FIX_SCOPES = `${READ_SCOPES},write_products,write_online_store_pages,write_legal_policies`;
 
 /** Requêtes reçues par le faux Shopify. */
-const received: { op: string; token: string | undefined; mutation: boolean }[] = [];
+const received: { op: string; token: string | undefined; mutation: boolean; variables?: any }[] = [];
+
+/** État modifiable du faux Shopify pour les corrections. */
+const store = {
+  products: new Map<string, { title: string; descriptionHtml: string }>(),
+  contact: null as { id: string; body: string; isPublished: boolean } | null,
+};
+
+function resetStore() {
+  store.products = new Map([
+    ["gid://shopify/Product/1", { title: "Lampe en laiton PROMO", descriptionHtml: "<p>Lampe de bureau en laiton.</p>" }],
+    ["gid://shopify/Product/3", { title: "Lampe en laiton 3", descriptionHtml: "<p>Produit de test — contenu provisoire.Lampe en laiton massif.</p>" }],
+  ]);
+  store.contact = null;
+}
+
+/** Réponses du faux Shopify aux requêtes de correction ; null pour les autres. */
+function fixResponse(query: string, variables: any): unknown | null {
+  const op = query.match(/(?:query|mutation) (\w+)/)?.[1];
+  switch (op) {
+    case "HtpFixProducts":
+      return { data: { nodes: variables.ids.map((id: string) => (store.products.has(id) ? { id, ...store.products.get(id) } : null)) } };
+    case "HtpFixContact":
+      return {
+        data: {
+          shop: { name: "Boutique Test", contactEmail: "contact@boutique-test.fr", shopAddress: { company: "Boutique Test SAS", formatted: ["1 rue du Test", "75001 Paris"], phone: null } },
+          pages: { nodes: store.contact ? [{ id: store.contact.id, handle: "contact", body: store.contact.body }] : [] },
+        },
+      };
+    case "HtpFixProduct": {
+      const { id, ...fields } = variables.product;
+      store.products.set(id, { ...store.products.get(id)!, ...fields });
+      return { data: { productUpdate: { product: { id }, userErrors: [] } } };
+    }
+    case "HtpFixPageCreate":
+      store.contact = { id: "gid://shopify/Page/99", body: variables.page.body, isPublished: true };
+      return { data: { pageCreate: { page: { id: store.contact.id }, userErrors: [] } } };
+    case "HtpFixPageUpdate":
+      store.contact = { ...store.contact!, ...variables.page };
+      return { data: { pageUpdate: { page: { id: variables.id }, userErrors: [] } } };
+    default:
+      return null;
+  }
+}
 let server: Server;
 let app: App;
 
@@ -31,9 +75,10 @@ beforeAll(async () => {
         op: query.match(/(?:query|mutation) (\w+)/)?.[1] ?? "",
         token: req.headers["x-shopify-access-token"] as string | undefined,
         mutation: /^\s*mutation/.test(query),
+        variables,
       });
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify(fakeResponse(query, variables, { products: 30 })));
+      res.end(JSON.stringify(fixResponse(query, variables) ?? fakeResponse(query, variables, { products: 30 })));
     });
   });
   await new Promise<void>((resolve) => server.listen(8799, "127.0.0.1", resolve));
@@ -139,8 +184,83 @@ describe("audit de conformité (émulateurs)", () => {
     const read = await call("htpShopifyStart", { shop: "boutique-test" }, idToken);
     const scope = new URL(read.result.url).searchParams.get("scope");
     expect(scope).toBe(READ_SCOPES);
-    const write = await call("htpShopifyStart", { shop: "boutique-test", publish: true }, idToken);
-    expect(new URL(write.result.url).searchParams.get("scope")).toContain("write_legal_policies");
+    const write = await call("htpShopifyStart", { shop: "boutique-test", access: "fix" }, idToken);
+    expect(new URL(write.result.url).searchParams.get("scope")).toBe(FIX_SCOPES);
+  });
+});
+
+describe("corrections en un clic (émulateurs)", () => {
+  const P1 = "gid://shopify/Product/1";
+  const P3 = "gid://shopify/Product/3";
+
+  it("propose un aperçu même en lecture seule, mais refuse d'appliquer", async () => {
+    resetStore();
+    const { uid, idToken } = await signUp();
+    await connectShop(uid);
+    const preview = await call("htpFixPreview", { kind: "product_title", ids: [P1, P3] }, idToken);
+    expect(preview.result.changes).toEqual([{ kind: "product_title", id: P1, label: "Lampe en laiton PROMO", before: "Lampe en laiton PROMO", after: "Lampe en laiton" }]);
+
+    received.length = 0;
+    const apply = await call("htpFixApply", { changes: preview.result.changes }, idToken);
+    expect(apply.error?.status).toBe("FAILED_PRECONDITION");
+    expect(received.some((r) => r.mutation)).toBe(false);
+  });
+
+  it("applique un titre modifié par le marchand, puis l'annule", async () => {
+    resetStore();
+    const { uid, idToken } = await signUp();
+    await connectShop(uid, FIX_SCOPES);
+    const [change] = (await call("htpFixPreview", { kind: "product_title", ids: [P1] }, idToken)).result.changes;
+    const apply = await call("htpFixApply", { changes: [{ ...change, after: "Lampe de bureau en laiton" }] }, idToken);
+    expect(apply.result.results[0]).toMatchObject({ id: P1, ok: true });
+    expect(store.products.get(P1)!.title).toBe("Lampe de bureau en laiton");
+
+    const history = await call("htpFixHistory", {}, idToken);
+    expect(history.result.changes[0]).toMatchObject({ kind: "product_title", before: "Lampe en laiton PROMO", after: "Lampe de bureau en laiton", undone: false });
+
+    const undo = await call("htpFixUndo", { changeId: apply.result.results[0].changeId }, idToken);
+    expect(undo.result).toEqual({ ok: true });
+    expect(store.products.get(P1)!.title).toBe("Lampe en laiton PROMO");
+    const again = await call("htpFixUndo", { changeId: apply.result.results[0].changeId }, idToken);
+    expect(again.error?.status).toBe("FAILED_PRECONDITION");
+  });
+
+  it("n'écrase pas une valeur modifiée depuis l'aperçu", async () => {
+    resetStore();
+    const { uid, idToken } = await signUp();
+    await connectShop(uid, FIX_SCOPES);
+    const [change] = (await call("htpFixPreview", { kind: "product_title", ids: [P1] }, idToken)).result.changes;
+    store.products.get(P1)!.title = "Titre changé dans Shopify";
+    const apply = await call("htpFixApply", { changes: [change] }, idToken);
+    expect(apply.result.results[0].ok).toBe(false);
+    expect(store.products.get(P1)!.title).toBe("Titre changé dans Shopify");
+  });
+
+  it("n'accepte que la description proposée par le serveur", async () => {
+    resetStore();
+    const { uid, idToken } = await signUp();
+    await connectShop(uid, FIX_SCOPES);
+    const [change] = (await call("htpFixPreview", { kind: "product_description", ids: [P1, P3] }, idToken)).result.changes;
+    expect(change.after).toBe("<p>Lampe en laiton massif.</p>");
+    const tampered = await call("htpFixApply", { changes: [{ ...change, after: "<script>x()</script>" }] }, idToken);
+    expect(tampered.result.results[0].ok).toBe(false);
+    const ok = await call("htpFixApply", { changes: [change] }, idToken);
+    expect(ok.result.results[0].ok).toBe(true);
+    expect(store.products.get(P3)!.descriptionHtml).toBe("<p>Lampe en laiton massif.</p>");
+  });
+
+  it("crée la page Contact à partir des réglages, et l'annulation la dépublie", async () => {
+    resetStore();
+    const { uid, idToken } = await signUp();
+    await connectShop(uid, FIX_SCOPES);
+    const [change] = (await call("htpFixPreview", { kind: "contact_page" }, idToken)).result.changes;
+    expect(change.after).toContain("contact@boutique-test.fr");
+    const apply = await call("htpFixApply", { changes: [{ ...change, after: "<p>autre contenu</p>" }] }, idToken);
+    expect(apply.result.results[0].ok).toBe(true);
+    // Le contenu publié est celui calculé par le serveur, pas celui envoyé par le client.
+    expect(store.contact?.body).toBe(change.after);
+    await call("htpFixUndo", { changeId: apply.result.results[0].changeId }, idToken);
+    expect(store.contact?.isPublished).toBe(false);
   });
 });
 
@@ -155,6 +275,7 @@ describe("règles Firestore (émulateur)", () => {
     await connectShop(uid);
     expect((await read(`htpShops/${uid}`, idToken)).status).toBe(403);
     expect((await read(`htpUsage/${uid}_${new Date().toISOString().slice(0, 10)}`, idToken)).status).toBe(403);
+    expect((await read("htpChanges/quelconque", idToken)).status).toBe(403);
   });
 
   it("un utilisateur ne lit que son propre profil", async () => {

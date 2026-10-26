@@ -92,7 +92,7 @@ export function LegalGenerator() {
     setError(null);
     setBusy("publish");
     try {
-      const { url } = await startShopifyConnect({ shop: shopify.shop, publish: true });
+      const { url } = await startShopifyConnect({ shop: shopify.shop, access: "fix" });
       window.location.assign(url);
     } catch (err) {
       setError(errorMessage(err));

@@ -85,12 +85,15 @@ de l'export dans `firebase/functions/src/index.ts`, puis passer
     avec pour chacun le pourquoi, la correction et la règle Google ;
   - rapport exportable en HTML, exemple sur une boutique fictive
     (`/boutique?exemple`) ;
-  - l'audit coche aussi une partie de la checklist Merchant Center.
+  - l'audit coche aussi une partie de la checklist Merchant Center ;
+  - corrections en un clic (titres, texte provisoire, page Contact) avec
+    aperçu avant/après, confirmation et annulation :
+    [`docs/phase2/README.md`](../../docs/phase2/README.md).
 
   Droits demandés par défaut, en lecture seule : `read_products`,
-  `read_content`, `read_legal_policies`. Le droit `write_legal_policies`
-  n'est demandé que si le marchand autorise la publication de ses pages
-  légales. Les jetons restent côté serveur. Détails, sources et limites :
+  `read_content`, `read_legal_policies`. Les droits `write_products`,
+  `write_online_store_pages` et `write_legal_policies` ne sont demandés que
+  si le marchand autorise les corrections. Les jetons restent côté serveur. Détails, sources et limites :
   [`docs/phase1/README.md`](../../docs/phase1/README.md).
 
 Sans configuration Firebase (ou tant que le verrou est actif), l'app fonctionne en **mode local** : pas de
@@ -105,6 +108,7 @@ firebase/functions/src/highTicket/
   ai.ts                    htpAskCoach, htpReviewLegal (Claude)
   shopify.ts               htpShopifyStart / Callback / Audit / PublishLegal / Disconnect
   collect.ts               lecture de la boutique pour l'audit (lecture seule)
+  corrections.ts           htpFixPreview / Apply / Undo / History (corrections en un clic)
   audit/                   règles et score, en TypeScript pur (partagé avec l'app)
 firestore.rules            htpUsers (propriétaire seul), htpShops, htpOAuthStates,
                            htpUsage (serveur seul)
@@ -145,7 +149,8 @@ le changer, modifiez `DAILY_QUESTIONS` et `DAILY_LEGAL_REVIEWS` dans
    (distribution publique, ou personnalisée pour vos propres boutiques).
 2. URL de redirection : `https://<votre-site>.web.app/api/shopify/callback`.
 3. Accès demandés : `read_products`, `read_content`, `read_legal_policies`
-   et, en option, `write_legal_policies`.
+   et, en option, `write_products`, `write_online_store_pages`,
+   `write_legal_policies`.
 4. Enregistrez les identifiants et l'URL de l'app :
 
 ```bash

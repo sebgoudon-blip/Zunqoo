@@ -4,7 +4,18 @@ import { useAuth } from "../auth";
 import { AuditReport } from "../components/AuditReport";
 import { Icon, Verdict } from "../components/Icon";
 import { useStoredState } from "../hooks/useStoredState";
-import { auditShop, disconnectShopify, isCurrentReport, startShopifyConnect, type AuditReport as Report } from "../lib/api";
+import type { FixController } from "../components/FixPanel";
+import {
+  auditShop,
+  disconnectShopify,
+  fixApply,
+  fixPreview,
+  fixUndo,
+  isCurrentReport,
+  startShopifyConnect,
+  type AuditReport as Report,
+} from "../lib/api";
+import { demoFixes } from "../lib/demoFixes";
 import { SAMPLE_SNAPSHOT, runAudit as auditSnapshot } from "../lib/audit";
 import { errorMessage } from "../lib/cloudConfig";
 import { useAppState } from "../state";
@@ -40,7 +51,7 @@ export function ShopPage() {
             <Link to="/boutique">Revenir à ma boutique</Link>
           </span>
         </p>
-        <AuditReport report={sample} sample />
+        <AuditReport report={sample} sample fixes={demoFixes} />
       </div>
     );
   }
@@ -66,6 +77,23 @@ export function ShopPage() {
       </div>
     );
   }
+
+  const fixes: FixController | undefined = shopify
+    ? {
+        demo: false,
+        canFix: shopify.canFix === true,
+        shop: shopify.shop,
+        preview: async (kind, ids) => (await fixPreview({ kind, ids })).changes,
+        apply: async (changes) => (await fixApply({ changes })).results,
+        undo: async (changeId) => {
+          await fixUndo({ changeId });
+        },
+        authorize: async () => {
+          const { url } = await startShopifyConnect({ shop: shopify.shop, access: "fix" });
+          window.location.assign(url);
+        },
+      }
+    : undefined;
 
   async function connect(e: FormEvent) {
     e.preventDefault();
@@ -162,7 +190,7 @@ export function ShopPage() {
 
           {audit ? (
             <>
-              <AuditReport report={audit} />
+              <AuditReport report={audit} fixes={fixes} />
               <small className="muted">
                 Les résultats cochent aussi la <Link to="/outils/gmc">checklist Merchant Center</Link>.
               </small>

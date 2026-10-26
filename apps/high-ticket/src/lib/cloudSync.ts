@@ -14,6 +14,8 @@ export interface ShopifyLink {
   shop: string;
   /** false : boutique connectée en lecture seule (publication des politiques non autorisée). */
   canPublish?: boolean;
+  /** false : corrections en un clic non autorisées (lecture seule). */
+  canFix?: boolean;
 }
 
 /**

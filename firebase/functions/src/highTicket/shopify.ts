@@ -9,15 +9,21 @@ import { REGION, consumeQuota, refundQuota, requireUid } from "./common";
 
 const shopifyClientId = defineSecret("SHOPIFY_CLIENT_ID");
 const shopifyClientSecret = defineSecret("SHOPIFY_CLIENT_SECRET");
+/** Secrets nécessaires à toute fonction qui peut renouveler le jeton Shopify. */
+export const shopifySecrets = [shopifyClientId, shopifyClientSecret];
 /** URL publique de l'app HighTicket Pilot, par exemple https://hightiket.web.app (sans / final). */
 const appUrl = defineString("HTP_APP_URL");
 
 const API_VERSION = "2026-10";
-// Accès minimaux : l'audit ne fait que lire. Le droit d'écrire les politiques
-// n'est demandé que si le marchand veut publier ses pages légales depuis l'app.
+// Accès minimaux : l'audit ne fait que lire. Les droits d'écriture ne sont
+// demandés que si le marchand autorise les corrections (produits, page
+// Contact, politiques légales), et chaque correction reste soumise à son accord.
 const READ_SCOPES = "read_products,read_content,read_legal_policies";
-const PUBLISH_SCOPES = `${READ_SCOPES},write_legal_policies`;
-const canPublish = (scope: string) => scope.split(",").includes("write_legal_policies");
+const FIX_WRITE_SCOPES = ["write_products", "write_online_store_pages", "write_legal_policies"];
+const FIX_SCOPES = [READ_SCOPES, ...FIX_WRITE_SCOPES].join(",");
+const hasScopes = (scope: string, wanted: string[]) => wanted.every((w) => scope.split(",").includes(w));
+const canPublish = (scope: string) => hasScopes(scope, ["write_legal_policies"]);
+export const canFix = (scope: string) => hasScopes(scope, FIX_WRITE_SCOPES);
 
 const DAILY_AUDITS_PER_USER = 10;
 const DAILY_AUDITS_PER_SHOP = 20;
@@ -38,10 +44,10 @@ function shopifyOrigin(shop: string): string {
 
 // Les jetons d'accès vivent dans une collection que les règles Firestore interdisent
 // au client : ils ne quittent jamais le serveur.
-const shopRef = (uid: string) => db().collection("htpShops").doc(uid);
+export const shopRef = (uid: string) => db().collection("htpShops").doc(uid);
 const publicRef = (uid: string) => db().collection("htpUsers").doc(uid);
 
-interface StoredShop {
+export interface StoredShop {
   shop: string;
   accessToken: string;
   refreshToken: string | null;
@@ -110,7 +116,7 @@ function tokenFields(t: TokenResponse) {
 }
 
 /** Jeton valide pour l'utilisateur, renouvelé s'il expire dans moins de 5 minutes. */
-async function accessTokenFor(uid: string): Promise<{ shop: string; token: string }> {
+export async function accessTokenFor(uid: string): Promise<{ shop: string; token: string }> {
   const snap = await shopRef(uid).get();
   if (!snap.exists) {
     throw new HttpsError("failed-precondition", "Aucune boutique Shopify connectée.");
@@ -138,7 +144,7 @@ interface GraphqlResult<T> {
   errors?: { message: string; extensions?: { code?: string } }[];
 }
 
-async function adminGraphql<T>(shop: string, token: string, query: string, variables?: Record<string, unknown>) {
+export async function adminGraphql<T>(shop: string, token: string, query: string, variables?: Record<string, unknown>) {
   const res = await fetch(`${shopifyOrigin(shop)}/admin/api/${API_VERSION}/graphql.json`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
@@ -156,10 +162,10 @@ async function adminGraphql<T>(shop: string, token: string, query: string, varia
 /** Étape 1 : génère l'URL d'autorisation Shopify pour l'utilisateur connecté. */
 export const htpShopifyStart = onCall(
   { region: REGION, secrets: [shopifyClientId] },
-  async (request: CallableRequest<{ shop: string; publish?: boolean }>) => {
+  async (request: CallableRequest<{ shop: string; access?: "read" | "fix"; publish?: boolean }>) => {
     const uid = requireUid(request);
     const shop = normalizeShop(request.data?.shop);
-    const scope = request.data?.publish === true ? PUBLISH_SCOPES : READ_SCOPES;
+    const scope = request.data?.access === "fix" || request.data?.publish === true ? FIX_SCOPES : READ_SCOPES;
     const state = randomBytes(24).toString("hex");
     await db().collection("htpOAuthStates").doc(state).set({ uid, shop, createdAt: FieldValue.serverTimestamp() });
     const params = new URLSearchParams({
@@ -201,7 +207,14 @@ export const htpShopifyCallback = onRequest(
       const token = await tokenRequest(shop, { code, expiring: "1" });
       await shopRef(saved.uid).set({ shop, ...tokenFields(token), connectedAt: FieldValue.serverTimestamp() });
       await publicRef(saved.uid).set(
-        { shopify: { shop, canPublish: canPublish(token.scope), connectedAt: FieldValue.serverTimestamp() } },
+        {
+          shopify: {
+            shop,
+            canPublish: canPublish(token.scope),
+            canFix: canFix(token.scope),
+            connectedAt: FieldValue.serverTimestamp(),
+          },
+        },
         { merge: true }
       );
       back("connected");

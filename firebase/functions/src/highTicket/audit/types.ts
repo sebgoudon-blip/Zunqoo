@@ -82,6 +82,8 @@ export interface ShopSnapshot {
 }
 
 export interface AuditItem {
+  /** Identifiant Shopify de l'élément (produit), quand une correction est possible. */
+  id?: string;
   label: string;
   detail?: string;
   url?: string;

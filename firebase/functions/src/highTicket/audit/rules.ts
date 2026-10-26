@@ -1,3 +1,4 @@
+import { PROMO, TEST_CONTENT } from "./patterns";
 import { digitsOf, emailsIn, htmlToText, mentionsDelay, normalize, phoneIn, placeholdersIn, returnDelays, validGtin } from "./text";
 import type {
   AuditItem,
@@ -40,11 +41,8 @@ const POLICY_LABELS: Record<PolicyType, string> = {
   CONTACT_INFORMATION: "Coordonnées",
 };
 
-const PROMO =
-  /\b(promo(tion)?s?|soldes?|offerte?s?|gratuite?s?|pas cher|meilleur prix|prix choc|d[ée]stockage|livraison (gratuite|offerte)|black friday|free shipping|best ?seller|n°\s?1)\b|-\s?\d+\s?%/i;
 const HEALTH =
   /\b(gu[ée]ri[rt]?|gu[ée]rison|soigner?|anti[- ]?cancer|miracle|perte de poids (garantie|rapide)|maigri[rs] (vite|rapidement)|anti[- ]?covid|cures?|heals?)\b/i;
-const TEST_CONTENT = /produit de test|contenu provisoire|lorem ipsum|test product|placeholder|texte (?:provisoire|temporaire)|description (?:a venir|à venir)/i;
 const IMITATION = /\b(r[ée]pliques?|replicas?|contrefa[çc]ons?|copies? conformes?|dupes?|first copy|inspir[ée]e?s? (de|par)|1:1)\b/i;
 // Marques très souvent contrefaites. Un revendeur autorisé peut les citer : le
 // point est un conseil de vérification, pas une accusation.
@@ -103,7 +101,7 @@ function productRule(
   if (!hits.length) return pass(okDetail);
   const items = hits
     .slice(0, ITEM_LIMIT)
-    .map(({ p, why }) => ({ label: p.title || "(sans titre)", detail: why || undefined, url: ctx.adminProductUrl(p.id) }));
+    .map(({ p, why }) => ({ id: p.id, label: p.title || "(sans titre)", detail: why || undefined, url: ctx.adminProductUrl(p.id) }));
   return fail(failDetail(hits.length), items, hits.length);
 }
 

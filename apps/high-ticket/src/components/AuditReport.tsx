@@ -1,7 +1,9 @@
 import { useState } from "react";
-import type { AuditReport as Report, AuditResult, Severity } from "../lib/audit";
+import { Link } from "react-router-dom";
+import { FIX_FOR_RULE, type AuditReport as Report, type AuditResult, type Severity } from "../lib/audit";
 import { downloadFile } from "../lib/download";
 import { CATEGORY_LABELS, DISCLAIMER, SEVERITY_HINTS, SEVERITY_LABELS, failedBySeverity, reportToHtml, scoreLabel } from "../lib/report";
+import { FixPanel, type FixController } from "./FixPanel";
 import { Icon, type IconName } from "./Icon";
 
 const SEVERITY_ICON: Record<Severity, IconName> = { bloquant: "bad", important: "warn", conseil: "help" };
@@ -16,7 +18,32 @@ function slug(text: string) {
     .replace(/^-|-$/g, "");
 }
 
-function Finding({ r }: { r: AuditResult }) {
+function FixAction({ r, fixes }: { r: AuditResult; fixes?: FixController }) {
+  const [open, setOpen] = useState(false);
+  const kind = FIX_FOR_RULE[r.id];
+  if (r.id.startsWith("policy_")) {
+    return (
+      <Link className="btn btn-ghost fix-open" to="/outils/legal">
+        <Icon name="wrench" /> Corriger avec le générateur de pages légales
+      </Link>
+    );
+  }
+  if (!kind || !fixes) return null;
+  const ids = (r.items ?? []).map((i) => i.id).filter((id): id is string => !!id);
+  return (
+    <div className="fix-action">
+      {open ? (
+        <FixPanel kind={kind} ids={ids} controller={fixes} />
+      ) : (
+        <button className="btn btn-ghost fix-open" type="button" onClick={() => setOpen(true)}>
+          <Icon name="wrench" /> Voir la correction proposée
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Finding({ r, fixes }: { r: AuditResult; fixes?: FixController }) {
   return (
     <details className={`finding ${r.severity}`}>
       <summary>
@@ -56,6 +83,7 @@ function Finding({ r }: { r: AuditResult }) {
             <li key={step}>{step}</li>
           ))}
         </ol>
+        <FixAction r={r} fixes={fixes} />
         <p className="finding-meta">
           {CATEGORY_LABELS[r.category]}
           {r.source && (
@@ -72,7 +100,7 @@ function Finding({ r }: { r: AuditResult }) {
   );
 }
 
-export function AuditReport({ report, sample = false }: { report: Report; sample?: boolean }) {
+export function AuditReport({ report, sample = false, fixes }: { report: Report; sample?: boolean; fixes?: FixController }) {
   const [filter, setFilter] = useState<Severity | "all">("all");
   const failed = failedBySeverity(report);
   const shown = filter === "all" ? failed : failed.filter((r) => r.severity === filter);
@@ -145,7 +173,7 @@ export function AuditReport({ report, sample = false }: { report: Report; sample
         ) : (
           <div className="finding-list">
             {shown.map((r) => (
-              <Finding key={r.id} r={r} />
+              <Finding key={r.id} r={r} fixes={fixes} />
             ))}
           </div>
         )}

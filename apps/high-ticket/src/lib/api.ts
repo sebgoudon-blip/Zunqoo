@@ -1,5 +1,5 @@
 import type { Profile } from "../types";
-import type { AuditReport } from "./audit";
+import type { AuditReport, FixKind } from "./audit";
 import { cloudEnabled } from "./cloudConfig";
 
 function callable<Req, Res>(name: string) {
@@ -51,8 +51,8 @@ export type PolicyType =
   | "PRIVACY_POLICY"
   | "CONTACT_INFORMATION";
 
-/** publish : demande aussi le droit d'écrire les politiques légales (sinon lecture seule). */
-export const startShopifyConnect = callable<{ shop: string; publish?: boolean }, { url: string }>("htpShopifyStart");
+/** access « fix » : demande aussi les droits d'écriture des corrections (sinon lecture seule). */
+export const startShopifyConnect = callable<{ shop: string; access?: "read" | "fix" }, { url: string }>("htpShopifyStart");
 export const disconnectShopify = callable<Record<string, never>, { ok: boolean }>("htpShopifyDisconnect");
 
 export type { AuditReport };
@@ -62,6 +62,26 @@ export const isCurrentReport = (value: unknown): value is AuditReport =>
   !!value && typeof value === "object" && (value as { version?: unknown }).version === 2;
 
 export const auditShop = callable<{ address?: string }, AuditReport>("htpShopifyAudit");
+
+export interface ProposedChange {
+  kind: FixKind;
+  /** Produit ou page ; null pour une page Contact à créer. */
+  id: string | null;
+  label: string;
+  before: string;
+  after: string;
+}
+
+export interface ApplyResult {
+  id: string | null;
+  ok: boolean;
+  changeId?: string;
+  error?: string;
+}
+
+export const fixPreview = callable<{ kind: FixKind; ids?: string[] }, { changes: ProposedChange[] }>("htpFixPreview");
+export const fixApply = callable<{ changes: ProposedChange[] }, { results: ApplyResult[] }>("htpFixApply");
+export const fixUndo = callable<{ changeId: string }, { ok: boolean }>("htpFixUndo");
 
 export const publishLegal = callable<
   { policies: Partial<Record<PolicyType, string>> },
