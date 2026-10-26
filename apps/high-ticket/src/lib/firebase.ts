@@ -16,7 +16,12 @@ const config = {
  * Sans configuration Firebase, l'app fonctionne en mode local (sans compte,
  * sans assistant IA ni connexion Shopify).
  */
-export const cloudEnabled = Boolean(config.apiKey && config.projectId);
+// Verrou de lancement : tant qu'il vaut false, l'app reste en mode local même
+// si une configuration Firebase est présente (aucun compte, aucun appel à
+// Firebase, à l'IA ou à Shopify). À passer à true uniquement au lancement.
+const CLOUD_LAUNCHED = false;
+
+export const cloudEnabled = CLOUD_LAUNCHED && Boolean(config.apiKey && config.projectId);
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;

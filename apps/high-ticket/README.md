@@ -3,6 +3,28 @@
 Plateforme de coaching pas-à-pas pour lancer une boutique e-commerce
 high-ticket sur Shopify, avec Google Shopping comme canal d'acquisition.
 
+## Statut : mode cloud verrouillé
+
+Tant que le lancement n'est pas validé, **rien ne peut générer de coût** :
+
+- aucun projet Firebase n'est relié, aucune clé (Claude, Shopify) n'est
+  configurée, et rien n'est déployé ;
+- `CLOUD_LAUNCHED = false` dans `src/lib/firebase.ts` : l'app reste en mode
+  local, même si un fichier `.env.local` est présent. Personne ne peut créer
+  de compte, ni appeler l'IA ou Shopify ;
+- les fonctions HighTicket ne sont pas exportées par
+  `firebase/functions/src/index.ts` : un déploiement des fonctions de
+  Zunqoo ne les met pas en ligne.
+
+Pour lancer : suivre « Mise en route » ci-dessous, retirer le commentaire
+de l'export dans `firebase/functions/src/index.ts`, puis passer
+`CLOUD_LAUNCHED` à `true`. Avant d'ouvrir au public, mettre en place :
+
+- des alertes de budget Google Cloud ;
+- App Check sur les fonctions ;
+- une limite de dépense mensuelle sur la clé Claude, dans la console
+  Claude.
+
 ## Fonctionnalités
 
 - **Parcours guidé en 7 modules** (`src/content/modules.ts`) : une
@@ -38,7 +60,7 @@ high-ticket sur Shopify, avec Google Shopping comme canal d'acquisition.
   Droits demandés : `read_products`, `read_content`,
   `write_legal_policies`. Les jetons restent côté serveur.
 
-Sans configuration Firebase, l'app fonctionne en **mode local** : pas de
+Sans configuration Firebase (ou tant que le verrou est actif), l'app fonctionne en **mode local** : pas de
 compte, d'IA ni de Shopify, et la progression est enregistrée dans le
 navigateur.
 
