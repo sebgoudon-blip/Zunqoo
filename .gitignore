@@ -30,3 +30,6 @@ web-build/
 # Editors
 .vscode/
 .idea/
+
+# Secrets locaux des émulateurs Cloud Functions
+.secret.local

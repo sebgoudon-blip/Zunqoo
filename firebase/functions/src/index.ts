@@ -121,3 +121,10 @@ export const sendReadyNotification = onDocumentUpdated(
     }
   }
 );
+
+// HighTicket Pilot (apps/high-ticket) : assistant IA et connexion Shopify.
+// Volontairement NON exporté tant que le lancement n'est pas validé : ces
+// fonctions ne sont donc jamais déployées, même lors d'un
+// `firebase deploy --only functions` fait pour Zunqoo. Pour lancer,
+// décommenter la ligne suivante (voir apps/high-ticket/README.md).
+// export * from "./highTicket";
