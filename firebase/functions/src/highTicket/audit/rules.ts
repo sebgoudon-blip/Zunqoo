@@ -44,6 +44,7 @@ const PROMO =
   /\b(promo(tion)?s?|soldes?|offerte?s?|gratuite?s?|pas cher|meilleur prix|prix choc|d[ée]stockage|livraison (gratuite|offerte)|black friday|free shipping|best ?seller|n°\s?1)\b|-\s?\d+\s?%/i;
 const HEALTH =
   /\b(gu[ée]ri[rt]?|gu[ée]rison|soigner?|anti[- ]?cancer|miracle|perte de poids (garantie|rapide)|maigri[rs] (vite|rapidement)|anti[- ]?covid|cures?|heals?)\b/i;
+const TEST_CONTENT = /produit de test|contenu provisoire|lorem ipsum|test product|placeholder|texte (?:provisoire|temporaire)|description (?:a venir|à venir)/i;
 const IMITATION = /\b(r[ée]pliques?|replicas?|contrefa[çc]ons?|copies? conformes?|dupes?|first copy|inspir[ée]e?s? (de|par)|1:1)\b/i;
 // Marques très souvent contrefaites. Un revendeur autorisé peut les citer : le
 // point est un conseil de vérification, pas une accusation.
@@ -52,9 +53,17 @@ const WATCHED_BRANDS = [
   "prada", "versace", "balenciaga", "ray-ban", "dyson", "lego", "disney", "pokemon", "marvel", "moncler", "yeezy",
 ];
 
+/** Où le texte d'une politique a été trouvé : politique Shopify ou page de la boutique. */
+interface PolicyDoc {
+  url: string;
+  /** Titre de la page, si la politique vient d'une page. */
+  page?: string;
+}
+
 interface Context {
   s: ShopSnapshot;
   policyText: Map<PolicyType, string>;
+  policyDocs: Map<PolicyType, PolicyDoc>;
   /** Texte où un client cherche les coordonnées : politique Coordonnées, mentions légales, page Contact. */
   contactText: string;
   adminProductUrl: (id: string) => string;
@@ -98,6 +107,11 @@ function productRule(
   return fail(failDetail(hits.length), items, hits.length);
 }
 
+const docLabel = (type: PolicyType, docs: Map<PolicyType, PolicyDoc>) => {
+  const page = docs.get(type)?.page;
+  return page ? `${POLICY_LABELS[type]} (page « ${page} »)` : POLICY_LABELS[type];
+};
+
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
 function policyPresence(type: PolicyType, severity: Severity, why: string, fix: string[]): Rule {
@@ -109,10 +123,11 @@ function policyPresence(type: PolicyType, severity: Severity, why: string, fix: 
     why,
     fix,
     source: SRC.guidelines,
-    check: (ctx) =>
-      ctx.policyText.has(type)
-        ? pass(ctx.s.policies.find((p) => p.type === type)?.url ?? "Publiée.")
-        : fail("Cette politique est absente ou vide dans Shopify."),
+    check: (ctx) => {
+      const doc = ctx.policyDocs.get(type);
+      if (!doc) return fail("Ni politique Shopify, ni page publiée de ce type n'a été trouvée.");
+      return pass(doc.page ? `Page « ${doc.page} » : ${doc.url}` : doc.url);
+    },
   };
 }
 
@@ -302,11 +317,11 @@ export const RULES: Rule[] = [
     why: "Un modèle laissé tel quel ([Nom de l'entreprise], XXX…) montre des informations fausses ou manquantes aux clients : c'est un motif de « présentation trompeuse ».",
     fix: ["Ouvre chaque politique signalée dans Paramètres > Politiques.", "Remplace chaque champ entre crochets par la vraie information.", "Relis la page publiée sur ta boutique."],
     source: SRC.misrepresentation,
-    check: ({ s, policyText }) => {
-      const items = s.policies
-        .map((p) => ({ p, found: placeholdersIn(policyText.get(p.type) ?? "") }))
+    check: ({ policyText, policyDocs }) => {
+      const items = [...policyText]
+        .map(([type, text]) => ({ type, found: placeholdersIn(text) }))
         .filter((x) => x.found.length)
-        .map(({ p, found }) => ({ label: POLICY_LABELS[p.type], detail: `Trouvé : ${found.join(", ")}`, url: p.url }));
+        .map(({ type, found }) => ({ label: docLabel(type, policyDocs), detail: `Trouvé : ${found.join(", ")}`, url: policyDocs.get(type)?.url }));
       return items.length ? fail(`${plural(items.length, "politique")} contien${items.length > 1 ? "nent" : "t"} des champs non remplis.`, items) : pass("Aucun champ de modèle oublié.");
     },
   },
@@ -318,12 +333,12 @@ export const RULES: Rule[] = [
     why: "Une politique de quelques lignes ne donne pas aux clients les informations attendues (procédure, délais, frais, exceptions).",
     fix: ["Complète les politiques signalées : procédure, délais, frais, exceptions, contact.", "Utilise le générateur de pages légales de l'outil comme point de départ."],
     source: SRC.guidelines,
-    check: ({ s, policyText }) => {
-      const items = s.policies
-        .filter((p) => p.type !== "CONTACT_INFORMATION")
-        .map((p) => ({ p, len: (policyText.get(p.type) ?? "").length }))
-        .filter((x) => x.len > 0 && x.len < 400)
-        .map(({ p, len }) => ({ label: POLICY_LABELS[p.type], detail: `${len} caractères seulement.`, url: p.url }));
+    check: ({ policyText, policyDocs }) => {
+      const items = [...policyText]
+        .filter(([type]) => type !== "CONTACT_INFORMATION")
+        .map(([type, text]) => ({ type, len: text.length }))
+        .filter((x) => x.len < 400)
+        .map(({ type, len }) => ({ label: docLabel(type, policyDocs), detail: `${len} caractères seulement.`, url: policyDocs.get(type)?.url }));
       return items.length ? fail(`${plural(items.length, "politique")} très courte${items.length > 1 ? "s" : ""}.`, items) : pass("Longueur suffisante.");
     },
   },
@@ -388,6 +403,25 @@ export const RULES: Rule[] = [
     fix: ["Dans Shopify, ouvre Produits.", "Passe au moins un produit complet au statut « Actif » et publie-le sur la boutique en ligne et sur le canal Google."],
     source: SRC.guidelines,
     check: ({ s }) => (s.productsTotal > 0 ? pass(`${plural(s.productsTotal, "produit")} actif${s.productsTotal > 1 ? "s" : ""}.`) : fail("Aucun produit actif.")),
+  },
+  {
+    id: "products_test_content",
+    category: "produits",
+    severity: "bloquant",
+    title: "Aucun contenu de test visible",
+    why: "Un texte provisoire (« produit de test », « lorem ipsum »…) montre aux clients une fiche inachevée : Google peut considérer la boutique comme incomplète ou trompeuse.",
+    fix: ["Ouvre chaque produit listé.", "Remplace le titre et la description par le texte définitif, ou passe le produit en brouillon tant qu'il n'est pas prêt."],
+    source: SRC.misrepresentation,
+    check: (ctx) =>
+      productRule(
+        ctx,
+        (p) => {
+          const m = `${p.title} ${p.description}`.match(TEST_CONTENT)?.[0];
+          return m ? `« ${m} »` : false;
+        },
+        "Aucun texte provisoire repéré.",
+        (n) => `${plural(n, "produit")} avec un texte provisoire.`
+      ),
   },
   {
     id: "products_image",
@@ -661,21 +695,47 @@ export const RULES: Rule[] = [
   },
 ];
 
+/**
+ * Beaucoup de boutiques publient leurs politiques comme pages (Boutique en
+ * ligne > Pages) plutôt que dans Paramètres > Politiques. Google regarde le
+ * site, pas l'emplacement dans Shopify : une page publiée du bon type compte.
+ */
+const PAGE_PATTERNS: [PolicyType, RegExp][] = [
+  ["REFUND_POLICY", /retour|rembourse|retractation|refund|return/],
+  ["SHIPPING_POLICY", /livraison|expedition|shipping|delivery/],
+  ["TERMS_OF_SERVICE", /\bcgv\b|conditions generales de vente|terms of (sale|service)/],
+  ["PRIVACY_POLICY", /confidentialite|privacy|donnees personnelles/],
+  ["LEGAL_NOTICE", /mentions[ -]legales|legal notice|imprint/],
+  ["CONTACT_INFORMATION", /contact|coordonnees/],
+];
+
 /** Exécute toutes les règles sur les données de la boutique et calcule le score. */
 export function runAudit(s: ShopSnapshot, checkedAt = Date.now()): AuditReport {
   const policyText = new Map<PolicyType, string>();
+  const policyDocs = new Map<PolicyType, PolicyDoc>();
   for (const p of s.policies) {
     const text = htmlToText(p.body);
-    if (text) policyText.set(p.type, text);
+    if (!text) continue;
+    policyText.set(p.type, text);
+    policyDocs.set(p.type, { url: p.url });
   }
-  const contactPages = (s.pages ?? []).filter((p) => p.isPublished && /contact/i.test(`${p.handle} ${p.title}`));
-  const contactText = [policyText.get("CONTACT_INFORMATION"), policyText.get("LEGAL_NOTICE"), ...contactPages.map((p) => htmlToText(p.body))]
-    .filter(Boolean)
-    .join("\n");
+  const pages = (s.pages ?? [])
+    .filter((p) => p.isPublished)
+    .map((p) => ({ ...p, key: normalize(`${p.handle} ${p.title}`), text: htmlToText(p.body) }))
+    .filter((p) => p.text);
+  for (const [type, pattern] of PAGE_PATTERNS) {
+    if (policyText.has(type)) continue;
+    const page = pages.find((p) => pattern.test(p.key));
+    if (!page) continue;
+    policyText.set(type, page.text);
+    policyDocs.set(type, { url: `https://${s.primaryDomain.host}/pages/${page.handle}`, page: page.title });
+  }
+  const contactText = [policyText.get("CONTACT_INFORMATION"), policyText.get("LEGAL_NOTICE")].filter(Boolean).join("\n");
   const store = s.myshopifyDomain.replace(/\.myshopify\.com$/, "");
   const ctx: Context = {
     s,
     policyText,
+    policyDocs,
     contactText,
     adminProductUrl: (id) => `https://admin.shopify.com/store/${store}/products/${id.split("/").pop()}`,
   };

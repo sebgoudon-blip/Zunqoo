@@ -11,7 +11,7 @@ exportées en production).
 2. La fonction `htpShopifyAudit` lit la boutique : informations de la boutique,
    politiques, pages, zones de livraison, et jusqu'à 250 produits actifs
    (les plus récemment modifiés).
-3. Le moteur `firebase/functions/src/highTicket/audit/` applique 37 contrôles et
+3. Le moteur `firebase/functions/src/highTicket/audit/` applique 38 contrôles et
    calcule un score sur 100.
 4. L'app affiche le rapport : points classés bloquant / important / conseil,
    avec pour chacun le constat, les éléments concernés (liens vers l'admin
@@ -78,6 +78,7 @@ Légende de la colonne « Base » :
 | Délais de livraison indiqués | important | Interprétation | [Consignes](https://support.google.com/merchants/answer/6363310) |
 | Délais de retour cohérents CGV / retours | important | Interprétation | [Présentation trompeuse](https://support.google.com/merchants/answer/6150127) |
 | Produits actifs | bloquant | Interprétation | [Consignes](https://support.google.com/merchants/answer/6363310) |
+| Aucun contenu de test (« produit de test », « lorem ipsum »…) | bloquant | Interprétation | [Présentation trompeuse](https://support.google.com/merchants/answer/6150127) |
 | Image principale | bloquant | Google (`image_link` obligatoire) | [Spécification](https://support.google.com/merchants/answer/7052112) |
 | Description présente | bloquant | À revérifier | [Spécification](https://support.google.com/merchants/answer/7052112) |
 | Description détaillée (≥ 150 caractères) | conseil | Bonne pratique | [Spécification](https://support.google.com/merchants/answer/7052112) |
@@ -95,6 +96,27 @@ Légende de la colonne « Base » :
 | Marques tierces citées | conseil | Interprétation (liste de marques) | [Règles Shopping](https://support.google.com/merchants/answer/6149970) |
 | Zones de livraison configurées | bloquant | Interprétation | [Consignes](https://support.google.com/merchants/answer/6363310) |
 | Moyen de paiement classique | bloquant, **à vérifier à la main** | Google | [Consignes](https://support.google.com/merchants/answer/6363310) |
+
+## Politiques publiées comme pages
+
+Beaucoup de boutiques publient leurs CGV, retours ou mentions légales comme
+pages (Boutique en ligne > Pages) plutôt que dans Paramètres > Politiques.
+Google regarde le site, pas l'emplacement dans Shopify : une page publiée dont
+le titre ou l'adresse correspond (par exemple « cgv », « retours »,
+« mentions-legales ») compte comme la politique. Les contrôles de contenu
+(champs à compléter, délais, cohérence) portent aussi sur ces pages.
+
+## Test sur une vraie boutique (26 octobre 2026)
+
+Les requêtes de l'audit ont été exécutées en lecture seule sur la boutique
+connectée à la session de développement. Elles ont toutes abouti. Ce test a
+conduit à deux corrections : la prise en compte des politiques publiées comme
+pages, et le contrôle des textes provisoires dans les produits.
+
+Attention : la connexion utilisée pour ce test n'est pas celle de l'app. Ses
+droits peuvent être plus larges que `read_products`, `read_content` et
+`read_legal_policies`. Il reste donc à vérifier, avec l'app elle-même, que ces
+trois droits suffisent.
 
 ## Limites connues
 
@@ -118,7 +140,7 @@ Légende de la colonne « Base » :
 ## Tests
 
 ```bash
-npm run test:functions    # moteur d'audit et lecture Shopify (34 tests)
+npm run test:functions    # moteur d'audit et lecture Shopify (38 tests)
 npm run test:high-ticket  # app, dont le rapport et son export (40 tests)
 npm run test:e2e          # émulateurs Firebase + faux Shopify (9 tests)
 ```

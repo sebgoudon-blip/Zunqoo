@@ -80,7 +80,7 @@ de l'export dans `firebase/functions/src/index.ts`, puis passer
   Ce ne sont toujours pas des conseils juridiques : l'app recommande une
   relecture par un professionnel.
 - **Connexion Shopify** (OAuth) et **audit de conformité Merchant Center** :
-  - 37 contrôles (identité, domaine, politiques, produits, tunnel d'achat),
+  - 38 contrôles (identité, domaine, politiques, produits, tunnel d'achat),
     un score sur 100 et des points classés bloquant / important / conseil,
     avec pour chacun le pourquoi, la correction et la règle Google ;
   - rapport exportable en HTML, exemple sur une boutique fictive

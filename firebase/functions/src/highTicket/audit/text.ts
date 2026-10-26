@@ -59,7 +59,7 @@ export function phoneIn(phone: string, text: string): boolean {
 export function returnDelays(text: string): number[] {
   const delays = new Set<number>();
   for (const sentence of normalize(text).split(/[.\n;!?]/)) {
-    if (!/retour|retract|rembours|renvo|return|refund/.test(sentence)) continue;
+    if (!/retour|retract|rembours|renvo|changer d.avis|prolong|return|refund/.test(sentence)) continue;
     for (const m of sentence.matchAll(/\b(\d{1,3})\s*(?:jours?|days?)\b/g)) delays.add(Number(m[1]));
   }
   return [...delays].sort((a, b) => a - b);
@@ -72,7 +72,7 @@ export function mentionsDelay(text: string): boolean {
 
 /** Traces d'un modèle non rempli : [Nom], lorem ipsum, XXX… */
 export function placeholdersIn(text: string): string[] {
-  const found = text.match(/\[[^\]\n]{2,60}\]|lorem ipsum|\bX{3,}\b|\{\{[^}]*\}\}|à compléter|a completer|votre (?:raison sociale|adresse|entreprise|nom de société)/gi);
+  const found = text.match(/\[[^\]\n]{2,120}\]|lorem ipsum|\bX{3,}\b|\{\{[^}]*\}\}|à compléter|a completer|votre (?:raison sociale|adresse|entreprise|nom de société)/gi);
   return [...new Set(found ?? [])].slice(0, 5);
 }
 

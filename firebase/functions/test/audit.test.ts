@@ -183,6 +183,48 @@ describe("politiques", () => {
   });
 });
 
+describe("politiques publiées comme pages", () => {
+  it("reconnaît les CGV, retours et livraison publiés comme pages", () => {
+    const s = cleanShop();
+    const moved = s.policies.filter((p) => p.type !== "PRIVACY_POLICY" && p.type !== "CONTACT_INFORMATION" && p.type !== "LEGAL_NOTICE");
+    s.policies = s.policies.filter((p) => !moved.includes(p));
+    s.pages = [
+      { title: "Retours et rétractation", handle: "retours-retractation", body: moved[0].body, isPublished: true },
+      { title: "Politique de livraison", handle: "politique-livraison", body: moved[1].body, isPublished: true },
+      { title: "Conditions générales de vente", handle: "cgv", body: moved[2].body, isPublished: true },
+    ];
+    const report = runAudit(s);
+    expect(result(report, "policy_refund_policy")?.detail).toContain("/pages/retours-retractation");
+    expect(prioritized(report)).toEqual([]);
+  });
+
+  it("ignore les pages non publiées ou vides", () => {
+    const s = cleanShop();
+    s.policies = s.policies.filter((p) => p.type !== "SHIPPING_POLICY");
+    s.pages = [
+      { title: "Livraison", handle: "livraison", body: "<p>Expédition sous 2 jours.</p>", isPublished: false },
+      { title: "Politique de livraison", handle: "politique-livraison", body: "", isPublished: true },
+    ];
+    expect(statusOf(s, "policy_shipping_policy")).toBe("fail");
+  });
+
+  it("repère les champs à compléter dans une page", () => {
+    const s = cleanShop();
+    s.policies = s.policies.filter((p) => p.type !== "LEGAL_NOTICE");
+    s.pages = [
+      {
+        title: "Mentions légales",
+        handle: "mentions-legales",
+        body: `<p>${long("Médiateur : [À COMPLÉTER : nom, adresse postale et site internet du médiateur auquel la société adhère].")}</p>`,
+        isPublished: true,
+      },
+    ];
+    const r = result(runAudit(s), "policy_placeholders");
+    expect(r?.status).toBe("fail");
+    expect(r?.items?.[0].label).toBe("Mentions légales (page « Mentions légales »)");
+  });
+});
+
 describe("produits", () => {
   const withProduct = (p: Partial<SnapshotProduct>) => {
     const s = cleanShop();
@@ -203,6 +245,12 @@ describe("produits", () => {
     expect(statusOf(withProduct({ description: "Bureau en bois." }), "products_description_short")).toBe("fail");
     const zero = withProduct({ variants: [{ price: 0, compareAtPrice: null, inventoryPolicy: "DENY", barcodes: [] }] });
     expect(statusOf(zero, "products_price_zero")).toBe("fail");
+  });
+
+  it("texte provisoire dans un produit", () => {
+    const r = result(runAudit(withProduct({ description: "Produit de test — contenu provisoire. Bureau en chêne." })), "products_test_content");
+    expect(r?.status).toBe("fail");
+    expect(statusOf(cleanShop(), "products_test_content")).toBe("pass");
   });
 
   it("liste les produits concernés avec un lien vers l'admin Shopify", () => {
