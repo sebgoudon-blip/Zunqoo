@@ -1,41 +1,29 @@
-import { useEffect, useState } from "react";
-
-const PREFIX = "htp_";
-
-function read<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(PREFIX + key);
-    return raw === null ? fallback : (JSON.parse(raw) as T);
-  } catch {
-    return fallback;
-  }
-}
+import { useCallback, useRef, useSyncExternalStore } from "react";
+import { clearAll, getValue, setValue, subscribe } from "../lib/store";
 
 /**
- * État React persisté dans le navigateur. Pour la V1 il n'y a pas de compte :
- * la progression de chaque utilisateur vit sur son appareil. Les erreurs de
- * stockage (navigation privée, quota) sont ignorées, l'app reste utilisable.
+ * État React persisté : sur l'appareil, et dans le cloud quand l'utilisateur
+ * est connecté (voir lib/cloudSync). Toutes les instances qui partagent une
+ * clé restent synchronisées.
  */
 export function useStoredState<T>(key: string, fallback: T): [T, (next: T | ((prev: T) => T)) => void] {
-  const [value, setValue] = useState<T>(() => read(key, fallback));
+  const fallbackRef = useRef(fallback);
+  const value = useSyncExternalStore(
+    useCallback((cb) => subscribe(key, cb), [key]),
+    () => getValue(key, fallbackRef.current)
+  );
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(PREFIX + key, JSON.stringify(value));
-    } catch {
-      // Stockage indisponible : on garde l'état en mémoire.
-    }
-  }, [key, value]);
+  const set = useCallback(
+    (next: T | ((prev: T) => T)) => {
+      const prev = getValue(key, fallbackRef.current);
+      setValue(key, typeof next === "function" ? (next as (p: T) => T)(prev) : next);
+    },
+    [key]
+  );
 
-  return [value, setValue];
+  return [value, set];
 }
 
 export function clearStoredState() {
-  try {
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith(PREFIX))
-      .forEach((k) => localStorage.removeItem(k));
-  } catch {
-    // Rien à faire.
-  }
+  clearAll();
 }

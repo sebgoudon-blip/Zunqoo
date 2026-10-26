@@ -121,3 +121,6 @@ export const sendReadyNotification = onDocumentUpdated(
     }
   }
 );
+
+// HighTicket Pilot (apps/high-ticket) : assistant IA et connexion Shopify.
+export * from "./highTicket";

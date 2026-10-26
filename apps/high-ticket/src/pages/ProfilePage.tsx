@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearStoredState } from "../hooks/useStoredState";
+import { validateLegalInfo } from "../lib/validation";
 import { EMPTY_PROFILE, useAppState } from "../state";
 import type { AddressType, Country, Profile } from "../types";
 
@@ -19,7 +20,7 @@ const ADDRESS_TYPES: { value: AddressType; label: string }[] = [
 ];
 
 export function ProfilePage() {
-  const { profile, setProfile } = useAppState();
+  const { profile, setProfile, policies } = useAppState();
   const [draft, setDraft] = useState<Profile>(profile ?? EMPTY_PROFILE);
   const navigate = useNavigate();
   const isNew = !profile;
@@ -37,21 +38,28 @@ export function ProfilePage() {
   function reset() {
     if (window.confirm("Effacer ton profil et toute ta progression sur cet appareil ?")) {
       clearStoredState();
-      window.location.href = "/";
+      navigate("/");
     }
   }
 
-  const text = (key: keyof Profile, label: string, placeholder = "", type = "text") => (
-    <label className="field">
-      <span>{label}</span>
-      <input
-        type={type}
-        value={String(draft[key])}
-        placeholder={placeholder}
-        onChange={(e) => update(key, e.target.value as never)}
-      />
-    </label>
-  );
+  // Les erreurs de format ne s'affichent que pour les champs déjà remplis.
+  const errors = validateLegalInfo(draft, policies);
+  const text = (key: keyof Profile, label: string, placeholder = "", type = "text") => {
+    const error = String(draft[key]).trim() ? errors[key] : undefined;
+    return (
+      <label className="field">
+        <span>{label}</span>
+        <input
+          type={type}
+          value={String(draft[key])}
+          placeholder={placeholder}
+          aria-invalid={error ? true : undefined}
+          onChange={(e) => update(key, e.target.value as never)}
+        />
+        {error && <small className="field-error">{error}</small>}
+      </label>
+    );
+  };
 
   return (
     <form className="page narrow" onSubmit={submit}>

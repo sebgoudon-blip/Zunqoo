@@ -29,6 +29,29 @@ service cloud.firestore {
         allow delete: if false;
       }
     }
+
+    // HighTicket Pilot : profil, progression et outils de chaque utilisateur.
+    // Seul le propriétaire du compte peut lire et écrire son document. Le
+    // champ "shopify" n'est écrit que par les Cloud Functions.
+    match /htpUsers/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && !('shopify' in request.resource.data);
+      allow update: if request.auth != null && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['shopify']);
+      allow delete: if false;
+    }
+
+    // Jetons Shopify, états OAuth et quotas IA : réservés aux Cloud Functions.
+    match /htpShops/{uid} {
+      allow read, write: if false;
+    }
+    match /htpOAuthStates/{state} {
+      allow read, write: if false;
+    }
+    match /htpUsage/{id} {
+      allow read, write: if false;
+    }
   }
 
   function isValidStatusUpdate() {

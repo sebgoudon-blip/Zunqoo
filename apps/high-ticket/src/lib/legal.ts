@@ -1,4 +1,5 @@
 import type { Profile } from "../types";
+import type { PolicyType } from "./api";
 
 export interface StorePolicies {
   hostName: string;
@@ -30,6 +31,8 @@ export interface LegalDoc {
   id: string;
   title: string;
   shopifyLocation: string;
+  /** Politique Shopify dans laquelle le texte est publié. */
+  policyType: PolicyType;
   body: string;
 }
 
@@ -149,11 +152,20 @@ Les données clients sont conservées pendant la durée de la relation commercia
 Vos droits
 Vous disposez d'un droit d'accès, de rectification, d'effacement, d'opposition et de portabilité. Écrivez à ${email}. Vous pouvez introduire une réclamation auprès de l'autorité de protection des données de votre pays.`;
 
+  const contact = `COORDONNÉES
+
+${company}
+${address}
+Email : ${email}
+Téléphone : ${phone}
+Immatriculation : ${reg}${p.vatNumber.trim() ? `\nN° de TVA : ${p.vatNumber.trim()}` : ""}`;
+
   return [
-    { id: "mentions", title: "Mentions légales", shopifyLocation: "Boutique en ligne > Pages > Ajouter une page", body: mentions },
-    { id: "terms", title: "Conditions générales de vente", shopifyLocation: "Paramètres > Politiques > Conditions d'utilisation", body: terms },
-    { id: "returns", title: "Politique de retour", shopifyLocation: "Paramètres > Politiques > Politique de retour et de remboursement", body: returns },
-    { id: "shipping", title: "Politique de livraison", shopifyLocation: "Paramètres > Politiques > Politique d'expédition", body: shipping },
-    { id: "privacy", title: "Politique de confidentialité", shopifyLocation: "Paramètres > Politiques > Politique de confidentialité", body: privacy },
+    { id: "mentions", title: "Mentions légales", shopifyLocation: "Paramètres > Politiques > Mentions légales", policyType: "LEGAL_NOTICE", body: mentions },
+    { id: "terms", title: "Conditions générales de vente", shopifyLocation: "Paramètres > Politiques > Conditions d'utilisation", policyType: "TERMS_OF_SERVICE", body: terms },
+    { id: "returns", title: "Politique de retour", shopifyLocation: "Paramètres > Politiques > Politique de retour et de remboursement", policyType: "REFUND_POLICY", body: returns },
+    { id: "shipping", title: "Politique de livraison", shopifyLocation: "Paramètres > Politiques > Politique d'expédition", policyType: "SHIPPING_POLICY", body: shipping },
+    { id: "privacy", title: "Politique de confidentialité", shopifyLocation: "Paramètres > Politiques > Politique de confidentialité", policyType: "PRIVACY_POLICY", body: privacy },
+    { id: "contact", title: "Coordonnées", shopifyLocation: "Paramètres > Politiques > Coordonnées", policyType: "CONTACT_INFORMATION", body: contact },
   ];
 }

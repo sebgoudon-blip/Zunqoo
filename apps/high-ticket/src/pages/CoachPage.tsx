@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { AssistantChat } from "../components/AssistantChat";
 import { Icon, type IconName } from "../components/Icon";
 import { MODULES, allVisibleTasks, visibleTasks } from "../content/modules";
 import { TOOL_LABELS } from "../tools/registry";
@@ -271,12 +272,8 @@ function TaskCard({
                 </details>
               ))}
             </>
-          ) : (
-            <p className="muted">
-              Pas encore de question fréquente sur cette tâche. Note ta question ci-dessous : elle restera attachée à
-              la tâche.
-            </p>
-          )}
+          ) : null}
+          <AssistantChat task={task} />
         </div>
       )}
 
@@ -288,7 +285,7 @@ function TaskCard({
           placeholder="Résultats, chiffres, questions à creuser…"
           onChange={(e) => onNote(e.target.value)}
         />
-        <small>Enregistré automatiquement sur cet appareil.</small>
+        <small>Enregistré automatiquement.</small>
       </label>
 
       {status ? (
