@@ -343,6 +343,15 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && !modal.hidden) close();
     });
+    // Lien direct vers le formulaire d'estimation (ex : pages communes → ./#estimer)
+    function openFromHash() {
+      if (location.hash === "#estimer") {
+        history.replaceState(null, "", location.pathname);
+        open();
+      }
+    }
+    window.addEventListener("hashchange", openFromHash);
+    openFromHash();
   }
 
   // ---------- Formulaires (validation + envoi) ----------
