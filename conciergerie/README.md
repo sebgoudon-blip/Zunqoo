@@ -20,10 +20,14 @@ avant la mise en ligne.
 
 ## Formulaires
 
-Sans `formEndpoint`, les formulaires (contact + popup « Estimer mes revenus »)
-affichent « Merci ! » sans rien envoyer. Pour recevoir les demandes par
-e-mail, créez un formulaire gratuit sur [Formspree](https://formspree.io) et
-collez son URL dans `config.js`.
+Les deux formulaires (contact + popup « Estimer mes revenus ») sont envoyés
+par `send.php` à **contact@drome-ardeche.fr**. Ce script utilise PHP, inclus
+dans l'hébergement LWS : rien d'autre à configurer. L'adresse de réception se
+change en haut de `send.php`. La boîte mail doit exister chez LWS pour
+recevoir les messages.
+
+Un champ invisible bloque les robots, et l'adresse du visiteur est mise en
+« Répondre à » : il suffit de cliquer sur Répondre dans votre messagerie.
 
 ## Fonctionnalités
 
