@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clévo | Conciergerie Airbnb & location courte durée</title>
+  <meta name="description" content="Conciergerie Airbnb clé en main : annonces, ménage, accueil des voyageurs et revenus optimisés. Vous encaissez, on s'occupe du reste.">
+  <meta property="og:title" content="Clévo | Conciergerie Airbnb & location courte durée">
+  <meta property="og:description" content="Conciergerie Airbnb clé en main : annonces, ménage, accueil des voyageurs et revenus optimisés.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#Accueil" class="logo" aria-label="Accueil">
+        <span class="logo__mark">C</span><span class="logo__text" data-brand>Clévo</span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Navigation principale">
+        <a href="#Accueil">Accueil</a>
+        <a href="#Nos-services">Services</a>
+        <a href="#A-propos">À propos</a>
+        <a href="#Notre-offre">Offre</a>
+        <a href="#Nos-logements">Logements</a>
+        <a href="#Contact">Contact</a>
+        <button class="btn btn--primary nav__cta-mobile" data-open-estimate>Estimer mes revenus</button>
+      </nav>
+      <button class="btn btn--primary header__cta" data-open-estimate>Estimer mes revenus</button>
+      <button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="Accueil">
+      <div class="hero__bg" aria-hidden="true">
+        <span class="blob blob--1"></span><span class="blob blob--2"></span><span class="blob blob--3"></span>
+      </div>
+      <div class="container hero__inner">
+        <div class="hero__content reveal">
+          <span class="badge"><span class="badge__dot"></span>La conciergerie qui fait travailler votre bien</span>
+          <h1 class="hero__title">Votre location courte durée, <span class="text-gradient">gérée de A à Z</span>, vos revenus en hausse.</h1>
+          <p class="hero__text">Annonces, voyageurs, ménage, linge, prix : on prend tout en main. Vous gardez la tranquillité et vous suivez vos gains chaque mois. Satisfaction garantie, sans engagement.</p>
+          <div class="hero__actions">
+            <a href="#Contact" class="btn btn--primary btn--lg">Nous contacter</a>
+            <a href="#" class="btn btn--ghost btn--lg" data-booking>Prendre un rendez-vous</a>
+          </div>
+          <ul class="hero__stats">
+            <li><strong data-count="98" data-suffix="%">98%</strong><span>taux de satisfaction</span></li>
+            <li><strong data-count="5" data-prefix="&lt;" data-suffix=" min">&lt;5 min</strong><span>temps de réponse</span></li>
+            <li><strong data-count="30" data-prefix="+" data-suffix="%">+30%</strong><span>de revenus en moyenne</span></li>
+          </ul>
+        </div>
+
+        <div class="hero__visual reveal reveal--delay">
+          <div class="phone phone--back">
+            <div class="phone__screen">
+              <div class="app-top"><span>Revenus</span><span class="pill">Ce mois</span></div>
+              <div class="app-amount" data-count="3480" data-suffix=" €">3 480 €</div>
+              <div class="app-chart">
+                <span style="--h:35%"></span><span style="--h:50%"></span><span style="--h:42%"></span><span style="--h:68%"></span><span style="--h:60%"></span><span style="--h:85%"></span><span style="--h:95%"></span>
+              </div>
+              <div class="app-row"><span>Taux d'occupation</span><b>91 %</b></div>
+              <div class="app-row"><span>Note moyenne</span><b>4,9 ★</b></div>
+            </div>
+          </div>
+          <div class="phone phone--front">
+            <div class="phone__screen">
+              <div class="app-photo"></div>
+              <div class="app-title">Appartement lumineux · Terrasse</div>
+              <div class="app-sub">4 voyageurs · 2 chambres</div>
+              <div class="app-booking">
+                <div><small>Nouvelle réservation</small><b>12 → 16 juil.</b></div>
+                <span class="pill pill--green">Confirmée</span>
+              </div>
+              <div class="app-msg">« Merci pour l'accueil, tout était parfait ! »</div>
+            </div>
+          </div>
+          <div class="float-card float-card--1">
+            <span class="float-card__icon">💬</span>
+            <div><b>Réponse envoyée</b><small>il y a 2 min</small></div>
+          </div>
+          <div class="float-card float-card--2">
+            <span class="float-card__icon">✨</span>
+            <div><b>Ménage terminé</b><small>Prêt pour l'arrivée</small></div>
+          </div>
+          <div class="float-card float-card--3">
+            <span class="float-card__icon">⭐</span>
+            <div><b>Avis 5 étoiles</b><small>Coup de cœur voyageurs</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PLATEFORMES ============ -->
+    <section class="platforms">
+      <p class="platforms__title">Votre logement diffusé sur les meilleures plateformes</p>
+      <div class="marquee" aria-hidden="false">
+        <div class="marquee__track">
+          <span>Airbnb</span><span>Booking.com</span><span>Abritel</span><span>Vrbo</span><span>Expedia</span><span>Google Vacation Rentals</span><span>Stripe</span>
+          <span>Airbnb</span><span>Booking.com</span><span>Abritel</span><span>Vrbo</span><span>Expedia</span><span>Google Vacation Rentals</span><span>Stripe</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SERVICES ============ -->
+    <section class="section" id="Nos-services">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">Nos services</span>
+          <h2>Tout ce dont votre logement a besoin</h2>
+          <p>Un seul interlocuteur pour l'ensemble de la gestion : prix ajustés chaque jour, ménage hôtelier, assistance voyageurs à toute heure… et bien plus.</p>
+        </div>
+
+        <div class="services reveal">
+          <div class="services__tabs" role="tablist" aria-label="Services">
+            <button class="service-tab is-active" role="tab" aria-selected="true" data-tab="0"><span class="service-tab__icon">📸</span>Photos professionnelles</button>
+            <button class="service-tab" role="tab" aria-selected="false" data-tab="1"><span class="service-tab__icon">📝</span>Création des annonces</button>
+            <button class="service-tab" role="tab" aria-selected="false" data-tab="2"><span class="service-tab__icon">📈</span>Prix dynamiques</button>
+            <button class="service-tab" role="tab" aria-selected="false" data-tab="3"><span class="service-tab__icon">📅</span>Gestion des réservations</button>
+            <button class="service-tab" role="tab" aria-selected="false" data-tab="4"><span class="service-tab__icon">💬</span>Relation voyageurs</button>
+            <button class="service-tab" role="tab" aria-selected="false" data-tab="5"><span class="service-tab__icon">🔑</span>Arrivées & départs autonomes</button>
+            <button class="service-tab" role="tab" aria-selected="false" data-tab="6"><span class="service-tab__icon">🧺</span>Ménage, linge & entretien</button>
+            <button class="service-tab" role="tab" aria-selected="false" data-tab="7"><span class="service-tab__icon">🎁</span>Services sur mesure</button>
+          </div>
+
+          <div class="services__panels">
+            <article class="service-panel is-active" role="tabpanel" data-panel="0">
+              <div class="service-panel__visual sv sv--1"><span>📸</span></div>
+              <h3>Photos professionnelles</h3>
+              <p>Un shooting soigné, lumineux et cadré pour faire ressortir chaque atout de votre logement et déclencher la réservation dès le premier coup d'œil.</p>
+            </article>
+            <article class="service-panel" role="tabpanel" data-panel="1">
+              <div class="service-panel__visual sv sv--2"><span>📝</span></div>
+              <h3>Création des annonces</h3>
+              <p>Titres accrocheurs, descriptions travaillées, équipements bien renseignés : nos annonces sont pensées pour remonter dans les résultats et convaincre.</p>
+            </article>
+            <article class="service-panel" role="tabpanel" data-panel="2">
+              <div class="service-panel__visual sv sv--3"><span>📈</span></div>
+              <h3>Prix dynamiques</h3>
+              <p>Vos tarifs s'adaptent chaque jour à la saison, aux événements locaux et à la concurrence, pour remplir le calendrier au meilleur prix.</p>
+            </article>
+            <article class="service-panel" role="tabpanel" data-panel="3">
+              <div class="service-panel__visual sv sv--4"><span>📅</span></div>
+              <h3>Gestion des réservations</h3>
+              <p>Demandes traitées en quelques minutes, voyageurs vérifiés, calendriers synchronisés entre plateformes : zéro double réservation, occupation maximale.</p>
+            </article>
+            <article class="service-panel" role="tabpanel" data-panel="4">
+              <div class="service-panel__visual sv sv--5"><span>💬</span></div>
+              <h3>Relation voyageurs</h3>
+              <p>Avant, pendant et après le séjour, nous répondons à chaque question, 7 jours sur 7. Vos voyageurs se sentent attendus, et ça se voit dans les avis.</p>
+            </article>
+            <article class="service-panel" role="tabpanel" data-panel="5">
+              <div class="service-panel__visual sv sv--6"><span>🔑</span></div>
+              <h3>Arrivées & départs autonomes</h3>
+              <p>Boîte à clés ou serrure connectée, guide d'arrivée clair et livret d'accueil digital : vos voyageurs entrent et sortent sans attendre personne.</p>
+            </article>
+            <article class="service-panel" role="tabpanel" data-panel="6">
+              <div class="service-panel__visual sv sv--7"><span>🧺</span></div>
+              <h3>Ménage, linge & entretien</h3>
+              <p>Une équipe formée aux standards de l'hôtellerie, du linge fourni et repassé, et une surveillance de l'état du logement après chaque séjour.</p>
+            </article>
+            <article class="service-panel" role="tabpanel" data-panel="7">
+              <div class="service-panel__visual sv sv--8"><span>🎁</span></div>
+              <h3>Services sur mesure</h3>
+              <p>Petits travaux, ameublement, décoration, panier d'accueil, transferts… nous adaptons nos prestations à votre bien et à vos objectifs.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CTA ============ -->
+    <section class="container">
+      <div class="cta-banner reveal">
+        <div class="cta-banner__content">
+          <h2>Donnez un coup d'accélérateur à votre logement</h2>
+          <p>Vous voulez arrêter de tout gérer vous-même ? Parlons de votre bien : on vous explique concrètement ce que nous pouvons faire pour lui.</p>
+          <div class="hero__actions">
+            <a href="#Contact" class="btn btn--white btn--lg">Nous contacter</a>
+            <a href="#" class="btn btn--outline-white btn--lg" data-booking>Prendre un RDV</a>
+          </div>
+        </div>
+        <div class="cta-banner__visual" aria-hidden="true">
+          <div class="cta-ring"></div>
+          <div class="cta-key">🔑</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ÉTAPES ============ -->
+    <section class="section" id="Comment-ca-marche">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">Comment ça marche ?</span>
+          <h2>4 étapes pour souffler</h2>
+          <p>Un accompagnement simple et transparent pour nous confier votre location sans prise de tête.</p>
+        </div>
+
+        <div class="steps">
+          <article class="step">
+            <div class="step__text">
+              <span class="step__num">01</span>
+              <h3>On fait connaissance</h3>
+              <p>Un premier échange pour comprendre votre bien, vos attentes et vos contraintes. Nous vous présentons notre méthode et une estimation de vos revenus.</p>
+              <a href="#" class="link-arrow" data-booking>Je réserve un échange <span>→</span></a>
+            </div>
+            <div class="step__visual sv sv--1"><span>🤝</span></div>
+          </article>
+          <article class="step">
+            <div class="step__text">
+              <span class="step__num">02</span>
+              <h3>On prépare votre logement</h3>
+              <p>Shooting photo, annonce optimisée, livret d'accueil personnalisé, accès autonome et outils de gestion : tout est installé pour démarrer dans les meilleures conditions.</p>
+              <a href="#Contact" class="link-arrow">Je vous confie mon logement <span>→</span></a>
+            </div>
+            <div class="step__visual sv sv--3"><span>🛠️</span></div>
+          </article>
+          <article class="step">
+            <div class="step__text">
+              <span class="step__num">03</span>
+              <h3>On gère tout, au quotidien</h3>
+              <p>Diffusion multi-plateformes, prix ajustés, accueil, messages, ménage, maintenance… Vous n'avez plus rien à faire, nous sommes sur le pont.</p>
+              <a href="#Contact" class="link-arrow">Je délègue la gestion <span>→</span></a>
+            </div>
+            <div class="step__visual sv sv--6"><span>🧹</span></div>
+          </article>
+          <article class="step">
+            <div class="step__text">
+              <span class="step__num">04</span>
+              <h3>Vous profitez de vos revenus</h3>
+              <p>Vous percevez vos loyers et recevez chaque mois un rapport clair : réservations, revenus, avis. Un revenu complémentaire, sans la charge mentale.</p>
+              <a href="#Contact" class="link-arrow">Je veux profiter de mes revenus <span>→</span></a>
+            </div>
+            <div class="step__visual sv sv--4"><span>💶</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ À PROPOS ============ -->
+    <section class="section section--soft" id="A-propos">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">À propos</span>
+          <h2>Une histoire de propriétaires, pour les propriétaires</h2>
+          <p>Nous avons créé le service que nous cherchions nous-mêmes.</p>
+        </div>
+
+        <div class="about">
+          <div class="about__texts">
+            <article class="about-card reveal">
+              <h3>Pourquoi <span data-brand>Clévo</span> ?</h3>
+              <p>[À personnaliser] Propriétaires nous-mêmes, nous avons vécu les annonces mal tenues, les ménages approximatifs et les voyageurs sans réponse. Nous avons donc bâti une conciergerie exigeante, proche du terrain et équipée des bons outils, pour offrir aux propriétaires la sérénité que nous aurions voulu trouver.</p>
+            </article>
+            <article class="about-card reveal">
+              <h3>Notre mission</h3>
+              <p>[À personnaliser] Rendre la location courte durée simple et rentable. De l'annonce au ménage, en passant par l'accueil et la maintenance, nous gérons chaque détail avec rigueur et transparence pour que votre bien soit toujours prêt, bien noté et bien rempli.</p>
+            </article>
+          </div>
+
+          <div class="founders">
+            <div class="flip reveal" tabindex="0">
+              <div class="flip__inner">
+                <div class="flip__front">
+                  <div class="avatar avatar--1">P1</div>
+                  <h4>Prénom Nom</h4>
+                  <p>Co-fondateur</p>
+                  <button class="flip__btn" aria-label="Voir le parcours">↻</button>
+                </div>
+                <div class="flip__back">
+                  <h4>Prénom · Co-fondateur</h4>
+                  <p>[À personnaliser] Quelques lignes sur votre parcours, vos expériences et ce que vous apportez aux propriétaires : rigueur, sens du service, connaissance du marché local…</p>
+                  <a href="#" class="flip__link" target="_blank" rel="noopener">LinkedIn</a>
+                  <button class="flip__btn" aria-label="Revenir">↻</button>
+                </div>
+              </div>
+            </div>
+            <div class="flip reveal reveal--delay" tabindex="0">
+              <div class="flip__inner">
+                <div class="flip__front">
+                  <div class="avatar avatar--2">P2</div>
+                  <h4>Prénom Nom</h4>
+                  <p>Co-fondateur</p>
+                  <button class="flip__btn" aria-label="Voir le parcours">↻</button>
+                </div>
+                <div class="flip__back">
+                  <h4>Prénom · Co-fondateur</h4>
+                  <p>[À personnaliser] Quelques lignes sur votre parcours, vos compétences (outils, automatisation, gestion de projet…) et votre vision du métier de conciergerie.</p>
+                  <a href="#" class="flip__link" target="_blank" rel="noopener">LinkedIn</a>
+                  <button class="flip__btn" aria-label="Revenir">↻</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OFFRE ============ -->
+    <section class="section" id="Notre-offre">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">Notre offre</span>
+          <h2>Une offre unique, tout compris</h2>
+          <p>Pas de formule à rallonge : un seul pourcentage, et nous ne gagnons que si vous gagnez.</p>
+        </div>
+
+        <div class="pricing reveal">
+          <div class="pricing__left">
+            <span class="pricing__tag">Offre Sérénité</span>
+            <div class="pricing__price"><span data-count="20">20</span><small>%</small></div>
+            <p class="pricing__sub">HT des revenus locatifs</p>
+            <p class="pricing__note">Sans engagement · Sans frais fixes · Sans frais de mise en route</p>
+            <a href="#Contact" class="btn btn--white btn--lg">Nous contacter</a>
+          </div>
+          <div class="pricing__right">
+            <p class="pricing__included">Inclus dans l'offre :</p>
+            <ul class="checklist">
+              <li>Shooting photo professionnel</li>
+              <li>Création et optimisation des annonces</li>
+              <li>Prix ajustés chaque jour</li>
+              <li>Gestion complète des réservations</li>
+              <li>Messages voyageurs 7j/7</li>
+              <li>Arrivées et départs autonomes</li>
+              <li>Ménage professionnel (refacturé aux voyageurs)</li>
+              <li>Linge de maison (refacturé aux voyageurs)</li>
+              <li>Rapport mensuel détaillé</li>
+              <li>Services complémentaires à la carte</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LOGEMENTS ============ -->
+    <section class="section section--soft" id="Nos-logements">
+      <div class="container">
+        <div class="section__head section__head--row reveal">
+          <div>
+            <span class="eyebrow">Nos logements</span>
+            <h2>Réservez vos vacances en direct</h2>
+            <p>Les logements que nous gérons, disponibles à la réservation sans intermédiaire.</p>
+          </div>
+          <div class="carousel-nav">
+            <button class="round-btn" data-carousel-prev="properties" aria-label="Précédent">←</button>
+            <button class="round-btn" data-carousel-next="properties" aria-label="Suivant">→</button>
+          </div>
+        </div>
+
+        <div class="carousel" id="properties">
+          <!-- Rempli par script.js à partir de la liste PROPERTIES -->
+        </div>
+
+        <div class="center">
+          <a href="#" class="btn btn--primary btn--lg" data-booking-site>Voir tous les logements</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ AVIS ============ -->
+    <section class="section" id="Avis">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">Nos avis clients</span>
+          <h2>Ils nous ont confié leur logement</h2>
+          <p>Des propriétaires qui ont délégué la gestion de leur location et ne reviendraient pas en arrière.</p>
+        </div>
+      </div>
+      <!-- ⚠️ AVIS D'EXEMPLE : remplacez-les par de vrais avis clients avant la mise en ligne (voir script.js → REVIEWS) -->
+      <div class="reviews">
+        <div class="reviews__row" id="reviews-row-1"></div>
+        <div class="reviews__row reviews__row--reverse" id="reviews-row-2"></div>
+      </div>
+    </section>
+
+    <!-- ============ CONTACT ============ -->
+    <section class="section section--soft" id="Contact">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">Contact</span>
+          <h2>Votre projet mérite le meilleur</h2>
+          <p>Un message suffit pour démarrer. On vous attend de l'autre côté !</p>
+        </div>
+
+        <div class="contact">
+          <div class="contact__info reveal">
+            <h3>Parlons-en</h3>
+            <p>Une question sur nos services ou sur la rentabilité de votre bien ? Nous vous répondons rapidement et sans engagement.</p>
+            <a class="contact-item" href="#" data-phone-link>
+              <span class="contact-item__icon">📞</span>
+              <div><small>Par téléphone</small><b data-phone>06 00 00 00 00</b></div>
+            </a>
+            <a class="contact-item" href="#" data-email-link>
+              <span class="contact-item__icon">✉️</span>
+              <div><small>Par e-mail</small><b data-email>contact@votre-domaine.fr</b></div>
+            </a>
+            <a class="contact-item" href="#" data-booking>
+              <span class="contact-item__icon">🎥</span>
+              <div><small>En visio</small><b>Prendre RDV en visio</b></div>
+            </a>
+          </div>
+
+          <div class="contact__form reveal reveal--delay">
+            <h3>Demande d'information</h3>
+            <form class="form" data-form="contact" novalidate>
+              <div class="form__grid">
+                <label class="field"><span>Prénom *</span><input name="prenom" required autocomplete="given-name"></label>
+                <label class="field"><span>Nom *</span><input name="nom" required autocomplete="family-name"></label>
+                <label class="field"><span>E-mail *</span><input type="email" name="email" required autocomplete="email"></label>
+                <label class="field"><span>Téléphone *</span><input type="tel" name="telephone" required autocomplete="tel"></label>
+                <label class="field field--full"><span>Ville du logement</span><input name="ville"></label>
+                <label class="field field--full"><span>Votre message *</span><textarea name="message" rows="4" required></textarea></label>
+              </div>
+              <label class="check"><input type="checkbox" name="rgpd" required> <span>J'accepte que mes données soient utilisées pour être recontacté(e).</span></label>
+              <button type="submit" class="btn btn--primary btn--lg btn--block">Envoyer ma demande</button>
+            </form>
+            <div class="form-state form-state--success" hidden>
+              <span class="form-state__icon">✓</span>
+              <h4>Merci !</h4>
+              <p>Votre demande est bien partie. On vous recontacte très vite.</p>
+            </div>
+            <div class="form-state form-state--error" hidden>
+              <p>Oups, l'envoi a échoué. Réessayez ou contactez-nous par téléphone.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section class="section" id="FAQ">
+      <div class="container faq">
+        <div class="faq__head reveal">
+          <span class="eyebrow">FAQ</span>
+          <h2>Questions fréquentes</h2>
+          <p>Services, tarifs, imprévus : les réponses aux questions qu'on nous pose le plus souvent.</p>
+          <a href="#Contact" class="btn btn--primary">Une autre question ?</a>
+        </div>
+        <div class="faq__list reveal reveal--delay">
+          <details class="faq-item" open>
+            <summary>Qu'est-ce qui est compris dans la conciergerie ?</summary>
+            <div class="faq-item__body"><p>Tout ce qui fait tourner une location : photos, annonces, prix dynamiques, réservations, messages voyageurs, arrivées et départs, ménage, linge et suivi de l'entretien. Des services complémentaires peuvent être ajoutés à la demande.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>Combien coûtent vos services ?</summary>
+            <div class="faq-item__body"><p>Une commission unique sur les revenus locatifs générés, sans frais fixes ni engagement. Le ménage et le linge sont refacturés aux voyageurs via les frais de ménage : ils ne vous coûtent rien.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>Que se passe-t-il en cas de souci avec un voyageur ?</summary>
+            <div class="faq-item__body"><p>Nous intervenons rapidement : assistance 7j/7, intervention sur place si besoin, gestion des litiges et des demandes de dédommagement auprès des plateformes. Vous êtes tenu informé à chaque étape.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>Puis-je profiter de mon logement quand je veux ?</summary>
+            <div class="faq-item__body"><p>Bien sûr. Il vous suffit de nous indiquer vos dates : nous bloquons le calendrier et préparons le logement pour votre arrivée.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>Comment suis-je payé ?</summary>
+            <div class="faq-item__body"><p>Les plateformes versent les loyers, nous déduisons notre commission et vous recevez un rapport mensuel détaillant chaque réservation et chaque euro.</p></div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <a href="#Accueil" class="logo logo--white"><span class="logo__mark">C</span><span class="logo__text" data-brand>Clévo</span></a>
+        <p>La conciergerie qui gère votre location courte durée comme si c'était la sienne.</p>
+      </div>
+      <div class="footer__col">
+        <h5>Navigation</h5>
+        <a href="#Nos-services">Services</a><a href="#A-propos">À propos</a><a href="#Notre-offre">Offre</a><a href="#Nos-logements">Logements</a><a href="#FAQ">FAQ</a>
+      </div>
+      <div class="footer__col">
+        <h5>Contact</h5>
+        <a href="#" data-phone-link data-phone>06 00 00 00 00</a>
+        <a href="#" data-email-link data-email>contact@votre-domaine.fr</a>
+        <a href="#" data-booking>Prendre rendez-vous</a>
+      </div>
+      <button class="to-top" id="toTop" aria-label="Revenir en haut">↑</button>
+    </div>
+    <div class="container footer__bottom">
+      <p>© <span id="year"></span> <span data-brand>Clévo</span>. Tous droits réservés.</p>
+      <p><a href="#">Mentions légales</a> · <a href="#">Politique de confidentialité</a> · <a href="#">CGV</a></p>
+    </div>
+  </footer>
+
+  <!-- ============ WHATSAPP ============ -->
+  <a class="whatsapp" href="#" data-whatsapp target="_blank" rel="noopener" aria-label="Nous écrire sur WhatsApp">
+    <svg viewBox="0 0 32 32" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M16 3C8.8 3 3 8.7 3 15.8c0 2.5.7 4.9 2 7L3 29l6.4-2c2 1.1 4.3 1.7 6.6 1.7 7.2 0 13-5.7 13-12.8S23.2 3 16 3zm0 23.4c-2.1 0-4.1-.6-5.9-1.7l-.4-.3-3.8 1.2 1.2-3.7-.3-.4a10.4 10.4 0 0 1-1.7-5.7C5.1 10 10 5.3 16 5.3S26.9 10 26.9 15.8 22 26.4 16 26.4zm6-7.8c-.3-.2-1.9-1-2.2-1-.3-.1-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.1 1.3 3.3c.2.2 2.3 3.5 5.6 4.9 2.8 1.1 3.3.9 3.9.8.6-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z"/></svg>
+  </a>
+
+  <!-- ============ POPUP ESTIMATION ============ -->
+  <div class="modal" id="estimateModal" role="dialog" aria-modal="true" aria-labelledby="estimateTitle" hidden>
+    <div class="modal__overlay" data-close-estimate></div>
+    <div class="modal__box">
+      <button class="modal__close" data-close-estimate aria-label="Fermer">✕</button>
+      <h2 id="estimateTitle">Estimer mes revenus !</h2>
+      <p class="modal__lead">Quelques infos sur votre logement et nous vous envoyons une estimation personnalisée, gratuitement.</p>
+      <form class="form" data-form="estimate" novalidate>
+        <div class="form__grid">
+          <label class="field field--full"><span>Adresse ou ville du logement *</span><input name="adresse" required></label>
+          <label class="field"><span>Type de bien *</span>
+            <select name="type" required>
+              <option value="">Choisir…</option><option>Studio</option><option>Appartement</option><option>Maison</option><option>Villa</option><option>Autre</option>
+            </select>
+          </label>
+          <label class="field"><span>Chambres *</span>
+            <select name="chambres" required>
+              <option value="">Choisir…</option><option>0 (studio)</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5 et +</option>
+            </select>
+          </label>
+          <label class="field"><span>Capacité (voyageurs)</span><input type="number" name="voyageurs" min="1" max="30"></label>
+          <label class="field"><span>Surface (m²)</span><input type="number" name="surface" min="5"></label>
+          <label class="field"><span>Prénom & nom *</span><input name="nom" required autocomplete="name"></label>
+          <label class="field"><span>Téléphone *</span><input type="tel" name="telephone" required autocomplete="tel"></label>
+          <label class="field field--full"><span>E-mail *</span><input type="email" name="email" required autocomplete="email"></label>
+        </div>
+        <button type="submit" class="btn btn--primary btn--lg btn--block">Recevoir mon estimation</button>
+      </form>
+      <div class="form-state form-state--success" hidden>
+        <span class="form-state__icon">✓</span>
+        <h4>Merci !</h4>
+        <p>Votre estimation arrive très prochainement.</p>
+      </div>
+      <div class="form-state form-state--error" hidden>
+        <p>Oups, une erreur est survenue… Réessayez dans un instant.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
