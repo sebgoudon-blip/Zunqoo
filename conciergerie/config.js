@@ -9,12 +9,12 @@ window.SITE_CONFIG = {
   // Initiales affichées dans le logo
   logoInitials: "DA",
 
-  // Coordonnées (numéro fictif en attendant les vrais)
-  phone: "06 00 00 00 00",
+  // Coordonnées
+  phone: "06 06 87 27 61",
   email: "contact@drome-ardeche.fr",
 
   // Numéro WhatsApp au format international, sans + ni espaces (ex : 33612345678)
-  whatsapp: "33600000000",
+  whatsapp: "33606872761",
 
   // Lien de prise de rendez-vous (Calendly, Lemcal, Google Agenda…)
   bookingUrl: "#Contact",
