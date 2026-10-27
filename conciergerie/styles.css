@@ -526,3 +526,22 @@ button { font: inherit; cursor: pointer; }
   .footer__inner { grid-template-columns: 1fr; }
   .hero__actions .btn { flex: 1 1 100%; }
 }
+
+/* ============ Pages légales ============ */
+.legal { padding: calc(var(--header-h) + 60px) 0 80px; background: var(--bg-soft); }
+.legal__inner { max-width: 860px; background: #fff; border: 1px solid var(--line); border-radius: 28px; padding: 56px; }
+.legal h1 { font-size: clamp(30px, 4vw, 44px); margin-top: 8px; }
+.legal h2 { font-size: 21px; margin: 40px 0 12px; }
+.legal p, .legal li { font-size: 16px; }
+.legal ul { padding-left: 20px; margin: 0 0 1em; }
+.legal li { margin-bottom: 6px; }
+.legal a { color: var(--primary); text-decoration: underline; }
+.legal__updated { color: var(--muted); font-size: 14px !important; }
+.legal__facts { list-style: none; padding: 20px 24px !important; background: var(--bg-soft); border-radius: 16px; }
+.legal-back { margin-left: auto; }
+.footer--legal { padding: 10px 0 30px; }
+@media (max-width: 640px) {
+  .legal__inner { padding: 32px 20px; border-radius: 20px; }
+  .legal-back { padding: 10px 14px; font-size: 14px; }
+  .legal-page .logo__text { display: none; }
+}
