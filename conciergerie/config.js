@@ -10,11 +10,11 @@ window.SITE_CONFIG = {
   logoInitials: "DAC",
 
   // Coordonnées
-  phone: "06 06 87 27 61",
+  phone: "07 44 43 82 22",
   email: "contact@drome-ardeche.fr",
 
   // Numéro WhatsApp au format international, sans + ni espaces (ex : 33612345678)
-  whatsapp: "33606872761",
+  whatsapp: "33744438222",
 
   // Lien de prise de rendez-vous (Calendly, Lemcal, Google Agenda…)
   bookingUrl: "#Contact",
