@@ -5,7 +5,7 @@
 // ============================================================
 $TO        = 'contact@drome-ardeche.fr';
 $FROM      = 'noreply@drome-ardeche.fr'; // doit être une adresse du domaine pour ne pas finir en spam
-$SITE_NAME = 'Drôme Ardèche';
+$SITE_NAME = 'DAC (Drôme Ardèche Conciergerie)';
 
 date_default_timezone_set('Europe/Paris');
 header('Content-Type: application/json; charset=utf-8');

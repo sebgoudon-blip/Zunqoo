@@ -4,10 +4,10 @@
 // ============================================================
 window.SITE_CONFIG = {
   // Nom de la conciergerie (remplacé partout sur le site)
-  brand: "Drôme Ardèche",
+  brand: "Drôme Ardèche Conciergerie",
 
   // Initiales affichées dans le logo
-  logoInitials: "DA",
+  logoInitials: "DAC",
 
   // Coordonnées
   phone: "06 06 87 27 61",
