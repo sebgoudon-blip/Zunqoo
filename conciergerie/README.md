@@ -1,4 +1,4 @@
-# Site vitrine — Conciergerie Airbnb
+# Site vitrine — Conciergerie Drôme Ardèche (drome-ardeche.fr)
 
 Site statique (HTML / CSS / JS, aucune dépendance). Ouvrez `index.html` dans
 un navigateur ou déposez le dossier sur n'importe quel hébergeur (Netlify,

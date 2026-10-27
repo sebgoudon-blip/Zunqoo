@@ -3,12 +3,15 @@
 //  Tout le site se met à jour automatiquement.
 // ============================================================
 window.SITE_CONFIG = {
-  // Nom de la conciergerie (remplace « Clévo » partout sur le site)
-  brand: "Clévo",
+  // Nom de la conciergerie (remplacé partout sur le site)
+  brand: "Drôme Ardèche",
+
+  // Initiales affichées dans le logo
+  logoInitials: "DA",
 
   // Coordonnées (numéro fictif en attendant les vrais)
   phone: "06 00 00 00 00",
-  email: "contact@votre-domaine.fr",
+  email: "contact@drome-ardeche.fr",
 
   // Numéro WhatsApp au format international, sans + ni espaces (ex : 33612345678)
   whatsapp: "33600000000",

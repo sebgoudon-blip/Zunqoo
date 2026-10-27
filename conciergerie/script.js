@@ -9,28 +9,28 @@
   // Sans photo, un visuel coloré est affiché à la place.
   // ------------------------------------------------------------
   var PROPERTIES = [
-    { title: "Villa familiale · Piscine chauffée", city: "Ville A", guests: 10, surface: 180, url: "", photos: [] },
-    { title: "Maison avec vue mer · Jacuzzi", city: "Ville B", guests: 8, surface: 120, url: "", photos: [] },
-    { title: "Studio cosy · Plage à 200 m", city: "Ville A", guests: 2, surface: 28, url: "", photos: [] },
-    { title: "Appartement standing · Terrasse", city: "Ville C", guests: 4, surface: 70, url: "", photos: [] },
-    { title: "T3 rénové · Parking · Centre", city: "Ville B", guests: 6, surface: 65, url: "", photos: [] },
-    { title: "T2 avec piscine · Calme", city: "Ville C", guests: 4, surface: 45, url: "", photos: [] },
-    { title: "Duplex lumineux · Hypercentre", city: "Ville A", guests: 5, surface: 60, url: "", photos: [] },
-    { title: "Maison de charme · Jardin", city: "Ville D", guests: 6, surface: 110, url: "", photos: [] }
+    { title: "Mas provençal · Piscine · Vue Lance", city: "Nyons", guests: 10, surface: 180, url: "", photos: [] },
+    { title: "Maison de pierre · Jacuzzi · Gorges à 5 min", city: "Vallon-Pont-d'Arc", guests: 8, surface: 120, url: "", photos: [] },
+    { title: "Studio cosy · Centre historique", city: "Montélimar", guests: 2, surface: 28, url: "", photos: [] },
+    { title: "Maison de village · Terrasse · Vue château", city: "Grignan", guests: 4, surface: 70, url: "", photos: [] },
+    { title: "Gîte au bord de l'Ardèche · Plage à pied", city: "Ruoms", guests: 6, surface: 65, url: "", photos: [] },
+    { title: "T2 avec piscine · Au calme", city: "Dieulefit", guests: 4, surface: 45, url: "", photos: [] },
+    { title: "Duplex lumineux · Proche Rhône", city: "Bourg-Saint-Andéol", guests: 5, surface: 60, url: "", photos: [] },
+    { title: "Maison de charme · Jardin · Cévennes", city: "Les Vans", guests: 6, surface: 110, url: "", photos: [] }
   ];
 
   // ------------------------------------------------------------
   // Avis : EXEMPLES À REMPLACER par de vrais avis avant mise en ligne.
   // ------------------------------------------------------------
   var REVIEWS = [
-    { name: "Prénom", role: "Propriétaire", city: "Ville", text: "Avis d'exemple : gestion sérieuse et réactive, je n'ai plus à m'occuper de rien." },
-    { name: "Prénom", role: "Investisseur", city: "Ville", text: "Avis d'exemple : mes réservations ont nettement augmenté dès les premiers mois." },
-    { name: "Prénom", role: "Cadre", city: "Ville", text: "Avis d'exemple : le rapport mensuel me permet de tout suivre à distance." },
-    { name: "Prénom", role: "Retraité", city: "Ville", text: "Avis d'exemple : ménage impeccable, voyageurs ravis, propriétaire serein." },
-    { name: "Prénom", role: "Chef d'entreprise", city: "Ville", text: "Avis d'exemple : une équipe disponible, flexible et vraiment efficace." },
-    { name: "Prénom", role: "Propriétaire", city: "Ville", text: "Avis d'exemple : mon logement est devenu un coup de cœur voyageurs." },
-    { name: "Prénom", role: "Infirmière", city: "Ville", text: "Avis d'exemple : tout est fluide, de l'arrivée des voyageurs au départ." },
-    { name: "Prénom", role: "Entrepreneur", city: "Ville", text: "Avis d'exemple : je gagne plus qu'avant, et sans y passer mes soirées." }
+    { name: "Prénom", role: "Propriétaire", city: "Drôme / Ardèche", text: "Avis d'exemple : gestion sérieuse et réactive, je n'ai plus à m'occuper de rien." },
+    { name: "Prénom", role: "Investisseur", city: "Drôme / Ardèche", text: "Avis d'exemple : mes réservations ont nettement augmenté dès les premiers mois." },
+    { name: "Prénom", role: "Cadre", city: "Drôme / Ardèche", text: "Avis d'exemple : le rapport mensuel me permet de tout suivre à distance." },
+    { name: "Prénom", role: "Retraité", city: "Drôme / Ardèche", text: "Avis d'exemple : ménage impeccable, voyageurs ravis, propriétaire serein." },
+    { name: "Prénom", role: "Chef d'entreprise", city: "Drôme / Ardèche", text: "Avis d'exemple : une équipe disponible, flexible et vraiment efficace." },
+    { name: "Prénom", role: "Propriétaire", city: "Drôme / Ardèche", text: "Avis d'exemple : mon logement est devenu un coup de cœur voyageurs." },
+    { name: "Prénom", role: "Infirmière", city: "Drôme / Ardèche", text: "Avis d'exemple : tout est fluide, de l'arrivée des voyageurs au départ." },
+    { name: "Prénom", role: "Entrepreneur", city: "Drôme / Ardèche", text: "Avis d'exemple : je gagne plus qu'avant, et sans y passer mes soirées." }
   ];
 
   var $ = function (sel, ctx) { return (ctx || document).querySelector(sel); };
@@ -41,8 +41,7 @@
   function applyConfig() {
     if (CONFIG.brand) {
       $$("[data-brand]").forEach(function (el) { el.textContent = CONFIG.brand; });
-      document.title = document.title.replace("Clévo", CONFIG.brand);
-      $$(".logo__mark").forEach(function (el) { el.textContent = CONFIG.brand.charAt(0).toUpperCase(); });
+      $$(".logo__mark").forEach(function (el) { el.textContent = CONFIG.logoInitials || CONFIG.brand.charAt(0).toUpperCase(); });
     }
     if (CONFIG.phone) $$("[data-phone]").forEach(function (el) { el.textContent = CONFIG.phone; });
     if (CONFIG.email) $$("[data-email]").forEach(function (el) { el.textContent = CONFIG.email; });
