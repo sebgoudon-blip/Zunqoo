@@ -30,3 +30,4 @@ web-build/
 # Editors
 .vscode/
 .idea/
+conciergerie/*.zip
