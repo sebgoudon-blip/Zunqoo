@@ -4,33 +4,46 @@
   var CONFIG = window.SITE_CONFIG || {};
 
   // ------------------------------------------------------------
-  // Données : logements (remplacez par vos biens et vos photos).
-  // "photos" accepte des chemins d'images (ex : "images/villa-1.jpg").
-  // Sans photo, un visuel coloré est affiché à la place.
+  // Biens présentés (photos libres de droit Pexels, usage commercial
+  // autorisé sans attribution). Ce sont des exemples de TYPES de biens
+  // du secteur : remplacez-les par vos vrais logements dès que possible.
+  // "photos" accepte aussi des chemins locaux (ex : "images/mas-1.jpg").
   // ------------------------------------------------------------
+  function px(id) {
+    return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg?auto=compress&cs=tinysrgb&w=900";
+  }
   var PROPERTIES = [
-    { title: "Mas provençal · Piscine · Vue Lance", city: "Nyons", guests: 10, surface: 180, url: "", photos: [] },
-    { title: "Maison de pierre · Jacuzzi · Gorges à 5 min", city: "Vallon-Pont-d'Arc", guests: 8, surface: 120, url: "", photos: [] },
-    { title: "Studio cosy · Centre historique", city: "Montélimar", guests: 2, surface: 28, url: "", photos: [] },
-    { title: "Maison de village · Terrasse · Vue château", city: "Grignan", guests: 4, surface: 70, url: "", photos: [] },
-    { title: "Gîte au bord de l'Ardèche · Plage à pied", city: "Ruoms", guests: 6, surface: 65, url: "", photos: [] },
-    { title: "T2 avec piscine · Au calme", city: "Dieulefit", guests: 4, surface: 45, url: "", photos: [] },
-    { title: "Duplex lumineux · Proche Rhône", city: "Bourg-Saint-Andéol", guests: 5, surface: 60, url: "", photos: [] },
-    { title: "Maison de charme · Jardin · Cévennes", city: "Les Vans", guests: 6, surface: 110, url: "", photos: [] }
+    { title: "Mas en pierre avec piscine", city: "Drôme provençale", tags: ["Piscine", "Grand jardin"],
+      photos: [px(37369019), px(28963493), px(34191306), px(31687845)] },
+    { title: "Maison au milieu des lavandes", city: "Nyonsais & Tricastin", tags: ["Vue", "Calme absolu"],
+      photos: [px(29837829), px(38499116), px(25921106), px(15456211)] },
+    { title: "Gîte à deux pas des gorges", city: "Vallon-Pont-d'Arc", tags: ["Canoë", "Randonnée"],
+      photos: [px(40308208), px(18598432), px(27872046), px(31492015)] },
+    { title: "Maison de village provençale", city: "Grignan", tags: ["Centre historique", "Terrasse"],
+      photos: [px(29837842), px(39614879), px(39524125), px(37334305)] },
+    { title: "Villa contemporaine avec piscine", city: "Montélimar", tags: ["Piscine", "Familles"],
+      photos: [px(26859026), px(20297248), px(18786201), px(40080688)] },
+    { title: "Maison fleurie avec jardin", city: "Dieulefit", tags: ["Jardin", "Charme"],
+      photos: [px(29942642), px(29942641), px(16959786), px(15692775)] },
+    { title: "Gîte au bord de l'Ardèche", city: "Ruoms & alentours", tags: ["Rivière", "Nature"],
+      photos: [px(31492016), px(16093350), px(30070551), px(24205634)] },
+    { title: "Maison de caractère avec vue", city: "Les Vans & Cévennes", tags: ["Vue", "Piscine"],
+      photos: [px(28586234), px(35069531), px(19346195), px(15501684)] }
   ];
 
   // ------------------------------------------------------------
-  // Avis : EXEMPLES À REMPLACER par de vrais avis avant mise en ligne.
+  // Avis clients — TEXTES PROVISOIRES, à remplacer par de vrais avis.
+  // Ils ne s'affichent que si showReviews vaut true dans config.js.
   // ------------------------------------------------------------
   var REVIEWS = [
-    { name: "Prénom", role: "Propriétaire", city: "Drôme / Ardèche", text: "Avis d'exemple : gestion sérieuse et réactive, je n'ai plus à m'occuper de rien." },
-    { name: "Prénom", role: "Investisseur", city: "Drôme / Ardèche", text: "Avis d'exemple : mes réservations ont nettement augmenté dès les premiers mois." },
-    { name: "Prénom", role: "Cadre", city: "Drôme / Ardèche", text: "Avis d'exemple : le rapport mensuel me permet de tout suivre à distance." },
-    { name: "Prénom", role: "Retraité", city: "Drôme / Ardèche", text: "Avis d'exemple : ménage impeccable, voyageurs ravis, propriétaire serein." },
-    { name: "Prénom", role: "Chef d'entreprise", city: "Drôme / Ardèche", text: "Avis d'exemple : une équipe disponible, flexible et vraiment efficace." },
-    { name: "Prénom", role: "Propriétaire", city: "Drôme / Ardèche", text: "Avis d'exemple : mon logement est devenu un coup de cœur voyageurs." },
-    { name: "Prénom", role: "Infirmière", city: "Drôme / Ardèche", text: "Avis d'exemple : tout est fluide, de l'arrivée des voyageurs au départ." },
-    { name: "Prénom", role: "Entrepreneur", city: "Drôme / Ardèche", text: "Avis d'exemple : je gagne plus qu'avant, et sans y passer mes soirées." }
+    { name: "Catherine", role: "Propriétaire d'un mas", city: "Nyons", text: "Une équipe aux petits soins, pour mon logement comme pour mes voyageurs. Je ne m'occupe plus de rien et mes revenus ont augmenté." },
+    { name: "Laurent", role: "Investisseur", city: "Montélimar", text: "Très réactifs et toujours de bon conseil. Le rapport mensuel est clair, je sais exactement où j'en suis." },
+    { name: "Nathalie", role: "Propriétaire", city: "Grignan", text: "Ma maison de village n'a jamais été aussi bien notée. Les voyageurs parlent tous de l'accueil !" },
+    { name: "Philippe", role: "Retraité", city: "Vallon-Pont-d'Arc", text: "J'habite loin de mon gîte et c'était un vrai casse-tête. Aujourd'hui tout roule, en toute confiance." },
+    { name: "Sophie", role: "Cadre", city: "Dieulefit", text: "Ménage impeccable, linge parfait, réponses rapides aux voyageurs : exactement ce que j'attendais d'une conciergerie." },
+    { name: "Julien", role: "Chef d'entreprise", city: "Ruoms", text: "Des prix ajustés au bon moment : mon calendrier d'été était plein bien plus tôt que d'habitude." },
+    { name: "Isabelle", role: "Propriétaire", city: "Les Vans", text: "Sébastien et Alexandra sont des propriétaires comme nous, et ça se sent. Humains, sérieux et disponibles." },
+    { name: "Marc", role: "Investisseur", city: "Bourg-Saint-Andéol", text: "Mise en place rapide, belles photos, annonce optimisée : les réservations sont arrivées dès la première semaine." }
   ];
 
   var $ = function (sel, ctx) { return (ctx || document).querySelector(sel); };
@@ -211,7 +224,7 @@
 
   function slideHtml(p, i, k) {
     if (p.photos && p.photos.length) {
-      return '<div class="pslide"><img src="' + escapeHtml(p.photos[k]) + '" alt="' + escapeHtml(p.title) + '" loading="lazy"></div>';
+      return '<div class="pslide"><img src="' + escapeHtml(p.photos[k]) + '" alt="' + escapeHtml(p.title + " · " + p.city) + '" loading="lazy" decoding="async"></div>';
     }
     var g = GRADIENTS[(i + k) % GRADIENTS.length];
     return '<div class="pslide pslide--placeholder" style="background:linear-gradient(135deg,' + g[0] + "," + g[1] + ')"><span>' + SCENES[(i + k) % SCENES.length] + "</span></div>";
@@ -226,8 +239,6 @@
         slides += slideHtml(p, i, k);
         dots += '<button class="pdot' + (k === 0 ? " is-active" : "") + '" aria-label="Photo ' + (k + 1) + '"></button>';
       }
-      var url = p.url || CONFIG.bookingSiteUrl || "#";
-      var external = /^https?:/.test(url);
       return (
         '<article class="property">' +
           '<div class="property__media">' +
@@ -238,9 +249,9 @@
             '<span class="property__city">📍 ' + escapeHtml(p.city) + "</span>" +
           "</div>" +
           '<div class="property__body">' +
-            '<div class="property__meta"><span>👥 ' + p.guests + " voyageurs</span><span>📐 " + p.surface + " m²</span></div>" +
+            '<div class="property__meta">' + (p.tags || []).map(function (t) { return "<span>" + escapeHtml(t) + "</span>"; }).join("") + "</div>" +
             "<h3>" + escapeHtml(p.title) + "</h3>" +
-            '<a class="btn btn--primary btn--block" href="' + escapeHtml(url) + '"' + (external ? ' target="_blank" rel="noopener"' : "") + ">Réserver</a>" +
+            '<button class="btn btn--primary btn--block" data-open-estimate>Estimer un bien similaire</button>' +
           "</div>" +
         "</article>"
       );
@@ -285,6 +296,10 @@
 
   // ---------- Avis : défilement infini sur deux lignes ----------
   function renderReviews() {
+    var show = CONFIG.showReviews === true;
+    $("#Avis").hidden = !show;
+    $("#Engagements").hidden = show;
+    if (!show) return;
     function card(r, i) {
       return (
         '<figure class="review">' +

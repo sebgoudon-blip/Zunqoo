@@ -22,6 +22,10 @@ window.SITE_CONFIG = {
   // Lien vers votre site de réservation directe (Superhote, Lodgify, Hostaway…)
   bookingSiteUrl: "#Nos-logements",
 
+  // Afficher la section « Avis clients » (true) ou « Nos engagements » (false).
+  // Ne passez à true qu'avec de vrais avis de vrais clients.
+  showReviews: false,
+
   // Script d'envoi des formulaires (send.php envoie les demandes par e-mail ;
   // l'adresse de réception se règle en haut de send.php).
   // Laissez vide pour simuler l'envoi (affiche « Merci ! » sans rien envoyer).

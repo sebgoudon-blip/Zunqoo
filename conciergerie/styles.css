@@ -322,7 +322,7 @@ button { font: inherit; cursor: pointer; }
 .property__media { position: relative; height: 240px; overflow: hidden; }
 .property__slides { display: flex; height: 100%; transition: transform .45s cubic-bezier(.2, .8, .2, 1); }
 .pslide { flex: 0 0 100%; height: 100%; }
-.pslide img { width: 100%; height: 100%; object-fit: cover; }
+.pslide img { width: 100%; height: 100%; object-fit: cover; color: transparent; }
 .pslide--placeholder { display: grid; place-items: center; font-size: 64px; }
 .pnav {
   position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; border: 0;
@@ -335,7 +335,17 @@ button { font: inherit; cursor: pointer; }
 .pdot.is-active { width: 20px; background: #fff; }
 .property__city { position: absolute; top: 12px; left: 12px; background: rgba(15, 23, 51, .65); color: #fff; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; backdrop-filter: blur(4px); }
 .property__body { padding: 20px; }
-.property__meta { display: flex; gap: 16px; font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+.property__meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.property__meta span { font-size: 12px; font-weight: 700; color: var(--primary); background: var(--primary-soft); padding: 4px 10px; border-radius: 999px; }
+.pslide { background: linear-gradient(135deg, #e9e3fb, #fbead1); }
+
+/* ============ Engagements ============ */
+.pledges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.pledge { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; transition: transform .3s, box-shadow .3s; }
+.pledge:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+.pledge__icon { width: 52px; height: 52px; border-radius: 16px; background: var(--primary-soft); display: grid; place-items: center; font-size: 24px; margin-bottom: 18px; }
+.pledge h3 { font-size: 18px; }
+.pledge p { margin: 0; font-size: 15px; }
 .property h3 { font-size: 18px; min-height: 2.4em; margin-bottom: 18px; }
 
 /* ============ Avis ============ */
@@ -454,6 +464,7 @@ button { font: inherit; cursor: pointer; }
   .nav { gap: 20px; }
   .header__cta { display: none; }
   .carousel { grid-auto-columns: calc((100% - 24px) / 2); }
+  .pledges { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 920px) {
@@ -510,6 +521,7 @@ button { font: inherit; cursor: pointer; }
   .pricing__price { font-size: 76px; }
   .form__grid { grid-template-columns: 1fr; }
   .review { width: 290px; }
+  .pledges { grid-template-columns: 1fr; }
   .footer__inner { grid-template-columns: 1fr; }
   .hero__actions .btn { flex: 1 1 100%; }
 }

@@ -9,14 +9,20 @@ Vercel, OVH, Firebase Hosting…).
 | Quoi | Où |
 |---|---|
 | Nom, téléphone, e-mail, WhatsApp, lien de RDV, envoi des formulaires | `config.js` |
-| Logements (titre, ville, voyageurs, m², photos, lien de réservation) | `script.js` → `PROPERTIES` |
-| Avis clients | `script.js` → `REVIEWS` |
+| Biens présentés (titre, secteur, étiquettes, photos) | `script.js` → `PROPERTIES` |
+| Avis clients (textes provisoires) | `script.js` → `REVIEWS`, affichés seulement si `showReviews: true` dans `config.js` |
 | Couleurs | `styles.css` → variables `:root` (`--primary`, `--accent`…) |
 | Textes « À propos », fondateurs, FAQ, offre | `index.html` (les passages `[À personnaliser]`) |
 | Photos | dossier `images/`, puis référencez-les dans `PROPERTIES` |
 
-⚠️ Les avis fournis sont des **exemples** : remplacez-les par de vrais avis
-avant la mise en ligne.
+⚠️ Les avis de `REVIEWS` sont des **textes provisoires** : tant que
+`showReviews` vaut `false`, le site affiche la section « Nos engagements » à
+la place. Ne l'activez qu'avec de vrais avis de vrais clients.
+
+📷 Les photos des biens viennent de [Pexels](https://www.pexels.com/fr-fr/licence/)
+(usage commercial gratuit, sans attribution). Ce sont des illustrations de
+types de biens du secteur : remplacez-les par vos vrais logements dès que
+possible.
 
 ## Formulaires
 

@@ -56,9 +56,9 @@
             <a href="#" class="btn btn--ghost btn--lg" data-booking>Prendre un rendez-vous</a>
           </div>
           <ul class="hero__stats">
-            <li><strong data-count="98" data-suffix="%">98%</strong><span>taux de satisfaction</span></li>
-            <li><strong data-count="5" data-prefix="&lt;" data-suffix=" min">&lt;5 min</strong><span>temps de réponse</span></li>
-            <li><strong data-count="30" data-prefix="+" data-suffix="%">+30%</strong><span>de revenus en moyenne</span></li>
+            <li><strong data-count="7" data-suffix="j/7">7j/7</strong><span>à votre écoute</span></li>
+            <li><strong data-count="15" data-prefix="&lt;" data-suffix=" min">&lt;15 min</strong><span>pour répondre aux voyageurs</span></li>
+            <li><strong data-count="0" data-suffix=" €">0 €</strong><span>de frais fixes</span></li>
           </ul>
         </div>
 
@@ -348,9 +348,9 @@
       <div class="container">
         <div class="section__head section__head--row reveal">
           <div>
-            <span class="eyebrow">Nos logements</span>
-            <h2>Réservez vos vacances en direct</h2>
-            <p>Mas, maisons de village et appartements en Drôme provençale et en sud Ardèche, à réserver sans intermédiaire.</p>
+            <span class="eyebrow">Les biens que nous gérons</span>
+            <h2>Mas, maisons de village, gîtes… on s'occupe de tout</h2>
+            <p>Du mas en pierre au milieu des lavandes au gîte à deux pas des gorges : chaque bien du sud Drôme et du sud Ardèche mérite une gestion sur mesure.</p>
           </div>
           <div class="carousel-nav">
             <button class="round-btn" data-carousel-prev="properties" aria-label="Précédent">←</button>
@@ -363,13 +363,13 @@
         </div>
 
         <div class="center">
-          <a href="#" class="btn btn--primary btn--lg" data-booking-site>Voir tous les logements</a>
+          <button class="btn btn--primary btn--lg" data-open-estimate>Estimer les revenus de mon bien</button>
         </div>
       </div>
     </section>
 
     <!-- ============ AVIS ============ -->
-    <section class="section" id="Avis">
+    <section class="section" id="Avis" hidden>
       <div class="container">
         <div class="section__head reveal">
           <span class="eyebrow">Nos avis clients</span>
@@ -377,10 +377,28 @@
           <p>Des propriétaires qui ont délégué la gestion de leur location et ne reviendraient pas en arrière.</p>
         </div>
       </div>
-      <!-- ⚠️ AVIS D'EXEMPLE : remplacez-les par de vrais avis clients avant la mise en ligne (voir script.js → REVIEWS) -->
+      <!-- Avis provisoires : affichés seulement si showReviews = true dans config.js (voir script.js → REVIEWS) -->
       <div class="reviews">
         <div class="reviews__row" id="reviews-row-1"></div>
         <div class="reviews__row reviews__row--reverse" id="reviews-row-2"></div>
+      </div>
+    </section>
+
+
+    <!-- ============ ENGAGEMENTS (affichés tant que les avis sont masqués) ============ -->
+    <section class="section" id="Engagements">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="eyebrow">Nos engagements</span>
+          <h2>Ce que nous vous promettons, noir sur blanc</h2>
+          <p>Ce que nous attendions des conciergeries… et que nous appliquons aujourd'hui à votre logement.</p>
+        </div>
+        <div class="pledges">
+          <article class="pledge reveal"><span class="pledge__icon">⚡</span><h3>Réponse en moins de 15 min</h3><p>Aux voyageurs comme à vous, 7 jours sur 7. Personne ne reste sans réponse.</p></article>
+          <article class="pledge reveal reveal--delay"><span class="pledge__icon">✨</span><h3>Un logement impeccable</h3><p>Ménage aux standards hôteliers et contrôle après chaque séjour, photos à l'appui.</p></article>
+          <article class="pledge reveal"><span class="pledge__icon">📊</span><h3>Des comptes transparents</h3><p>Un rapport mensuel clair : réservations, revenus, dépenses. Aucune surprise.</p></article>
+          <article class="pledge reveal reveal--delay"><span class="pledge__icon">🤝</span><h3>Sans engagement</h3><p>Pas satisfait ? Vous arrêtez quand vous voulez. C'est à nous de mériter votre confiance.</p></article>
+        </div>
       </div>
     </section>
 
