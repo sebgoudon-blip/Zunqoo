@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /send.php
+
+Sitemap: https://www.drome-ardeche.fr/sitemap.xml

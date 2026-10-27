@@ -1,4 +1,6 @@
 # Redirige tout vers https://www.drome-ardeche.fr (activez d'abord le SSL dans l'espace client LWS)
+ErrorDocument 404 /404.html
+
 RewriteEngine On
 RewriteCond %{HTTPS} off [OR]
 RewriteCond %{HTTP_HOST} !^www\. [NC]
