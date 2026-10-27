@@ -21,3 +21,13 @@ RewriteRule ^(.*)$ https://www.drome-ardeche.fr/$1 [R=301,L]
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
 </IfModule>
+
+# config.js n'est jamais mis en cache : vos réglages s'appliquent immédiatement
+<FilesMatch "^config\.js$">
+  <IfModule mod_expires.c>
+    ExpiresActive Off
+  </IfModule>
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, must-revalidate"
+  </IfModule>
+</FilesMatch>
