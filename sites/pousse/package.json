@@ -1,0 +1,16 @@
+{
+  "name": "pousse",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Pousse : trouver les entreprises sans site web et préparer leur site.",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env dev-server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
