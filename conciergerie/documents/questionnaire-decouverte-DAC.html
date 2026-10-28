@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Questionnaire découverte propriétaire – DAC</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+  :root { --violet: #5238b8; --violet2: #6a4fd6; --ocre: #e8a33d; --ink: #141a33; --text: #3c4463; --muted: #8a92ad; --line: #d9dceb; --soft: #f5f3fd; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Inter", "DejaVu Sans", sans-serif; color: var(--text); font-size: 9.6pt; line-height: 1.45; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h1, h2, h3 { color: var(--ink); margin: 0; }
+
+  /* ----- Couverture / en-tête ----- */
+  .masthead { display: flex; align-items: center; justify-content: space-between; padding-bottom: 5mm; border-bottom: 2.2pt solid var(--violet2); }
+  .brand { display: flex; align-items: center; gap: 4mm; }
+  .mark { width: 15mm; height: 15mm; border-radius: 3.5mm; background: linear-gradient(135deg, #5238b8 0%, #6a4fd6 55%, #e8a33d 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13pt; letter-spacing: -.03em; }
+  .brand-name { font-weight: 800; font-size: 15pt; color: var(--ink); line-height: 1.05; letter-spacing: -.01em; }
+  .brand-sub { font-size: 7pt; font-weight: 700; letter-spacing: .32em; color: var(--violet2); text-transform: uppercase; margin-top: 1.2mm; }
+  .doc-tag { text-align: right; }
+  .doc-tag .kicker { font-size: 7pt; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--ocre); }
+  .doc-tag .title { font-size: 13pt; font-weight: 800; color: var(--ink); margin-top: 1mm; }
+  .doc-tag .ref { font-size: 8pt; color: var(--muted); margin-top: 1mm; }
+
+  .meta { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 4mm; margin: 5mm 0 4mm; }
+  .meta div { border: 0.8pt solid var(--line); border-radius: 2mm; padding: 2mm 3mm; height: 13mm; }
+  .meta span { display: block; font-size: 6.8pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+  .intro { background: var(--soft); border-left: 2.2pt solid var(--violet2); border-radius: 0 2mm 2mm 0; padding: 3.5mm 4.5mm; margin-bottom: 5mm; }
+  .intro p { margin: 0 0 1.5mm; }
+  .intro ol { margin: 1.5mm 0 0; padding-left: 5mm; }
+  .intro li { margin-bottom: .8mm; }
+
+  /* ----- Sections ----- */
+  section { margin-top: 6mm; }
+  .sec-head { display: flex; align-items: center; gap: 3mm; margin-bottom: 2.5mm; break-after: avoid; }
+  .num { width: 7.5mm; height: 7.5mm; border-radius: 50%; background: var(--violet2); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 9pt; flex: none; }
+  .sec-head h2 { font-size: 12.5pt; letter-spacing: -.01em; }
+  .sec-head .hint { margin-left: auto; font-size: 7.5pt; color: var(--muted); font-style: italic; }
+  .lead { margin: 0 0 2.5mm; color: var(--text); }
+  h3 { font-size: 9.6pt; margin: 4mm 0 1.8mm; color: var(--violet); text-transform: uppercase; letter-spacing: .08em; font-size: 7.8pt; break-after: avoid; }
+
+  /* Tableaux formulaires */
+  table { width: 100%; border-collapse: collapse; break-inside: auto; }
+  tr { break-inside: avoid; }
+  th { text-align: left; font-size: 7pt; letter-spacing: .1em; text-transform: uppercase; color: #fff; background: var(--ink); padding: 1.8mm 2.5mm; font-weight: 700; }
+  td { border-bottom: 0.7pt solid var(--line); padding: 1.6mm 2.5mm; vertical-align: top; height: 9.5mm; }
+  td.q { width: 46%; color: var(--ink); font-weight: 500; }
+  tr:nth-child(even) td.q { background: #fafaff; }
+  table.form td + td { border-left: 0.7pt dotted var(--line); }
+  table.tight td { height: 8mm; }
+  td.c { text-align: center; width: 12mm; }
+  .box { display: inline-block; width: 3.4mm; height: 3.4mm; border: 0.9pt solid var(--violet2); border-radius: .7mm; vertical-align: -0.6mm; }
+
+  /* Cases à cocher */
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6mm 6mm; margin: 0; padding: 0; list-style: none; }
+  .checks.one { grid-template-columns: 1fr; }
+  .checks li { display: flex; gap: 2.2mm; align-items: flex-start; }
+  .checks li .box { flex: none; margin-top: .4mm; }
+  .fill { display: inline-block; border-bottom: 0.7pt solid var(--muted); min-width: 22mm; }
+
+  /* Questions ouvertes */
+  .open { counter-reset: q; margin: 0; padding: 0; list-style: none; }
+  .open li { counter-increment: q; margin-bottom: 1.5mm; break-inside: avoid; }
+  .open li::before { content: counter(q); display: inline-flex; align-items: center; justify-content: center; width: 4.8mm; height: 4.8mm; border-radius: 50%; background: var(--soft); color: var(--violet2); font-weight: 800; font-size: 7.5pt; margin-right: 2mm; }
+  .open li b { color: var(--ink); font-weight: 600; }
+  .lines { margin: 1mm 0 0 6.8mm; }
+  .lines i { display: block; height: 5.6mm; border-bottom: 0.6pt solid var(--line); }
+
+  .notes { border: 0.8pt solid var(--line); border-radius: 2mm; padding: 2mm 3mm; margin-top: 3mm; }
+  .notes span { font-size: 6.8pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .notes i { display: block; height: 6.5mm; border-bottom: 0.6pt solid var(--line); }
+  .notes i:last-child { border-bottom: 0; }
+
+  .rank td.r { width: 18mm; text-align: center; }
+  .rank td.r span { display: inline-block; width: 8mm; height: 5.5mm; border: 0.9pt solid var(--violet2); border-radius: 1.5mm; }
+
+  .profiles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2mm; }
+  .profile { border: 0.8pt solid var(--line); border-radius: 2mm; padding: 2mm 2.5mm; display: flex; gap: 2.2mm; break-inside: avoid; }
+  .profile b { color: var(--ink); display: block; font-size: 9pt; }
+  .profile small { color: var(--muted); font-size: 7.6pt; line-height: 1.35; display: block; }
+
+  .callout { background: #fff8ec; border: 0.8pt solid #f3d9a8; border-radius: 2mm; padding: 2.5mm 3.5mm; margin-bottom: 3mm; font-size: 8.6pt; }
+  .page-break { break-before: page; }
+  .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 6mm; }
+  .sign div { border-top: 0.8pt solid var(--ink); padding-top: 1.5mm; font-size: 7.5pt; color: var(--muted); }
+  .avoid { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <div class="mark">DAC</div>
+    <div>
+      <div class="brand-name">Drôme Ardèche</div>
+      <div class="brand-sub">Conciergerie</div>
+    </div>
+  </div>
+  <div class="doc-tag">
+    <div class="kicker">Premier rendez-vous</div>
+    <div class="title">Questionnaire découverte propriétaire</div>
+    <div class="ref">Document interne · Confidentiel</div>
+  </div>
+</header>
+
+<div class="meta">
+  <div><span>Propriétaire</span></div>
+  <div><span>Date du rendez-vous</span></div>
+  <div><span>Mené par</span></div>
+</div>
+
+<div class="intro">
+  <p><b>Objectif :</b> comprendre le bien, mais surtout ce que le propriétaire attend vraiment : gagner plus, gagner du temps, ne plus gérer le ménage, ou être rassuré. Durée : 45 min à 1 h 15, visite comprise.</p>
+  <ol>
+    <li><b>Accueil (5 min)</b> : présenter DAC en deux phrases, puis le laisser parler de son logement.</li>
+    <li><b>Questions (20 à 30 min)</b> : sections 1 à 6, dans l'ordre ou au fil de la conversation. Cocher ce qui est couvert.</li>
+    <li><b>Visite (15 à 20 min)</b> : grille de la section 7, en marchant, photos à l'appui.</li>
+    <li><b>Conclusion (10 min)</b> : reformuler ses priorités, annoncer l'estimation et la date de retour (section 8).</li>
+  </ol>
+</div>
+
+<!-- 1 -->
+<section>
+  <div class="sec-head"><div class="num">1</div><h2>Le propriétaire</h2></div>
+  <table class="form">
+    <tr><th>Question</th><th>Réponse</th></tr>
+    <tr><td class="q">Nom et prénom</td><td></td></tr>
+    <tr><td class="q">Téléphone et e-mail</td><td></td></tr>
+    <tr><td class="q">Moyen de contact préféré (appel, SMS, WhatsApp, e-mail)</td><td></td></tr>
+    <tr><td class="q">Lieu de résidence et distance jusqu'au logement</td><td></td></tr>
+    <tr><td class="q">Statut (particulier, SCI, société) et nombre de propriétaires</td><td></td></tr>
+    <tr><td class="q">Profession, disponibilité au quotidien</td><td></td></tr>
+    <tr><td class="q">Autres biens possédés ou en projet</td><td></td></tr>
+    <tr><td class="q">Comment nous a-t-il connus ? (Google, Instagram, bouche-à-oreille, site…)</td><td></td></tr>
+  </table>
+  <h3>Expérience de la location courte durée</h3>
+  <ul class="checks one">
+    <li><span class="box"></span>Jamais loué : projet de mise en location</li>
+    <li><span class="box"></span>Loue lui-même actuellement</li>
+    <li><span class="box"></span>Déjà en conciergerie : <span class="fill" style="min-width:30mm"></span> depuis <span class="fill"></span></li>
+    <li><span class="box"></span>A loué puis arrêté. Pourquoi ? <span class="fill" style="min-width:28mm"></span></li>
+  </ul>
+</section>
+
+<!-- 2 -->
+<section class="page-break">
+  <div class="sec-head"><div class="num">2</div><h2>Motivations et attentes</h2><span class="hint">Section clé : elle décide de l'offre</span></div>
+  <p class="lead">Le laisser répondre librement avant de proposer des choix. Noter ses mots exacts : ils serviront dans la proposition.</p>
+  <ol class="open">
+    <li><b>Pourquoi faites-vous appel à une conciergerie aujourd'hui ? Qu'est-ce qui a déclenché votre démarche ?</b><div class="lines"><i></i><i></i></div></li>
+    <li><b>Qu'est-ce qui vous pèse le plus dans la gestion actuelle (ou que vous redoutez si vous débutez) ?</b><div class="lines"><i></i></div></li>
+    <li><b>À quoi ressemblerait une location « réussie » pour vous dans un an ?</b><div class="lines"><i></i></div></li>
+    <li><b>Avez-vous un objectif de revenus (par mois ou par an) ? Un minimum en dessous duquel ce n'est pas intéressant ?</b><div class="lines"><i></i></div></li>
+    <li><b>Combien de temps y consacrez-vous par semaine aujourd'hui ? Et demain ?</b><div class="lines"><i></i></div></li>
+    <li><b>Si vous avez déjà eu une conciergerie : qu'est-ce qui n'allait pas ? Qu'attendez-vous de différent ?</b><div class="lines"><i></i></div></li>
+    <li><b>Qu'est-ce qui vous ferait arrêter de travailler avec nous ?</b><div class="lines"><i></i></div></li>
+  </ol>
+
+  <h3>Ses priorités : à classer de 1 (le plus important) à 6</h3>
+  <table class="form rank tight">
+    <tr><th>Priorité</th><th style="text-align:center">Rang</th><th>Ce qu'il en dit</th></tr>
+    <tr><td class="q">Gagner plus d'argent</td><td class="r"><span></span></td><td></td></tr>
+    <tr><td class="q">Gagner du temps, ne plus s'en occuper</td><td class="r"><span></span></td><td></td></tr>
+    <tr><td class="q">Ne plus gérer le ménage et le linge</td><td class="r"><span></span></td><td></td></tr>
+    <tr><td class="q">Ne plus gérer les voyageurs (messages, arrivées, problèmes)</td><td class="r"><span></span></td><td></td></tr>
+    <tr><td class="q">Être rassuré sur l'état du logement</td><td class="r"><span></span></td><td></td></tr>
+    <tr><td class="q">Pouvoir profiter du logement quand il le souhaite</td><td class="r"><span></span></td><td></td></tr>
+  </table>
+
+  <h3>Profil déduit (à cocher après l'échange)</h3>
+  <div class="profiles">
+    <div class="profile"><span class="box"></span><div><b>Investisseur</b><small>Priorité au rendement, sensible aux chiffres et au rapport mensuel</small></div></div>
+    <div class="profile"><span class="box"></span><div><b>Propriétaire débordé</b><small>Manque de temps, veut déléguer entièrement</small></div></div>
+    <div class="profile"><span class="box"></span><div><b>Attaché à son bien</b><small>Priorité à l'entretien et à la qualité des voyageurs</small></div></div>
+    <div class="profile"><span class="box"></span><div><b>Débutant</b><small>Besoin d'être accompagné et rassuré sur les démarches</small></div></div>
+    <div class="profile"><span class="box"></span><div><b>Déçu d'une autre conciergerie</b><small>Attend transparence et réactivité</small></div></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="page-break">
+  <div class="sec-head"><div class="num">3</div><h2>Le logement</h2></div>
+  <table class="form">
+    <tr><th>Caractéristique</th><th>Réponse</th></tr>
+    <tr><td class="q">Adresse complète et commune</td><td></td></tr>
+    <tr><td class="q">Type (appartement, maison, villa, mas, gîte, studio)</td><td></td></tr>
+    <tr><td class="q">Résidence principale, secondaire ou investissement locatif</td><td></td></tr>
+    <tr><td class="q">Surface (m²) et nombre de niveaux</td><td></td></tr>
+    <tr><td class="q">Nombre de chambres</td><td></td></tr>
+    <tr><td class="q">Couchages (doubles, simples, canapés-lits) et capacité maximale</td><td></td></tr>
+    <tr><td class="q">Salles de bain et WC</td><td></td></tr>
+    <tr><td class="q">Étage, ascenseur, accessibilité PMR</td><td></td></tr>
+    <tr><td class="q">Stationnement (garage, place, rue, gratuit ou payant)</td><td></td></tr>
+    <tr><td class="q">Année de construction ou de rénovation</td><td></td></tr>
+    <tr><td class="q">Animaux acceptés ? Fumeurs ?</td><td></td></tr>
+  </table>
+  <h3>Équipements et extérieurs</h3>
+  <ul class="checks">
+    <li><span class="box"></span>Piscine (chauffée ? sécurisée ? entretien par qui ?)</li>
+    <li><span class="box"></span>Jacuzzi ou spa</li>
+    <li><span class="box"></span>Jardin, terrasse, balcon, barbecue</li>
+    <li><span class="box"></span>Climatisation (pièces : <span class="fill"></span>)</li>
+    <li><span class="box"></span>Wifi (débit : <span class="fill"></span>) et espace de travail</li>
+    <li><span class="box"></span>Cuisine équipée (lave-vaisselle, four, cafetière)</li>
+    <li><span class="box"></span>Lave-linge, sèche-linge</li>
+    <li><span class="box"></span>Télévision, jeux, équipement bébé</li>
+    <li><span class="box"></span>Vélos, borne de recharge électrique</li>
+    <li><span class="box"></span>Chauffage (type : <span class="fill"></span>)</li>
+  </ul>
+  <div class="notes"><span>Ce que les voyageurs vont adorer</span><i></i><i></i></div>
+  <div class="notes"><span>Ce qui pourrait poser problème (bruit, vis-à-vis, travaux, accès)</span><i></i><i></i></div>
+</section>
+
+<!-- 4 -->
+<section class="page-break">
+  <div class="sec-head"><div class="num">4</div><h2>Situation actuelle de la location</h2><span class="hint">Si le logement est déjà loué</span></div>
+  <p class="lead">Demander à voir les annonces et les relevés de la plateforme si possible.</p>
+  <table class="form tight">
+    <tr><th>Question</th><th>Réponse</th></tr>
+    <tr><td class="q">Plateformes utilisées et liens des annonces</td><td></td></tr>
+    <tr><td class="q">Depuis quand le logement est-il loué ?</td><td></td></tr>
+    <tr><td class="q">Prix moyen par nuit (basse saison / haute saison)</td><td></td></tr>
+    <tr><td class="q">Frais de ménage facturés aux voyageurs</td><td></td></tr>
+    <tr><td class="q">Nuits louées sur 12 mois (ou taux d'occupation)</td><td></td></tr>
+    <tr><td class="q">Revenus des 12 derniers mois</td><td></td></tr>
+    <tr><td class="q">Note moyenne, nombre d'avis, statut Superhost</td><td></td></tr>
+    <tr><td class="q">Durée minimum de séjour, conditions d'annulation</td><td></td></tr>
+    <tr><td class="q">Périodes bloquées ou non louables</td><td></td></tr>
+    <tr><td class="q">Qui fait le ménage aujourd'hui, à quel coût ?</td><td></td></tr>
+    <tr><td class="q">Calendriers synchronisés ? Outil de gestion utilisé ?</td><td></td></tr>
+  </table>
+  <h3>Difficultés rencontrées</h3>
+  <ul class="checks">
+    <li><span class="box"></span>Peu de réservations ou prix trop bas</li>
+    <li><span class="box"></span>Avis négatifs (sur quoi ?)</li>
+    <li><span class="box"></span>Problèmes de ménage ou de linge</li>
+    <li><span class="box"></span>Voyageurs difficiles, dégradations, litiges</li>
+    <li><span class="box"></span>Manque de temps pour les messages</li>
+    <li><span class="box"></span>Clés ou arrivées tardives</li>
+    <li><span class="box"></span>Autre : <span class="fill" style="min-width:45mm"></span></li>
+  </ul>
+
+</section>
+
+<!-- 5 -->
+<section class="page-break">
+  <div class="sec-head"><div class="num">5</div><h2>Réglementation et administratif</h2></div>
+  <div class="callout">Les règles varient selon la commune : tout point incertain se vérifie auprès de la mairie avant la mise en ligne.</div>
+  <table class="form tight">
+    <tr><th>Point à vérifier</th><th style="text-align:center">Oui</th><th style="text-align:center">Non</th><th>À faire</th></tr>
+    <tr><td class="q">Logement déclaré en mairie comme meublé de tourisme</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">Numéro d'enregistrement obtenu (si la commune l'exige)</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">Résidence principale : plafond de nuits louées par an respecté</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">Copropriété : le règlement autorise la location courte durée</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">Locataire : autorisation écrite du propriétaire</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">Assurance couvrant la location saisonnière</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">DPE à jour et classe connue</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">Taxe de séjour collectée par la plateforme ou déclarée</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">Détecteur de fumée, piscine sécurisée</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td class="q">Revenus suivis par un comptable (LMNP, meublé de tourisme…)</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+  </table>
+  <p class="lead" style="margin-top:2.5mm"><b>Documents à récupérer :</b> récépissé de déclaration en mairie, attestation d'assurance, DPE, extrait du règlement de copropriété si besoin.</p>
+  <div class="notes"><span>Notes sur l'administratif</span><i></i><i></i><i></i><i></i></div>
+</section>
+
+<!-- 6 -->
+<section class="page-break">
+  <div class="sec-head"><div class="num">6</div><h2>Organisation pratique</h2></div>
+  <table class="form">
+    <tr><th>Sujet</th><th>Réponse</th></tr>
+    <tr><td class="q">Date souhaitée de démarrage</td><td></td></tr>
+    <tr><td class="q">Périodes où il occupe le logement, prévenance souhaitée</td><td></td></tr>
+    <tr><td class="q">Clés : nombre de jeux, boîte à clés ou serrure connectée à installer ?</td><td></td></tr>
+    <tr><td class="q">Linge de lit et de toilette : fourni par lui ou par DAC ? Stock actuel</td><td></td></tr>
+    <tr><td class="q">Produits d'accueil et consommables : qui les fournit ?</td><td></td></tr>
+    <tr><td class="q">Artisans habituels (plombier, électricien, jardinier, pisciniste)</td><td></td></tr>
+    <tr><td class="q">Montant au-delà duquel il valide une dépense ou réparation</td><td></td></tr>
+    <tr><td class="q">Compteurs, disjoncteur, vanne d'eau, poubelles</td><td></td></tr>
+    <tr><td class="q">Voisins à prévenir ou points sensibles</td><td></td></tr>
+  </table>
+  <h3>Règles de la maison souhaitées</h3>
+  <ul class="checks">
+    <li><span class="box"></span>Pas de fêtes ni d'événements</li>
+    <li><span class="box"></span>Non-fumeur</li>
+    <li><span class="box"></span>Animaux acceptés (conditions : <span class="fill"></span>)</li>
+    <li><span class="box"></span>Durée minimum : <span class="fill" style="min-width:10mm"></span> nuits</li>
+    <li><span class="box"></span>Voyageurs pros et séjours longs acceptés</li>
+    <li><span class="box"></span>Arrivée / départ : <span class="fill"></span></li>
+  </ul>
+  <h3>Suivi et communication</h3>
+  <ul class="checks">
+    <li><span class="box"></span>Rapport mensuel seulement</li>
+    <li><span class="box"></span>Point téléphonique régulier (fréquence : <span class="fill" style="min-width:14mm"></span>)</li>
+    <li><span class="box"></span>Message après chaque séjour</li>
+    <li><span class="box"></span>Prévenu de chaque réservation</li>
+  </ul>
+  <div class="notes"><span>Notes sur l'organisation</span><i></i><i></i><i></i><i></i></div>
+
+</section>
+
+<!-- 7 -->
+<section class="page-break">
+  <div class="sec-head"><div class="num">7</div><h2>Grille de visite</h2><span class="hint">État : 1 = à revoir · 3 = parfait</span></div>
+  <p class="lead">En faisant le tour du logement. Prendre une photo de référence de chaque pièce : elle sert d'état des lieux de départ.</p>
+  <table class="form">
+    <tr><th>Pièce ou zone</th><th style="text-align:center">État</th><th>Propreté et déco</th><th>À améliorer ou acheter</th><th style="text-align:center">Photo</th></tr>
+    <tr><td class="q" style="width:28%">Entrée et accès</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">Séjour</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">Cuisine</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">Chambre 1</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">Chambre 2</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">Chambre 3</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">Salle(s) de bain</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">WC</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">Extérieurs, piscine</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+    <tr><td class="q" style="width:28%">Stationnement</td><td class="c"></td><td></td><td></td><td class="c"><span class="box"></span></td></tr>
+  </table>
+</section>
+
+  <h3>À vérifier sur place</h3>
+  <ul class="checks">
+    <li><span class="box"></span>Literie en bon état (matelas, oreillers, protège-matelas)</li>
+    <li><span class="box"></span>Vaisselle suffisante pour la capacité</li>
+    <li><span class="box"></span>Lumière naturelle et meilleur moment pour le shooting</li>
+    <li><span class="box"></span>Réseau mobile et débit wifi testés</li>
+    <li><span class="box"></span>Rangements pour le stock de linge et de produits</li>
+    <li><span class="box"></span>Emplacement pour une boîte à clés</li>
+    <li><span class="box"></span>Odeurs, humidité, nuisances sonores</li>
+  </ul>
+  <div class="notes"><span>Petits investissements conseillés et budget estimé</span><i></i><i></i><i></i></div>
+
+</section>
+
+<!-- 8 -->
+<section class="page-break">
+  <div class="sec-head"><div class="num">8</div><h2>Synthèse et prochaines étapes</h2><span class="hint">À remplir juste après le rendez-vous</span></div>
+  <p class="lead">Reformuler à voix haute ses deux priorités avant de partir et les lui faire valider.</p>
+  <table class="form">
+    <tr><th>Élément</th><th>Notes</th></tr>
+    <tr><td class="q">Ses 2 priorités principales, avec ses mots</td><td></td></tr>
+    <tr><td class="q">Profil retenu</td><td></td></tr>
+    <tr><td class="q">Potentiel du bien (faible, moyen, fort) et pourquoi</td><td></td></tr>
+    <tr><td class="q">Freins ou objections exprimés</td><td></td></tr>
+    <tr><td class="q">Points bloquants avant la mise en ligne</td><td></td></tr>
+    <tr><td class="q">Services complémentaires à proposer</td><td></td></tr>
+    <tr><td class="q">Niveau d'intérêt : <span class="box"></span> froid &nbsp; <span class="box"></span> tiède &nbsp; <span class="box"></span> chaud</td><td></td></tr>
+  </table>
+  <h3>Actions</h3>
+  <ul class="checks one">
+    <li><span class="box"></span>Envoyer l'estimation de revenus, date promise : <span class="fill" style="min-width:30mm"></span></li>
+    <li><span class="box"></span>Envoyer la proposition et le contrat de prestation</li>
+    <li><span class="box"></span>Récupérer les documents manquants (section 5)</li>
+    <li><span class="box"></span>Planifier le shooting photo : <span class="fill" style="min-width:30mm"></span></li>
+    <li><span class="box"></span>Relancer le <span class="fill" style="min-width:30mm"></span> si pas de réponse</li>
+  </ul>
+  <div class="notes"><span>Notes libres</span><i></i><i></i><i></i></div>
+  <div class="sign">
+    <div>Propriétaire</div>
+    <div>Pour DAC – Drôme Ardèche Conciergerie</div>
+  </div>
+</section>
+
+</body>
+</html>
