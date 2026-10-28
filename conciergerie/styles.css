@@ -606,3 +606,10 @@ button { font: inherit; cursor: pointer; }
   .logo__text { font-size: 17px; }
   .logo__text small { font-size: 9.5px; letter-spacing: .22em; }
 }
+
+/* ============ Votre argent reste chez vous ============ */
+.money-safe { display: flex; gap: 20px; align-items: flex-start; max-width: 1000px; margin: 28px auto 0; background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 20px; padding: 26px 30px; box-shadow: var(--shadow); }
+.money-safe__icon { flex: none; width: 52px; height: 52px; border-radius: 16px; background: #fff4e2; display: grid; place-items: center; font-size: 24px; }
+.money-safe h3 { font-size: 20px; margin-bottom: 6px; }
+.money-safe p { margin: 0; }
+@media (max-width: 640px) { .money-safe { flex-direction: column; padding: 22px; } }
