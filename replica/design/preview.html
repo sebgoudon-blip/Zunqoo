@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design system : aperçu des composants</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--color-bg);color:var(--color-text);font:var(--weight-base) var(--text-base)/var(--leading-base) var(--font-sans)}
+  h1,h2,h3{font-family:var(--font-display);margin:0}
+  h1{font-size:var(--text-xl);line-height:var(--leading-xl)}
+  h2{font-size:var(--text-lg);line-height:var(--leading-lg);margin-bottom:var(--space-4)}
+  .muted{color:var(--color-text-muted)} .xs{font-size:var(--text-xs);line-height:var(--leading-xs)} .sm{font-size:var(--text-sm);line-height:var(--leading-sm)}
+  .mono{font-family:var(--font-mono)}
+  .app{display:grid;grid-template-columns:var(--layout-sidebar) 1fr;min-height:100vh}
+  .sidebar{background:var(--color-surface);border-right:1px solid var(--color-border);padding:var(--space-4) var(--space-3);display:flex;flex-direction:column;gap:2px}
+  .logo{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-3) var(--space-5);font-family:var(--font-display);font-weight:700}
+  .logo i{width:24px;height:24px;border-radius:var(--radius-sm);background:var(--color-accent);display:inline-block}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:var(--radius-md);color:var(--color-text-muted);font-size:var(--text-sm);text-decoration:none;position:relative}
+  .nav:hover{background:var(--color-surface-2);color:var(--color-text)}
+  .nav[aria-current]{background:var(--color-surface-2);color:var(--color-text)}
+  .nav[aria-current]::before{content:"";position:absolute;left:-12px;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--color-accent)}
+  .pro{font-size:10px;font-weight:700;padding:1px 6px;border-radius:var(--radius-pill);border:1px solid var(--color-accent);color:var(--color-accent)}
+  .side-foot{margin-top:auto;padding:var(--space-3);border-top:1px solid var(--color-border)}
+  main{padding:var(--space-6) var(--space-7);max-width:var(--layout-content-max)}
+  header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-6)}
+  section{margin-bottom:var(--space-7)}
+  .row{display:flex;flex-wrap:wrap;gap:var(--space-3);align-items:center}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}
+  .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);box-shadow:var(--shadow-card)}
+  button{font:600 var(--text-sm)/var(--leading-sm) var(--font-sans);border-radius:var(--radius-md);height:40px;padding:0 16px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background var(--motion-fast) var(--motion-ease)}
+  button:focus-visible,.prompt textarea:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+  .b-primary{background:var(--color-accent);color:var(--color-on-accent)} .b-primary:hover{background:var(--color-accent-hover)}
+  .b-secondary{background:var(--color-surface-2);color:var(--color-text);border-color:var(--color-border)}
+  .b-ghost{background:transparent;color:var(--color-text)} .b-ghost:hover{background:var(--color-surface-2)}
+  .b-danger{background:var(--color-danger);color:var(--color-on-danger)}
+  .b-sm{height:32px;padding:0 12px} .b-lg{height:48px;padding:0 24px;font-size:var(--text-base)}
+  button[disabled]{opacity:.5;cursor:not-allowed}
+  .spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s 0.8s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:var(--text-xs);font-weight:500;padding:4px 10px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-border)}
+  .dot{width:8px;height:8px;border-radius:50%} .d-ok{background:var(--color-success)} .d-warn{background:var(--color-warning)} .d-off{background:var(--color-text-muted)}
+  .meter{display:flex;align-items:center;gap:8px;font-size:var(--text-sm)}
+  .bar{height:6px;border-radius:3px;background:var(--color-surface-2);overflow:hidden;width:160px} .bar>i{display:block;height:100%;background:var(--color-accent)}
+  .prompt{background:var(--color-surface);border:1px solid var(--color-border-input);border-radius:var(--radius-lg);padding:var(--space-3);box-shadow:var(--shadow-glow)}
+  .prompt textarea{width:100%;background:transparent;border:0;color:var(--color-text);font:inherit;resize:none;min-height:56px;border-radius:var(--radius-sm)}
+  .prompt textarea::placeholder{color:var(--color-text-muted)}
+  .prompt .bar2{display:flex;justify-content:space-between;align-items:center;margin-top:var(--space-2)}
+  .plan ol{list-style:none;margin:var(--space-4) 0;padding:0;display:flex;flex-direction:column;gap:var(--space-2)}
+  .plan li{display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-3);border-radius:var(--radius-md);background:var(--color-surface-2)}
+  .plan li .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:var(--text-xs);font-weight:700;flex:none;border:1px solid var(--color-border)}
+  .plan li.done .n{background:var(--color-success);color:var(--color-bg);border-color:transparent}
+  .plan li.cur{outline:1px solid var(--color-accent)}
+  .plan li.todo{opacity:.6}
+  .log{background:var(--color-code-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);font:var(--text-xs)/1.7 var(--font-mono);padding:var(--space-3)}
+  .log div{display:flex;gap:10px} .ok{color:var(--color-success)} .err{color:var(--color-danger)} .run{color:var(--color-warning)}
+  .diff{background:var(--color-code-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);font:var(--text-xs)/1.7 var(--font-mono);overflow:hidden}
+  .diff .h{padding:6px 12px;border-bottom:1px solid var(--color-border);color:var(--color-text-muted);display:flex;justify-content:space-between}
+  .diff pre{margin:0;padding:8px 12px;white-space:pre}
+  .add{color:var(--color-success);display:block} .del{color:var(--color-danger);display:block}
+  table{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
+  th{text-align:left;color:var(--color-text-muted);font-weight:500;font-size:var(--text-xs);padding:8px;border-bottom:1px solid var(--color-border)}
+  td{padding:10px 8px;border-bottom:1px solid var(--color-border)}
+  .chip{font-size:var(--text-xs);padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-surface-2);color:var(--color-text-muted);margin-right:4px}
+  .up{color:var(--color-success)} .down{color:var(--color-danger)}
+  .price{font-family:var(--font-display);font-size:var(--text-xl);font-weight:700}
+  .featured{border-color:var(--color-accent);box-shadow:var(--shadow-glow)}
+  ul.inc{list-style:none;padding:0;margin:var(--space-4) 0;display:flex;flex-direction:column;gap:6px;font-size:var(--text-sm)}
+  ul.inc li::before{content:"✓  ";color:var(--color-success);font-weight:700}
+  .field label{display:block;font-size:var(--text-sm);font-weight:500;margin-bottom:6px}
+  .field input{width:100%;height:40px;background:var(--color-bg);border:1px solid var(--color-border-input);border-radius:var(--radius-md);color:var(--color-text);padding:0 12px;font:inherit}
+  .field.error input{border-color:var(--color-danger)} .field .msg{font-size:var(--text-xs);color:var(--color-danger);margin-top:4px}
+  .code{font:700 var(--text-xl)/1 var(--font-mono);letter-spacing:.2em;padding:var(--space-4);background:var(--color-code-bg);border-radius:var(--radius-md);text-align:center;border:1px dashed var(--color-border-input)}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar" aria-label="Outils">
+    <div class="logo"><i aria-hidden="true"></i>Nom à venir</div>
+    <a class="nav" href="#" aria-current="page">Créer une île</a>
+    <a class="nav" href="#">Projets</a>
+    <a class="nav" href="#">Miniatures</a>
+    <a class="nav" href="#">Modèles 3D <span class="pro">PRO</span></a>
+    <a class="nav" href="#">Stats d'îles</a>
+    <a class="nav" href="#">Idées <span class="pro">PRO</span></a>
+    <a class="nav" href="#">Analyse <span class="pro">PRO</span></a>
+    <div class="side-foot">
+      <div class="meter" role="meter" aria-valuenow="5820" aria-valuemax="7500" aria-label="Crédits"><span>5 820 crédits</span></div>
+      <div class="bar" style="margin-top:6px"><i style="width:78%"></i></div>
+      <div class="xs muted" style="margin-top:6px">Renouvellement le 28 nov.</div>
+    </div>
+  </nav>
+
+  <main>
+    <header class="top">
+      <h1>Design system : aperçu</h1>
+      <div class="row">
+        <span class="badge"><span class="dot d-ok"></span>UEFN connecté · PC-SEB · MonIle</span>
+        <span class="badge"><span class="dot d-warn"></span>Pont connecté, MCP introuvable</span>
+        <span class="badge"><span class="dot d-off"></span>UEFN non connecté</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Boutons</h2>
+      <div class="row">
+        <button class="b-primary">Construire</button>
+        <button class="b-secondary">Modifier le plan</button>
+        <button class="b-ghost">Annuler</button>
+        <button class="b-danger">Révoquer ce PC</button>
+        <button class="b-primary" aria-busy="true"><span class="spin" aria-hidden="true"></span>Construction…</button>
+        <button class="b-primary" disabled>Plus de crédits</button>
+        <button class="b-primary b-sm">Petit</button>
+        <button class="b-primary b-lg">Créer mon île</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Champ de prompt</h2>
+      <div class="prompt">
+        <label for="p" class="xs muted">Décris ton île</label>
+        <textarea id="p" placeholder="Un deathrun néon de 30 niveaux avec checkpoints, chrono et classement…"></textarea>
+        <div class="bar2">
+          <button class="b-ghost b-sm">Modèle rapide ▾</button>
+          <div class="row"><span class="xs muted">≈ 40–90 crédits</span><button class="b-primary b-sm">Envoyer</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div class="card plan">
+        <div class="row" style="justify-content:space-between"><h2 style="margin:0">Plan proposé</h2><span class="badge"><span class="dot d-warn"></span>En attente d'accord</span></div>
+        <ol>
+          <li class="done"><span class="n">✓</span><div><b class="sm">Spawners et zone de départ</b><div class="xs muted">4 devices placés</div></div></li>
+          <li class="cur" aria-current="step"><span class="n">2</span><div><b class="sm">Gestionnaire de manches en Verse</b><div class="xs muted">round_manager.verse · compilation</div></div></li>
+          <li class="todo"><span class="n">3</span><div><b class="sm">Checkpoints et chrono</b><div class="xs muted">Devices + UI</div></div></li>
+          <li class="todo"><span class="n">4</span><div><b class="sm">Écran de victoire</b><div class="xs muted">UMG</div></div></li>
+        </ol>
+        <div class="row" style="justify-content:space-between"><span class="xs muted">Plafond : 400 crédits · dépensé 112</span><button class="b-secondary b-sm">Arrêter</button></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+        <!-- Noms d'outils illustratifs : les vrais viendront du tools/list d'UEFN. -->
+        <div class="log" role="log" aria-label="Journal des opérations">
+          <div><span class="ok">✓</span><span>place_device player_spawner ×4</span><span class="muted">1,2 s</span></div>
+          <div><span class="ok">✓</span><span>read_verse_files</span><span class="muted">0,3 s</span></div>
+          <div><span class="ok">✓</span><span>write round_manager.verse</span><span class="muted">0,4 s</span></div>
+          <div><span class="err">✗</span><span>compile : 1 erreur (ligne 18)</span><span class="muted">6,1 s</span></div>
+          <div><span class="run">●</span><span>correction 1/3…</span></div>
+        </div>
+        <div class="diff">
+          <div class="h"><span>round_manager.verse</span><span>+3 −1</span></div>
+<pre>  OnBegin&lt;override&gt;()&lt;suspends&gt;:void=
+<span class="del">−     Timer.Start()</span><span class="add">+     Timer.SetActiveDuration(60.0)
++     Timer.Start()
++     Timer.SuccessEvent.Subscribe(OnTimeUp)</span></pre>
+        </div>
+        <div class="row"><button class="b-primary b-sm">Accepter</button><button class="b-secondary b-sm">Refuser</button><label class="xs muted"><input type="checkbox"> Tout accepter pour cette étape</label></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Stats d'îles</h2>
+      <div class="card" style="padding:var(--space-3)">
+        <table>
+          <thead><tr><th>Île</th><th>Tags</th><th>Joueurs max 24 h</th><th>Rétention J1</th><th>7 jours</th></tr></thead>
+          <tbody>
+            <tr><td><b>Exemple d'île A</b><div class="xs muted">createur_a</div></td><td><span class="chip">deathrun</span><span class="chip">parkour</span></td><td>48 210</td><td>31 %</td><td class="up">▲ 18 %</td></tr>
+            <tr><td><b>Exemple d'île B</b><div class="xs muted">createur_b</div></td><td><span class="chip">tycoon</span></td><td>22 904</td><td>27 %</td><td class="down">▼ 6 %</td></tr>
+          </tbody>
+        </table>
+        <div class="xs muted" style="padding:8px">Données d'exemple. En production : Fortnite Data API officielle.</div>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div class="card featured">
+        <span class="pro">LE PLUS CHOISI</span>
+        <h2 style="margin-top:var(--space-3)">Pro</h2>
+        <div class="price">Prix à fixer</div>
+        <div class="sm muted">crédits/mois et projets : à fixer à l'étape replica-launch</div>
+        <ul class="inc"><li>Modèles de pointe</li><li>Stats sur tout le catalogue</li><li>Modèles 3D</li><li>Ta propre clé API</li></ul>
+        <button class="b-primary" style="width:100%;justify-content:center">Choisir Pro</button>
+      </div>
+      <div class="card">
+        <h2>Connecter UEFN</h2>
+        <p class="sm muted" style="margin-top:0">Colle ce code dans le pont sur ton PC.</p>
+        <div class="code" aria-label="Code d'appairage">K7QM 2XPA</div>
+        <p class="xs muted">Expire dans 9:42</p>
+        <div class="field error" style="margin-top:var(--space-4)"><label for="e">E-mail</label><input id="e" value="seb@" aria-invalid="true" aria-describedby="em"><div class="msg" id="em">Adresse e-mail incomplète.</div></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
