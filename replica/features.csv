@@ -1,0 +1,48 @@
+feature,area,priority,original,clone,notes
+Inscription e-mail / Google,onboarding,must,yes,no,original propose aussi login Roblox ; équivalent = login Epic (OAuth officiel Epic Account Services) en should
+Connexion avec compte Epic (OAuth officiel),onboarding,should,adapt,no,remplace le login Roblox
+Crédits offerts contre abonnement aux réseaux,onboarding,could,yes,no,800 crédits chez l'original ; vérification déclarative seulement
+Accueil avec colonne d'outils (Créer / Miniatures / 3D / Stats / Idées),navigation,must,yes,no,S03
+Pont desktop qui relaie vers l'UEFN MCP local (127.0.0.1:8000),editor link,must,adapt,no,remplace le plugin Creator Store ; UEFN est Windows uniquement
+Appairage du pont par code court + statut Connecté,editor link,must,yes,no,un seul éditeur actif à la fois
+Guide d'activation Python Editor Scripting + UEFN MCP Toolsets,editor link,must,adapt,no,prérequis côté UEFN
+Atelier chat : décrire son île en une phrase,builder,must,yes,no,cœur du produit
+Plan en étapes à relire / modifier avant construction,builder,must,yes,no,
+Bouton Construire + journal des opérations en direct,builder,must,yes,no,
+Écriture et compilation de fichiers Verse avec boucle de correction d'erreurs,builder,must,adapt,no,remplace Luau
+Placement et configuration de devices Creative,builder,must,adapt,no,remplace les parts / services Roblox
+Création d'entités Scene Graph,builder,should,adapt,no,
+Construction d'UI (UMG),builder,should,adapt,no,remplace StarterGui
+Lecture de l'existant avant modification (îles déjà commencées),builder,must,yes,no,
+Validation de chaque changement avant application,builder,must,yes,no,
+Lancement d'une session de test et lecture du log client,builder,should,adapt,no,UEFN joue en Play-in-Client
+Annulation d'une étape,builder,should,yes,no,original = Ctrl+Z Studio ; à vérifier côté UEFN (snapshot Verse avant écriture)
+Choix du modèle d'IA dans le chat,builder,should,yes,no,modèle maison + modèles de pointe en Pro
+Utiliser sa propre clé API (BYOK),billing,could,yes,no,Pro et plus
+Solde de crédits visible dans l'atelier,billing,must,yes,no,
+Projets (limite par formule : 5 / 25 / 100),projects,must,yes,no,
+Studio de miniatures depuis texte ou image,thumbnails,must,adapt,no,format île Fortnite 16:9 (1920x1080 à vérifier dans la doc Epic)
+Variantes et historique de miniatures par projet,thumbnails,should,yes,no,
+Modèles 3D IA depuis texte ou image (4 styles),3d,should,yes,no,export FBX / GLB importable dans UEFN ; 100 crédits chez l'original
+Visionneuse 3D dans le navigateur,3d,should,yes,no,
+Fil d'itération par objet 3D (plus grand / en bleu),3d,could,yes,no,
+Stats d'îles en direct via Fortnite Data API officielle,stats,must,adapt,no,remplace TrackBlox ; API publique sans auth avec rate limit et 7 jours d'historique
+Vue par genre/tag : nombre d'îles + joueurs + tendance,stats,should,yes,no,
+Limite du catalogue de stats selon la formule,stats,could,yes,no,500 îles en Starter
+Idées d'îles tirées des tendances,ideas,should,yes,no,Pro
+Analyse et note d'une idée avant construction,ideas,should,yes,no,Pro
+Guide « méthode virale » pas à pas,content,could,yes,no,contenu à écrire à neuf
+Page tarifs 3 formules + annuel,billing,must,yes,no,Stripe
+Résiliation en un clic dans les réglages,billing,must,yes,no,obligation légale FR
+Crédits additionnels qui n'expirent pas,billing,should,yes,no,
+Parrainage (crédits si le filleul s'abonne),growth,could,yes,no,2000 crédits chez l'original
+Programme créateurs / affiliés (candidature),growth,could,yes,no,
+Documentation de démarrage,content,must,yes,no,
+Page support,content,must,yes,no,
+Pages légales (CGU / CGV / confidentialité / remboursement / résiliation / IP),content,must,yes,no,à rédiger à neuf
+Pages SEO thématiques,content,could,yes,no,
+Site FR + EN,content,should,yes,no,
+Avis clients sur la landing,marketing,could,yes,skip,ne pas reprendre leurs avis ; n'afficher que de vrais avis de tes utilisateurs
+Vitrine de jeux avec revenus mensuels,marketing,could,yes,skip,chiffres invérifiables : ne pas reproduire sans preuve
+Plugin publié sur le Creator Store Roblox,editor link,skip,yes,skip,sans objet pour Fortnite
+Communauté Discord / TikTok / Instagram de l'original,growth,skip,yes,skip,le réseau et l'audience ne se clonent pas
